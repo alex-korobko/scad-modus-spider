@@ -16,7 +16,8 @@
 
 #define	NO_BLOCK_COLOR		Pg_WHITE	
 #define	BLOCK_COLOR		Pg_RED
-#define	RECEIVE_TIMEOUT		1
+#define	RECEIVE_TIMEOUT		2
+#define	NO_RESPONSE_COUNT		3
 
 #define CHECK_ADDRESS(addr) if (addr > 247) { SysMessage(ERROR_MSG, "Incorrect device address (%d)", addr); return 0; }
 #define CHECK_ORDER(lo, hi)	if (hi < lo) { SysMessage(ERROR_MSG, "Last address of requested block less then first"); return 0; }
@@ -75,6 +76,7 @@ metro_escalator::metro_escalator()
 	parent = NULL;
 	Arrow = numLabel = blockLabel = NULL;
 	number = 0;
+	no_response_count=0;
 	enabled = 0;
 	type = 0;
 	id = 0;
@@ -198,10 +200,10 @@ void metro_escalator::UpdateEscalator()
 
 	if (enabled)
 	{
-//		printf("Enabled\n");
+		printf("Escalator id %d  mode %d %d direction %d pref_direction %d\n", id, dataBlock.mode, dataBlock.status, direction, prefDirection);
 		if (online == 1)
 		{
-//			printf("Online mode %d %d\n", dataBlock.mode, dataBlock.status);
+//		printf("Online escalator id %d\n", id);
 			if (dataBlock.mode == 3)
 			{
 				switch(dataBlock.status)
@@ -491,7 +493,7 @@ int metro_escalator::SetData()
 	dataBlock.breakingPath = ntohl(*((dword*)&buffer[18]));
 	dataBlock.odometr = ntohl(*((dword*)&buffer[22]));
 
-//	printf ("dataBlock.status = %d ready %d\n", dataBlock.status, dataBlock.ready);
+	//printf ("dataBlock.mode = %d ready %d\n", dataBlock.mode, dataBlock.ready);
 	
 	for(int i=0; i<12; i++)
 		dataBlock.signals[i] = ntohs(*((word*)&buffer[30+i*2]));
@@ -574,7 +576,7 @@ void metro_escalator::SetState(dword state)
 	char		message[] =  "Потеряна cвязь с эскалатором %d на станции \"%s\"";
 	char		name[128];
 
-//	printf("Set state %d\n", id);
+//	printf("Set to escalator %d state %d\n", id, state);
 
 	switch (state)
 	{
@@ -762,12 +764,40 @@ void* Run(void* arg)
 			if (++time_correct_int>TIME_CORR_INTER) time_correct_int=0;
 */			
 			readNum = SendBuffer(sock, output, size, input);			
+
+
 						 			
-// 			printf ("Readnum %d\n", readNum);
+ 			printf ("Readnum %d\n", readNum);
  			
 			if (!readNum)
 			{
-				if (curEscalator->online == 1)
+				if (curEscalator->online == 1 && curEscalator->no_response_count>NO_RESPONSE_COUNT)
+				{
+					curEscalator->no_response_count=0;
+					MsgSendPulse(curEscalator->conID, SIGEV_PULSE_PRIO_INHERIT, 0, curEscalator->GetID());
+					reconnect = 1;
+				} else {
+				curEscalator->no_response_count++;
+				continue;
+				}
+			}
+			else		
+			{			
+				if (curEscalator->online <= 0)
+				{
+//					curEscalator->online = 1;
+					MsgSendPulse(curEscalator->conID, SIGEV_PULSE_PRIO_INHERIT, 1, curEscalator->GetID());
+					// после коннекта - запрос данных
+					curEscalator->GetData();
+				}
+
+/*
+
+ 			printf ("Readnum %d\n", readNum);
+ 			
+			if (!readNum)
+			{
+			if (curEscalator->online == 1)
 				{
 					MsgSendPulse(curEscalator->conID, SIGEV_PULSE_PRIO_INHERIT, 0, curEscalator->GetID());
 					reconnect = 1;
@@ -777,13 +807,15 @@ void* Run(void* arg)
 			{			
 				if (curEscalator->online <= 0)
 				{
-					curEscalator->online = 1;
+//					curEscalator->online = 1;
 					MsgSendPulse(curEscalator->conID, SIGEV_PULSE_PRIO_INHERIT, 1, curEscalator->GetID());
 					// после коннекта - запрос данных
 					curEscalator->GetData();
 				}
+
+*/
 /*
-			if (curEscalator->type==2)
+			if (curEscalator->id==9)
 				{
 				// DEBUG dump modbus packet
 				printf("Packet [%d] tid %d socket %d:\n", curEscalator->id, pthread_self(), sock);
@@ -792,7 +824,7 @@ void* Run(void* arg)
 				printf("\n\n"); 
 				// DEBUG
 				};
-*/		
+*/
 				// проверяем команду
 				switch(input[1])
 				{
@@ -972,7 +1004,7 @@ int SendBuffer (int sock, byte* output, int size, byte* input)
 		lost++;
 		clock2 = ClockCycles();
 		diffTime = (clock2-clock1)*1.0/SYSPAGE_ENTRY(qtime)->cycles_per_sec;
-//		printf("Response - failed (%f sec)\n", diffTime);
+		printf("Response - failed (%f sec)\n", diffTime);
 		return 0;
 	}
 

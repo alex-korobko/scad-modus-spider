@@ -81,6 +81,7 @@ public:
 
    	metro_station* parent;
    	pthread_t	tid;   
+   	int				no_response_count;
    	int				stationID;
 	int				sleepticks;
    	int 			enabled;

@@ -23,8 +23,16 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 
 Log::Log()
 {
+	time_t			curTime;
 	wnd = NULL;
+	
 	memset(&lastAccessTime, 0, sizeof(lastAccessTime));
+	memset(&lastSaveTime, 0, sizeof(lastSaveTime));
+
+	curTime = time(NULL);
+	localtime_r(&curTime, &lastSaveTime);
+	lastAccessTime=lastSaveTime;
+	
 }
 
 Log::~Log()
@@ -286,13 +294,20 @@ int Log::Rotate()
 
 	curTime = time(NULL);
 	localtime_r(&curTime, &localTime);
+	
+	if (	lastSaveTime.tm_min!=localTime.tm_min)  	
+		{
+		mainLog.Save("main.log");
+		lastSaveTime=localTime;
+		}
+	
 	if ((localTime.tm_mon != lastAccessTime.tm_mon) && !(localTime.tm_mon % 3))
 	{
 		int quartal = int(lastAccessTime.tm_mon / 3) + 1;
 		sprintf(fileName, "%d-%d.log", quartal, lastAccessTime.tm_year + 1900);
 		Save(fileName);
 		memcpy(&lastAccessTime, &localTime, sizeof(lastAccessTime));
-		Clear();
+//		Clear(); // Commented  poka ;-) 
 		SysMessage(INFO_MSG, "Rotating log");
 	}
 
@@ -323,3 +338,4 @@ int Log::AttachWnd(PtWidget_t* wnd)
 	
 	return 1;
 }	
+

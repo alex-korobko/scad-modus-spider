@@ -142,13 +142,20 @@ const int ABN_ArchiveLogOpenBtn = 116;
 const int ABN_ArchiveLogCancelBtn = 117;
 
 /* 'PrevCmdPullDlg' Dialog link */
-const int ABN_PrevCmdPullDlg = 118;
+const int ABN_PrevCmdPoolDlg = 118;
+const int ABN_CmdPoolDlgBtnClose = 119;
+const int ABN_SendCommandBtn = 120;
+const int ABN_ChancelCommandBtn = 121;
+const int ABN_CommandPoolRwLst = 122;
+const int ABN_CmdPoolRwListStation = 123;
+const int ABN_CmdPoolRwListEscal = 124;
+const int ABN_CmdPoolRwListBtn = 125;
 
 /* 'EscalatorMenu' Menu link */
-const int ABN_EscalatorMenu = 119;
-const int ABN_MoveUp = 120;
-const int ABN_MoveStop = 121;
-const int ABN_MoveDown = 122;
+const int ABN_EscalatorMenu = 126;
+const int ABN_MoveUp = 127;
+const int ABN_MoveStop = 128;
+const int ABN_MoveDown = 129;
 
 
 #if defined(__cplusplus)
