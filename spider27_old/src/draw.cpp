@@ -247,3 +247,117 @@ void draw_log_item(
 	}
 }
 
+
+
+void draw_command_pool_item(
+        PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
+        unsigned nitems, PhRect_t *where)
+{
+	uchar_t Helvetica10[MAX_FONT_TAG];
+	uchar_t font_name[] = { "Arial" };
+	PtGenListItem_t *cur_item;
+	PhPoint_t point;
+	PhRect_t extent;
+	int count, flg,strSize;
+	char buffer[256],	str[128];
+	int typeIndex;
+	Command *record;	
+
+//	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
+	
+	if (PfGenerateFontName(font_name, 0, 10, Helvetica10) == NULL)
+	{
+		perror("Unable to generate font name"); 
+	} else	
+	{    
+		PgSetFont((char*)Helvetica10);
+	}
+	
+	PtListColumn_t* column_pos = (PtListColumn_t*)get_widget_scalar(widget,	Pt_ARG_LIST_COLUMN_POS);
+
+	printf ("index %d\n", index);
+	count = 0;
+	cur_item = items;
+	point.x = where->ul.x;
+	point.y = where->ul.y + 18;
+	while(cur_item)
+	{
+		record  = g_CommandPool[index-1];
+		
+		// Station
+		point.x = where->ul.x + column_pos[2].from + COLUMN_LEFT_MARGIN;		
+		strSize = g_stations[record->GetStation()].Name.Get(str, 128);
+		PgDrawText(str, strSize, &point, Pg_TEXT_BOTTOM);
+		cur_item = cur_item->next;		
+	}
+	
+/*
+		// Escalator
+		if (msgID <143)
+		{
+			itoa(record->escalatorID, buffer, 10);
+
+			PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );		
+			point.x = where->ul.x + column_pos[3].from + (column_pos[3].to - column_pos[3].from - (extent.lr.x - extent.ul.x))/2;
+			
+			PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
+		}
+
+		// Message
+		point.x = where->ul.x + column_pos[4].from + COLUMN_LEFT_MARGIN;
+			//if (translate_string(messages[msgID].text, translate, translate_set))
+			//{	
+				if (msgID == 119)
+				{
+					sprintf(buffer, "%s %d (мм)", curEntry->text, param);
+
+				PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);							
+				}
+				else
+					{
+					PgDrawText(curEntry->text, strlen(curEntry->text), &point, Pg_TEXT_BOTTOM);							
+					};
+			//}
+		}
+		else
+		{
+
+				point.x = where->ul.x + column_pos[4].from + COLUMN_LEFT_MARGIN;
+				//if (translate_string(blockingNames[abs(short(msgID))], translate, translate_set))
+				//{				
+					PgSetTextColor(COLOR_GREEN);		
+	
+	//				PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
+	
+		ALL_ESCALATORS
+		{
+			if (g_escalators[i].number == record->escalatorID && g_escalators[i].stationID == record->stationID)
+				{
+					if (g_escTypes)
+						{
+						typeIndex = g_escalators[i].type-1;
+
+						if (typeIndex!=0) {
+														
+						printf("\nEscalator type %d id %d message %d record ID %d record station %d mess id %d", typeIndex, g_escalators[i].id, msgID, record->escalatorID, record->stationID, abs(short(msgID)));
+						g_escTypes[typeIndex].blocks[0].signals[abs(short(msgID))].name.Get(pblock_text, 250);			
+						PgDrawText(pblock_text, strlen(pblock_text), &point, Pg_TEXT_BOTTOM);
+														} else {								
+					PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
+														};
+						}
+				break;
+				 };
+		};	
+	
+	
+				//}
+		}
+		}
+		cur_item = cur_item->next;
+		count++;
+		point.y += 18;		
+	}
+*/	
+}
+

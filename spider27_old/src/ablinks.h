@@ -9,7 +9,7 @@ extern ApContext_t AbContext;
 ApWindowLink_t main_wnd = {
 	"main_wnd.wgtw",
 	&AbContext,
-	AbLinks_main_wnd, 0, 12
+	AbLinks_main_wnd, 0, 13
 	};
 
 ApPictureLink_t interface = {
@@ -49,10 +49,10 @@ ApWindowLink_t ArchiveLog = {
 	AbLinks_ArchiveLog, 114, 5
 	};
 
-ApDialogLink_t PrevCmdPullDlg = {
-	"PrevCmdPullDlg.wgtd",
+ApDialogLink_t PrevCmdPoolDlg = {
+	"PrevCmdPoolDlg.wgtd",
 	&AbContext,
-	NULL, 118, 0
+	AbLinks_PrevCmdPoolDlg, 118, 4
 	};
 
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {
@@ -70,7 +70,7 @@ ApMenuLink_t EscalatorMenu = {
 	ApItems_EscalatorMenu,
 	& AbContext,
 	AbLinks_EscalatorMenu,
-	119, 3, 3
+	126, 3, 3
 	};
 
 

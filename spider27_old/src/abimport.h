@@ -15,8 +15,8 @@ extern ApDialogLink_t EscConfig;
 extern ApDialogLink_t SignalDlg;
 extern ApDialogLink_t ArchiveDlg;
 extern ApWindowLink_t ArchiveLog;
-extern ApDialogLink_t PrevCmdPullDlg;
-extern ApWidget_t AbWidgets[ 119 ];
+extern ApDialogLink_t PrevCmdPoolDlg;
+extern ApWidget_t AbWidgets[ 126 ];
 
 extern ApMenuLink_t EscalatorMenu;
 
@@ -67,4 +67,10 @@ int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *c
 int OnChancelDirections( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int FillEscConfList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int DiscardBlocking( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int OnClickSendCommandBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+void draw_command_pool_item(
+        PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
+        unsigned nitems, PhRect_t *where
+        );
+int ReleazeCmdPoolList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif

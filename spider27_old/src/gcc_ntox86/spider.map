@@ -19,6 +19,8 @@ metro_escalator::images
                     0x48              escalator.o
 List<AlertRecord> type_info node
                     0x8               abmain.o
+Map<Command> type_info node
+                    0x8               abmain.o
 Sound type_info node
                     0x8               sound.o
 Map<DictEntry> type_info node
@@ -50,6 +52,7 @@ LOAD /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 LOAD abmain.o
 LOAD alert.o
 LOAD archive.o
+LOAD cmd_pool.o
 LOAD ctrl_widget.o
 LOAD draw.o
 LOAD escalator.o
@@ -89,25 +92,25 @@ LOAD /x86/lib/crtn.o
 
 .note0          0x08048108        0x0
 
-.hash           0x08048108      0x4e8
+.hash           0x08048108      0x4ec
  *(.hash)
- .hash          0x08048108      0x4e8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .hash          0x08048108      0x4ec /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
-.dynsym         0x080485f0      0xb50
+.dynsym         0x080485f4      0xb60
  *(.dynsym)
- .dynsym        0x080485f0      0xb50 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .dynsym        0x080485f4      0xb60 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
-.dynstr         0x08049140      0x8dc
+.dynstr         0x08049154      0x8f3
  *(.dynstr)
- .dynstr        0x08049140      0x8dc /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .dynstr        0x08049154      0x8f3 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
-.gnu.version    0x08049a1c        0x0
+.gnu.version    0x08049a48        0x0
  *(.gnu.version)
 
-.gnu.version_d  0x08049a1c        0x0
+.gnu.version_d  0x08049a48        0x0
  *(.gnu.version_d)
 
-.gnu.version_r  0x08049a1c        0x0
+.gnu.version_r  0x08049a48        0x0
  *(.gnu.version_r)
 
 .rel.init
@@ -164,9 +167,9 @@ LOAD /x86/lib/crtn.o
 .rela.dtors
  *(.rela.dtors)
 
-.rel.got        0x08049a1c       0x10
+.rel.got        0x08049a48       0x10
  *(.rel.got)
- .rel.got       0x08049a1c       0x10 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .rel.got       0x08049a48       0x10 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
 .rela.got
  *(.rela.got)
@@ -187,913 +190,963 @@ LOAD /x86/lib/crtn.o
 .rela.sbss
  *(.rela.sbss)
 
-.rel.bss        0x08049a2c       0xc0
+.rel.bss        0x08049a58       0xc0
  *(.rel.bss)
- .rel.bss       0x08049a2c       0xc0 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .rel.bss       0x08049a58       0xc0 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
 .rela.bss
  *(.rela.bss)
 
-.rel.plt        0x08049aec      0x488
+.rel.plt        0x08049b18      0x490
  *(.rel.plt)
- .rel.plt       0x08049aec      0x488 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .rel.plt       0x08049b18      0x490 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
 .rela.plt
  *(.rela.plt)
 
-.init           0x08049f74        0xd
+.init           0x08049fa8        0xd
  *(.init)
- .init          0x08049f74        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- .init          0x08049f79        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
- .init          0x08049f7e        0x3 /x86/lib/crtn.o
+ .init          0x08049fa8        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .init          0x08049fad        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .init          0x08049fb2        0x3 /x86/lib/crtn.o
 
-.plt            0x08049f84      0x920
+.plt            0x08049fb8      0x930
  *(.plt)
- .plt           0x08049f84      0x920 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
-                0x08049f94                strcpy
-                0x08049fa4                ioctl
-                0x08049fb4                printf
-                0x08049fc4                recv
-                0x08049fd4                connect
-                0x08049fe4                pthread_create
-                0x08049ff4                snd_pcm_close
-                0x0804a004                strerror
-                0x0804a014                PtFlush
-                0x0804a024                pthread_attr_init
-                0x0804a034                memmove
-                0x0804a044                ApLinkWindow
-                0x0804a054                timer_create
-                0x0804a064                PtSetResources
-                0x0804a074                PtGenListRemoveItems
-                0x0804a084                PhChannelAttach
-                0x0804a094                usleep
-                0x0804a0a4                fscanf
-                0x0804a0b4                fgets
-                0x0804a0c4                snd_pcm_plugin_status
-                0x0804a0d4                memcpy
-                0x0804a0e4                pthread_cancel
-                0x0804a0f4                perror
-                0x0804a104                snd_pcm_open_preferred
-                0x0804a114                ApCloseDBase
-                0x0804a124                ApInitialize
-                0x0804a134                malloc
-                0x0804a144                sleep
-                0x0804a154                vsnprintf
-                0x0804a164                strtoul
-                0x0804a174                itoa
-                0x0804a184                socket
-                0x0804a194                select
-                0x0804a1a4                PgSetTextColor
-                0x0804a1b4                __rtti_user
-                0x0804a1c4                _PtSetResource
-                0x0804a1d4                PtGetResources
-                0x0804a1e4                snd_mixer_close
-                0x0804a1f4                send
-                0x0804a204                PfExtentText
-                0x0804a214                PtGenListGetCurrent
-                0x0804a224                MsgSendPulse
-                0x0804a234                strrchr
-                0x0804a244                snd_pcm_plugin_params
-                0x0804a254                __throw
-                0x0804a264                write
-                0x0804a274                PtExit
-                0x0804a284                ConnectDetach
-                0x0804a294                strcat
-                0x0804a2a4                PtWindowToFront
-                0x0804a2b4                inet_addr
-                0x0804a2c4                ntohl
-                0x0804a2d4                __deregister_frame_info
-                0x0804a2e4                PtSetParentWidget
-                0x0804a2f4                setsockopt
-                0x0804a304                fseek
-                0x0804a314                PtGenListLastItem
-                0x0804a324                PxTranslateToUTF
-                0x0804a334                PgDrawText
-                0x0804a344                __get_errno_ptr
-                0x0804a354                snd_pcm_plugin_set_disable
-                0x0804a364                PgExtentText
-                0x0804a374                ApCreateModule
-                0x0804a384                read
-                0x0804a394                snd_pcm_plugin_setup
-                0x0804a3a4                strncmp
-                0x0804a3b4                ApGetTextRes
-                0x0804a3c4                ApCreateWidget
-                0x0804a3d4                strtok
-                0x0804a3e4                PtAppAddInput
-                0x0804a3f4                ConnectAttach
-                0x0804a404                sigaction
-                0x0804a414                PtAlert
-                0x0804a424                fread
-                0x0804a434                snd_mixer_file_descriptor
-                0x0804a444                ChannelDestroy
-                0x0804a454                std::terminate(void)
-                0x0804a464                _init_libc
-                0x0804a474                fopen
-                0x0804a484                localtime
-                0x0804a494                memset
-                0x0804a4a4                ftell
-                0x0804a4b4                fclose
-                0x0804a4c4                ntohs
-                0x0804a4d4                inet_ntoa
-                0x0804a4e4                ChannelCreate
-                0x0804a4f4                time
-                0x0804a504                MsgSendv
-                0x0804a514                strcmp
-                0x0804a524                pthread_mutex_unlock
-                0x0804a534                ApGetWidgetPtr
-                0x0804a544                ApOpenDBase
-                0x0804a554                __builtin_vec_new
-                0x0804a564                PtNotice
-                0x0804a574                sprintf
-                0x0804a584                atexit
-                0x0804a594                MsgReceive
-                0x0804a5a4                ApGetImageRes
-                0x0804a5b4                ltoa
-                0x0804a5c4                snd_pcm_plugin_write
-                0x0804a5d4                PtRealizeWidget
-                0x0804a5e4                pthread_self
-                0x0804a5f4                getsockopt
-                0x0804a604                localtime_r
-                0x0804a614                strftime
-                0x0804a624                __builtin_vec_delete
-                0x0804a634                stat
-                0x0804a644                PtGenListDrawBackground
-                0x0804a654                PtCreateWidget
-                0x0804a664                fwrite
-                0x0804a674                PtDestroyWidget
-                0x0804a684                htons
-                0x0804a694                pthread_mutex_destroy
-                0x0804a6a4                PtMainLoop
-                0x0804a6b4                pthread_mutex_lock
-                0x0804a6c4                exit
-                0x0804a6d4                pthread_mutex_trylock
-                0x0804a6e4                atoi
-                0x0804a6f4                PtGenListAddItems
-                0x0804a704                __builtin_delete
-                0x0804a714                PtMultiTextModifyText
-                0x0804a724                _PtGetResource
-                0x0804a734                __builtin_new
-                0x0804a744                PgSetFont
-                0x0804a754                pthread_mutex_init
-                0x0804a764                strlen
-                0x0804a774                open
-                0x0804a784                snd_mixer_open
-                0x0804a794                __assert
-                0x0804a7a4                abs
-                0x0804a7b4                snd_pcm_plugin_prepare
-                0x0804a7c4                strchr
-                0x0804a7d4                PtListReplaceItemPos
-                0x0804a7e4                snd_pcm_plugin_info
-                0x0804a7f4                pthread_attr_setdetachstate
-                0x0804a804                fcntl
-                0x0804a814                snd_mixer_read
-                0x0804a824                timer_settime
-                0x0804a834                __register_frame_info
-                0x0804a844                snd_pcm_plugin_flush
-                0x0804a854                snd_pcm_file_descriptor
-                0x0804a864                close
-                0x0804a874                PfGenerateFontName
-                0x0804a884                PtListAddItems
-                0x0804a894                free
+ .plt           0x08049fb8      0x930 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+                0x08049fc8                strcpy
+                0x08049fd8                ioctl
+                0x08049fe8                printf
+                0x08049ff8                recv
+                0x0804a008                connect
+                0x0804a018                pthread_create
+                0x0804a028                snd_pcm_close
+                0x0804a038                strerror
+                0x0804a048                PtFlush
+                0x0804a058                pthread_attr_init
+                0x0804a068                memmove
+                0x0804a078                ApLinkWindow
+                0x0804a088                timer_create
+                0x0804a098                PtSetResources
+                0x0804a0a8                PtGenListGetSelIndexes
+                0x0804a0b8                PtGenListRemoveItems
+                0x0804a0c8                PhChannelAttach
+                0x0804a0d8                usleep
+                0x0804a0e8                fscanf
+                0x0804a0f8                fgets
+                0x0804a108                snd_pcm_plugin_status
+                0x0804a118                memcpy
+                0x0804a128                pthread_cancel
+                0x0804a138                perror
+                0x0804a148                snd_pcm_open_preferred
+                0x0804a158                ApCloseDBase
+                0x0804a168                ApInitialize
+                0x0804a178                malloc
+                0x0804a188                sleep
+                0x0804a198                vsnprintf
+                0x0804a1a8                strtoul
+                0x0804a1b8                itoa
+                0x0804a1c8                socket
+                0x0804a1d8                select
+                0x0804a1e8                PgSetTextColor
+                0x0804a1f8                __rtti_user
+                0x0804a208                _PtSetResource
+                0x0804a218                PtGetResources
+                0x0804a228                snd_mixer_close
+                0x0804a238                send
+                0x0804a248                PfExtentText
+                0x0804a258                PtGenListGetCurrent
+                0x0804a268                MsgSendPulse
+                0x0804a278                strrchr
+                0x0804a288                snd_pcm_plugin_params
+                0x0804a298                __throw
+                0x0804a2a8                write
+                0x0804a2b8                PtExit
+                0x0804a2c8                ConnectDetach
+                0x0804a2d8                strcat
+                0x0804a2e8                PtWindowToFront
+                0x0804a2f8                inet_addr
+                0x0804a308                ntohl
+                0x0804a318                __deregister_frame_info
+                0x0804a328                PtSetParentWidget
+                0x0804a338                setsockopt
+                0x0804a348                fseek
+                0x0804a358                PtGenListLastItem
+                0x0804a368                PxTranslateToUTF
+                0x0804a378                PgDrawText
+                0x0804a388                __get_errno_ptr
+                0x0804a398                snd_pcm_plugin_set_disable
+                0x0804a3a8                PgExtentText
+                0x0804a3b8                ApCreateModule
+                0x0804a3c8                read
+                0x0804a3d8                snd_pcm_plugin_setup
+                0x0804a3e8                strncmp
+                0x0804a3f8                ApGetTextRes
+                0x0804a408                ApCreateWidget
+                0x0804a418                strtok
+                0x0804a428                PtAppAddInput
+                0x0804a438                ConnectAttach
+                0x0804a448                sigaction
+                0x0804a458                PtAlert
+                0x0804a468                fread
+                0x0804a478                snd_mixer_file_descriptor
+                0x0804a488                ChannelDestroy
+                0x0804a498                std::terminate(void)
+                0x0804a4a8                _init_libc
+                0x0804a4b8                fopen
+                0x0804a4c8                localtime
+                0x0804a4d8                memset
+                0x0804a4e8                ftell
+                0x0804a4f8                fclose
+                0x0804a508                ntohs
+                0x0804a518                inet_ntoa
+                0x0804a528                ChannelCreate
+                0x0804a538                time
+                0x0804a548                MsgSendv
+                0x0804a558                strcmp
+                0x0804a568                pthread_mutex_unlock
+                0x0804a578                ApGetWidgetPtr
+                0x0804a588                ApOpenDBase
+                0x0804a598                __builtin_vec_new
+                0x0804a5a8                PtNotice
+                0x0804a5b8                sprintf
+                0x0804a5c8                atexit
+                0x0804a5d8                MsgReceive
+                0x0804a5e8                ApGetImageRes
+                0x0804a5f8                ltoa
+                0x0804a608                snd_pcm_plugin_write
+                0x0804a618                PtRealizeWidget
+                0x0804a628                pthread_self
+                0x0804a638                getsockopt
+                0x0804a648                localtime_r
+                0x0804a658                strftime
+                0x0804a668                __builtin_vec_delete
+                0x0804a678                stat
+                0x0804a688                PtGenListDrawBackground
+                0x0804a698                PtCreateWidget
+                0x0804a6a8                fwrite
+                0x0804a6b8                PtDestroyWidget
+                0x0804a6c8                htons
+                0x0804a6d8                pthread_mutex_destroy
+                0x0804a6e8                PtMainLoop
+                0x0804a6f8                pthread_mutex_lock
+                0x0804a708                exit
+                0x0804a718                pthread_mutex_trylock
+                0x0804a728                atoi
+                0x0804a738                PtGenListAddItems
+                0x0804a748                __builtin_delete
+                0x0804a758                PtMultiTextModifyText
+                0x0804a768                _PtGetResource
+                0x0804a778                __builtin_new
+                0x0804a788                PgSetFont
+                0x0804a798                pthread_mutex_init
+                0x0804a7a8                strlen
+                0x0804a7b8                open
+                0x0804a7c8                snd_mixer_open
+                0x0804a7d8                __assert
+                0x0804a7e8                abs
+                0x0804a7f8                snd_pcm_plugin_prepare
+                0x0804a808                strchr
+                0x0804a818                PtListReplaceItemPos
+                0x0804a828                snd_pcm_plugin_info
+                0x0804a838                pthread_attr_setdetachstate
+                0x0804a848                fcntl
+                0x0804a858                snd_mixer_read
+                0x0804a868                timer_settime
+                0x0804a878                __register_frame_info
+                0x0804a888                snd_pcm_plugin_flush
+                0x0804a898                snd_pcm_file_descriptor
+                0x0804a8a8                close
+                0x0804a8b8                PfGenerateFontName
+                0x0804a8c8                PtListAddItems
+                0x0804a8d8                free
 
-.text           0x0804a8a4     0xee82
-                0x0804a8a4                _btext=.
+.text           0x0804a8e8     0xf63a
+                0x0804a8e8                _btext=.
  *(.text)
- .text          0x0804a8a4       0x5f /x86/lib/crt1.o
-                0x0804a8ac                _start
- *fill*         0x0804a903        0x1 37008
- .text          0x0804a904       0xf4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- .text          0x0804a9f8       0x6e abmain.o
-                0x0804a9f8                main
- *fill*         0x0804aa66        0x2 37008
- .text          0x0804aa68      0x656 alert.o
-                0x0804adbc                NextAlert(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804aa68                AlertQueue::AlertQueue(void)
-                0x0804ab6c                AlertQueue::AddAlert(char const *)
-                0x0804aacc                AlertQueue::~AlertQueue(void)
-                0x0804b058                ActivateAlertBtn(Pt_widget *, ApInfo_t *, Pt_callback_info *)
- *fill*         0x0804b0be        0x2 37008
- .text          0x0804b0c0       0xa2 archive.o
-                0x0804b0e4                UnrealizeArchiveWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804b104                LoadArchive(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804b0c0                RealizeArchiveWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
- *fill*         0x0804b162        0x2 37008
- .text          0x0804b164       0x2e ctrl_widget.o
-                0x0804b164                realize_log_wnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804b188                select_escalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
- *fill*         0x0804b192        0x2 37008
- .text          0x0804b194      0x740 draw.o
-                0x0804b194                draw_log_item(Pt_widget *, Pt_genlist_item *, unsigned int, unsigned int, Ph_rect *)
- .text          0x0804b8d4     0x37c2 escalator.o
-                0x0804ba58                ConfirmDirection(void)
-                0x0804e3f8                metro_escalator::UpdateLeds(void)
-                0x0804bb24                metro_escalator::~metro_escalator(void)
-                0x0804ec98                SetupPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804d144                SelectEscalatorDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804d6b8                ConnectToServer(unsigned int)
-                0x0804dfd8                metro_escalator::SendTime(void)
-                0x0804e9e4                RelizeEscalatorPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e794                MoveUp(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e9c0                UnrealizeEscalatorPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804daf4                SendBuffer(int, unsigned char *, int, unsigned char *)
-                0x0804c484                metro_escalator::SetParam(int, int)
-                0x0804ee08                SetReverseEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804da2c                IsConnected(int, fd_set *, fd_set *, fd_set *)
-                0x0804e948                MoveStop(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e230                metro_escalator::GetData(void)
-                0x0804cc60                metro_escalator::SetState(unsigned long)
-                0x0804c6c8                InflateBalloon(Pt_widget *, Pt_widget *, int, char *, char *, unsigned long, unsigned long)
-                0x0804b8d4                metro_escalator::metro_escalator(void)
-                0x0804e6a0                PopupControlMenu(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e130                metro_escalator::CheckStatus(void)
-                0x0804cf60                SetDownDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e3ac                metro_escalator::Start(void)
-                0x0804e324                metro_escalator::ConnectToChannel(int)
-                0x0804c6f0                metro_escalator::SetData(void)
-                0x0804dedc                metro_escalator::SendCommand(unsigned char)
-                0x0804e99c                OnSaveDirections(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804efec                OnChancelDirections(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804e86c                MoveDown(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804c508                SetIndicator(Pt_widget *, char const *, int)
-                0x0804c5e8                enable_header(Pt_widget *, int)
-                0x0804e384                metro_escalator::DisconnectToChannel(void)
-                0x0804bf48                metro_escalator::UpdateEscalator(void)
-                0x0804cd7c                SetUpDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804bbdc                metro_escalator::CreateWnd(AB_DBASE *, Pt_widget *, int, int)
-                0x0804d388                Run(void *)
-                0x0804f010                DiscardBlocking(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804edd8                metro_escalator::Discard_Blocking(Pt_widget *)
-                0x0804c380                metro_escalator::UpdatePanel(int)
- *fill*         0x0804f096        0x2 37008
- .text          0x0804f098     0x1b9f filter.o
-                0x0804f1c0                SelectRangeEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050b60                ResetFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f210                SetLogFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050250                DisableAllTimeRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050864                ActivateRangeEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050404                SelectFilterStation(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f1d0                CreateFilterDlg(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050b54                ShowFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f868                RealizeFilterDlg(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f100                FillStationList(void)
-                0x0805009c                EnableAllTimeRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050a78                SelectAllRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f0cc                LogFilter::~LogFilter(void)
-                0x0804f1b0                SelectOneEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050650                ActivateOneEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0804f098                LogFilter::LogFilter(void)
- *fill*         0x08050c37        0x1 37008
- .text          0x08050c38     0x29ca main.o
-                0x08052ab8                Initialize(int, char **)
-                0x08052230                CreateScheme(void)
-                0x08050c38                SigpipeHandler(int)
-                0x08050e2c                TimerThread(void *)
-                0x080529d4                PulseReceiver(void *, int, void *, unsigned int)
-                0x0805327c                CloseMainWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08050c44                PingThread(void *)
-                0x08051004                LoadMap(char const *)
-                0x080530d0                Uninitialize(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08052600                ResizeScheme(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08053474                OpenArchive(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x0805320c                RealizeMainWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x080532ac                FillEscConfList(Pt_widget *, ApInfo_t *, Pt_callback_info *)
- *fill*         0x08053602        0x2 37008
- .text          0x08053604      0x2f9 cbuffer.o
-                0x08053604                Cbuffer_c::Cbuffer_c(int)
-                0x080536d4                Cbuffer_c::Create(int)
-                0x08053664                Cbuffer_c::~Cbuffer_c(void)
-                0x0805382c                Cbuffer_c::Get(unsigned char *)
-                0x08053750                Cbuffer_c::Add(unsigned char *, int)
- *fill*         0x080538fd        0x3 37008
- .text          0x08053900      0x5fa system.o
-                0x0805395c                file_size(_Filet *)
-                0x08053b64                SysMessage(int, char const *,...)
-                0x08053a58                translate_string(char const *, char *, PxTransCtrl *)
-                0x08053b28                get_widget_scalar(Pt_widget *, long)
-                0x08053d10                SaveDirections(char const *)
-                0x08053900                error_msg(char *, int, char const *)
-                0x08053c98                CRC(unsigned char const *, int)
-                0x080539c0                extract_string(char const *, char *, char, char)
-                0x08053de4                LoadDirections(char const *)
- *fill*         0x08053efa        0x2 37008
- .text          0x08053efc       0xd9 line.o
-                0x08053efc                metro_line::metro_line(void)
-                0x08053f9c                metro_line::~metro_line(void)
- *fill*         0x08053fd5        0x3 37008
- .text          0x08053fd8      0x333 station.o
-                0x08053fd8                metro_station::metro_station(void)
-                0x080540b0                metro_station::create_wnd(AB_DBASE *, Pt_widget *, int, int, int, int)
-                0x0805406c                metro_station::~metro_station(void)
- *fill*         0x0805430b        0x1 37008
- .text          0x0805430c      0xc97 log.o
-                0x08054ae8                RealizeLogWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
-                0x08054384                Log::~Log(void)
-                0x08054c30                CheckFilter(LogRecord const *)
-                0x08054a78                Log::ScrollDown(void)
-                0x08054be0                Log::Clear(void)
-                0x08054ee4                Log::AttachWnd(Pt_widget *)
-                0x08054f94                Log::DetachWnd(void)
-                0x0805473c                Log::Load(char const *)
-                0x08054404                Log::AddMessage(int, int, int, unsigned int *, unsigned long)
-                0x08054b0c                Log::FilterLogWnd(void)
-                0x080545a8                Log::Save(char const *)
-                0x0805430c                Log::Log(void)
-                0x08054dec                Log::Rotate(void)
-                0x08054f84                Log::GetWindow(void)
- *fill*         0x08054fa3        0x1 37008
- .text          0x08054fa4      0x21e goodies.o
-                0x08054fa4                ErrorMsg(char const *)
-                0x08055010                StripSpaces(char *)
-                0x08055100                CRC16(unsigned char *, int)
- *fill*         0x080551c2        0x2 37008
- .text          0x080551c4     0x1423 esc_types.o
-                0x08055230                Type::~Type(void)
-                0x080556d4                Signal::~Signal(void)
-                0x080555fc                Signal::CreateLed(Pt_widget *, int, int)
-                0x080551c4                Type::Type(void)
-                0x0805535c                Block::CreatePanel(Pt_widget *)
-                0x0805555c                Signal::Signal(void)
-                0x08055734                FreeEscalatorTypes(void)
-                0x080557b4                LoadEscalatorLibrary(char const *)
-                0x080554a4                Block::~Block(void)
-                0x080552ec                Block::Block(void)
- *fill*         0x080565e7        0x1 37008
- .text          0x080565e8      0x26a string.o
-                0x0805666c                String::~String(void)
-                0x080566c4                String::Set(char const *)
-                0x08056608                String::String(char const *)
-                0x08056790                String::Archive(_Filet *)
-                0x080565e8                String::String(void)
-                0x080567cc                String::Load(_Filet *)
-                0x08056750                String::Get(char *, int)
-                0x08056840                String::Length(void)
- *fill*         0x08056852        0x2 37008
- .text          0x08056854      0x383 dictionary.o
-                0x08056854                LoadDictionary(char const *)
- *fill*         0x08056bd7        0x1 37008
- .text          0x08056bd8      0x992 sound.o
-                0x08056bd8                Sound::Sound(void)
-                0x08056c90                Sound::Init(void)
-                0x08056c04                Sound::~Sound(void)
-                0x08056f84                CheckHdr(_Filet *)
-                0x08056efc                FindTag(_Filet *, char const *)
-                0x0805703c                Player(void *)
-                0x08056e88                Sound::Play(char *)
- *fill*         0x0805756a        0x2 37008
- .text          0x0805756c     0x1172 router.o
-                0x0805768c                Router::~Router(void)
-                0x08057ce4                ConnectToServer(unsigned int, int)
-                0x080581a0                Router::Loop(void)
-                0x080580d8                Receive(int, unsigned char *, int)
-                0x080575a8                Net::first_Net(void)
-                0x08057aa4                Router::LoadRight(char const *)
-                0x08057754                Router::CreateTable(int)
-                0x080575e8                Net::~Net(void)
-                0x08057668                Router::AddRightLeafGate(char *)
-                0x0805761c                Router::Router(void)
-                0x080575d8                Net::next_Net(void)
-                0x0805756c                Net::Net(void)
-                0x08057ca4                Routing(void *)
-                0x080578d8                Router::LoadLeft(char const *)
-                0x08057c60                Router::Start(void)
-                0x08058560                ChangeRoute(in_addr *, in_addr *, int, int)
-                0x08057644                Router::AddLeftLeafGate(char *)
- *fill*         0x080586de        0x2 37008
- .text          0x080586e0       0x35 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
-                0x080586e0                __cmpdi2
- *fill*         0x08058715        0x3 37008
- .text          0x08058718      0x27a /x86/lib/libc.a(slog.o)
-                0x080588d0                vslogf
-                0x08058828                slogi
-                0x080587e4                slogb
-                0x08058978                slogf
- *fill*         0x08058992        0x2 37008
- .text          0x08058994       0x5c /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .text          0x0804a8e8       0x5f /x86/lib/crt1.o
+                0x0804a8f0                _start
+ *fill*         0x0804a947        0x1 37008
+ .text          0x0804a948       0xf4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .text          0x0804aa3c       0x6e abmain.o
+                0x0804aa3c                main
+ *fill*         0x0804aaaa        0x2 37008
+ .text          0x0804aaac      0x656 alert.o
+                0x0804ae00                NextAlert(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804aaac                AlertQueue::AlertQueue(void)
+                0x0804abb0                AlertQueue::AddAlert(char const *)
+                0x0804ab10                AlertQueue::~AlertQueue(void)
+                0x0804b09c                ActivateAlertBtn(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+ *fill*         0x0804b102        0x2 37008
+ .text          0x0804b104       0xa2 archive.o
+                0x0804b128                UnrealizeArchiveWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804b148                LoadArchive(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804b104                RealizeArchiveWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+ *fill*         0x0804b1a6        0x2 37008
+ .text          0x0804b1a8      0x242 cmd_pool.o
+                0x0804b264                OnClickSendCommandBtn(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804b340                ReleazeCmdPoolList(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804b254                Command::GetStation(void)
+                0x0804b1a8                Command::Send(void)
+ *fill*         0x0804b3ea        0x2 37008
+ .text          0x0804b3ec       0x2e ctrl_widget.o
+                0x0804b3ec                realize_log_wnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804b410                select_escalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+ *fill*         0x0804b41a        0x2 37008
+ .text          0x0804b41c      0x8aa draw.o
+                0x0804bb5c                draw_command_pool_item(Pt_widget *, Pt_genlist_item *, unsigned int, unsigned int, Ph_rect *)
+                0x0804b41c                draw_log_item(Pt_widget *, Pt_genlist_item *, unsigned int, unsigned int, Ph_rect *)
+ *fill*         0x0804bcc6        0x2 37008
+ .text          0x0804bcc8     0x38da escalator.o
+                0x0804be4c                ConfirmDirection(void)
+                0x0804e820                metro_escalator::UpdateLeds(void)
+                0x0804bf18                metro_escalator::~metro_escalator(void)
+                0x0804f1a4                SetupPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804d56c                SelectEscalatorDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804dae0                ConnectToServer(unsigned int)
+                0x0804e400                metro_escalator::SendTime(void)
+                0x0804eef0                RelizeEscalatorPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804ebf0                MoveUp(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804eecc                UnrealizeEscalatorPanel(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804df1c                SendBuffer(int, unsigned char *, int, unsigned char *)
+                0x0804c8ac                metro_escalator::SetParam(int, int)
+                0x0804f314                SetReverseEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804de54                IsConnected(int, fd_set *, fd_set *, fd_set *)
+                0x0804ee54                MoveStop(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804e658                metro_escalator::GetData(void)
+                0x0804d088                metro_escalator::SetState(unsigned long)
+                0x0804caf0                InflateBalloon(Pt_widget *, Pt_widget *, int, char *, char *, unsigned long, unsigned long)
+                0x0804bcc8                metro_escalator::metro_escalator(void)
+                0x0804eac8                PopupControlMenu(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804e558                metro_escalator::CheckStatus(void)
+                0x0804d388                SetDownDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804e7d4                metro_escalator::Start(void)
+                0x0804e74c                metro_escalator::ConnectToChannel(int)
+                0x0804cb18                metro_escalator::SetData(void)
+                0x0804e304                metro_escalator::SendCommand(unsigned char)
+                0x0804eea8                OnSaveDirections(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f4f8                OnChancelDirections(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804ecc8                MoveDown(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804c930                SetIndicator(Pt_widget *, char const *, int)
+                0x0804ca10                enable_header(Pt_widget *, int)
+                0x0804e7ac                metro_escalator::DisconnectToChannel(void)
+                0x0804c33c                metro_escalator::UpdateEscalator(void)
+                0x0804d1a4                SetUpDirection(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804bfd0                metro_escalator::CreateWnd(AB_DBASE *, Pt_widget *, int, int)
+                0x0804d7b0                Run(void *)
+                0x0804f51c                DiscardBlocking(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f2e4                metro_escalator::Discard_Blocking(Pt_widget *)
+                0x0804c7a8                metro_escalator::UpdatePanel(int)
+ *fill*         0x0804f5a2        0x2 37008
+ .text          0x0804f5a4     0x1ab7 filter.o
+                0x0804f6cc                SelectRangeEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050fec                ResetFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f71c                SetLogFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x080506dc                DisableAllTimeRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050cf0                ActivateRangeEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050890                SelectFilterStation(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f6dc                CreateFilterDlg(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050fe0                ShowFilter(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804fcf4                RealizeFilterDlg(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f60c                FillStationList(void)
+                0x08050528                EnableAllTimeRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050f04                SelectAllRange(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f5d8                LogFilter::~LogFilter(void)
+                0x0804f6bc                SelectOneEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08050adc                ActivateOneEscalator(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x0804f5a4                LogFilter::LogFilter(void)
+ *fill*         0x0805105b        0x1 37008
+ .text          0x0805105c     0x29f6 main.o
+                0x08052edc                Initialize(int, char **)
+                0x08052654                CreateScheme(void)
+                0x0805105c                SigpipeHandler(int)
+                0x08051250                TimerThread(void *)
+                0x08052df8                PulseReceiver(void *, int, void *, unsigned int)
+                0x080536a0                CloseMainWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08051068                PingThread(void *)
+                0x08051428                LoadMap(char const *)
+                0x080534f4                Uninitialize(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08052a24                ResizeScheme(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08053898                OpenArchive(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x08053630                RealizeMainWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x080536d0                FillEscConfList(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+ *fill*         0x08053a52        0x2 37008
+ .text          0x08053a54      0x2f9 cbuffer.o
+                0x08053a54                Cbuffer_c::Cbuffer_c(int)
+                0x08053b24                Cbuffer_c::Create(int)
+                0x08053ab4                Cbuffer_c::~Cbuffer_c(void)
+                0x08053c7c                Cbuffer_c::Get(unsigned char *)
+                0x08053ba0                Cbuffer_c::Add(unsigned char *, int)
+ *fill*         0x08053d4d        0x3 37008
+ .text          0x08053d50      0x5fa system.o
+                0x08053dac                file_size(_Filet *)
+                0x08053fb4                SysMessage(int, char const *,...)
+                0x08053ea8                translate_string(char const *, char *, PxTransCtrl *)
+                0x08053f78                get_widget_scalar(Pt_widget *, long)
+                0x08054160                SaveDirections(char const *)
+                0x08053d50                error_msg(char *, int, char const *)
+                0x080540e8                CRC(unsigned char const *, int)
+                0x08053e10                extract_string(char const *, char *, char, char)
+                0x08054234                LoadDirections(char const *)
+ *fill*         0x0805434a        0x2 37008
+ .text          0x0805434c       0xd9 line.o
+                0x0805434c                metro_line::metro_line(void)
+                0x080543ec                metro_line::~metro_line(void)
+ *fill*         0x08054425        0x3 37008
+ .text          0x08054428      0x333 station.o
+                0x08054428                metro_station::metro_station(void)
+                0x08054500                metro_station::create_wnd(AB_DBASE *, Pt_widget *, int, int, int, int)
+                0x080544bc                metro_station::~metro_station(void)
+ *fill*         0x0805475b        0x1 37008
+ .text          0x0805475c      0xc97 log.o
+                0x08054f38                RealizeLogWnd(Pt_widget *, ApInfo_t *, Pt_callback_info *)
+                0x080547d4                Log::~Log(void)
+                0x08055080                CheckFilter(LogRecord const *)
+                0x08054ec8                Log::ScrollDown(void)
+                0x08055030                Log::Clear(void)
+                0x08055334                Log::AttachWnd(Pt_widget *)
+                0x080553e4                Log::DetachWnd(void)
+                0x08054b8c                Log::Load(char const *)
+                0x08054854                Log::AddMessage(int, int, int, unsigned int *, unsigned long)
+                0x08054f5c                Log::FilterLogWnd(void)
+                0x080549f8                Log::Save(char const *)
+                0x0805475c                Log::Log(void)
+                0x0805523c                Log::Rotate(void)
+                0x080553d4                Log::GetWindow(void)
+ *fill*         0x080553f3        0x1 37008
+ .text          0x080553f4      0x21e goodies.o
+                0x080553f4                ErrorMsg(char const *)
+                0x08055460                StripSpaces(char *)
+                0x08055550                CRC16(unsigned char *, int)
+ *fill*         0x08055612        0x2 37008
+ .text          0x08055614     0x1423 esc_types.o
+                0x08055680                Type::~Type(void)
+                0x08055b24                Signal::~Signal(void)
+                0x08055a4c                Signal::CreateLed(Pt_widget *, int, int)
+                0x08055614                Type::Type(void)
+                0x080557ac                Block::CreatePanel(Pt_widget *)
+                0x080559ac                Signal::Signal(void)
+                0x08055b84                FreeEscalatorTypes(void)
+                0x08055c04                LoadEscalatorLibrary(char const *)
+                0x080558f4                Block::~Block(void)
+                0x0805573c                Block::Block(void)
+ *fill*         0x08056a37        0x1 37008
+ .text          0x08056a38      0x26a string.o
+                0x08056abc                String::~String(void)
+                0x08056b14                String::Set(char const *)
+                0x08056a58                String::String(char const *)
+                0x08056be0                String::Archive(_Filet *)
+                0x08056a38                String::String(void)
+                0x08056c1c                String::Load(_Filet *)
+                0x08056ba0                String::Get(char *, int)
+                0x08056c90                String::Length(void)
+ *fill*         0x08056ca2        0x2 37008
+ .text          0x08056ca4      0x383 dictionary.o
+                0x08056ca4                LoadDictionary(char const *)
+ *fill*         0x08057027        0x1 37008
+ .text          0x08057028      0x992 sound.o
+                0x08057028                Sound::Sound(void)
+                0x080570e0                Sound::Init(void)
+                0x08057054                Sound::~Sound(void)
+                0x080573d4                CheckHdr(_Filet *)
+                0x0805734c                FindTag(_Filet *, char const *)
+                0x0805748c                Player(void *)
+                0x080572d8                Sound::Play(char *)
+ *fill*         0x080579ba        0x2 37008
+ .text          0x080579bc     0x1172 router.o
+                0x08057adc                Router::~Router(void)
+                0x08058134                ConnectToServer(unsigned int, int)
+                0x080585f0                Router::Loop(void)
+                0x08058528                Receive(int, unsigned char *, int)
+                0x080579f8                Net::first_Net(void)
+                0x08057ef4                Router::LoadRight(char const *)
+                0x08057ba4                Router::CreateTable(int)
+                0x08057a38                Net::~Net(void)
+                0x08057ab8                Router::AddRightLeafGate(char *)
+                0x08057a6c                Router::Router(void)
+                0x08057a28                Net::next_Net(void)
+                0x080579bc                Net::Net(void)
+                0x080580f4                Routing(void *)
+                0x08057d28                Router::LoadLeft(char const *)
+                0x080580b0                Router::Start(void)
+                0x080589b0                ChangeRoute(in_addr *, in_addr *, int, int)
+                0x08057a94                Router::AddLeftLeafGate(char *)
+ *fill*         0x08058b2e        0x2 37008
+ .text          0x08058b30       0x35 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+                0x08058b30                __cmpdi2
+ *fill*         0x08058b65        0x3 37008
+ .text          0x08058b68      0x27a /x86/lib/libc.a(slog.o)
+                0x08058d20                vslogf
+                0x08058c78                slogi
+                0x08058c34                slogb
+                0x08058dc8                slogf
+ *fill*         0x08058de2        0x2 37008
+ .text          0x08058de4       0x5c /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
  *(.text.*)
  *(.stub)
  *(.gnu.warning)
  *(.gnu.linkonce.t*)
  .gnu.linkonce.t.__tft4List1Z9LogRecord
-                0x080589f0       0x2e abmain.o
-                0x080589f0                List<LogRecord> type_info function
- *fill*         0x08058a1e        0x2 37008
+                0x08058e40       0x2e abmain.o
+                0x08058e40                List<LogRecord> type_info function
+ *fill*         0x08058e6e        0x2 37008
  .gnu.linkonce.t.__tft4List1Z11AlertRecord
-                0x08058a20       0x2e abmain.o
-                0x08058a20                List<AlertRecord> type_info function
- *fill*         0x08058a4e        0x2 37008
+                0x08058e70       0x2e abmain.o
+                0x08058e70                List<AlertRecord> type_info function
+ *fill*         0x08058e9e        0x2 37008
  .gnu.linkonce.t.__tft3Map1Z9DictEntry
-                0x08058a50       0x2e abmain.o
-                0x08058a50                Map<DictEntry> type_info function
- *fill*         0x08058a7e        0x2 37008
+                0x08058ea0       0x2e abmain.o
+                0x08058ea0                Map<DictEntry> type_info function
+ *fill*         0x08058ece        0x2 37008
+ .gnu.linkonce.t.__tft3Map1Z7Command
+                0x08058ed0       0x2e abmain.o
+                0x08058ed0                Map<Command> type_info function
+ *fill*         0x08058efe        0x2 37008
  .gnu.linkonce.t.__t4List1Z11AlertRecord
-                0x08058a80       0x7e alert.o
-                0x08058a80                List<AlertRecord>::List(void)
- *fill*         0x08058afe        0x2 37008
+                0x08058f00       0x7e alert.o
+                0x08058f00                List<AlertRecord>::List(void)
+ *fill*         0x08058f7e        0x2 37008
  .gnu.linkonce.t._._t4List1Z11AlertRecord
-                0x08058b00       0x85 alert.o
-                0x08058b00                List<AlertRecord>::~List(void)
- *fill*         0x08058b85        0x3 37008
+                0x08058f80       0x85 alert.o
+                0x08058f80                List<AlertRecord>::~List(void)
+ *fill*         0x08059005        0x3 37008
  .gnu.linkonce.t.next__t4List1Z11AlertRecord
-                0x08058b88       0x29 alert.o
-                0x08058b88                List<AlertRecord>::next(void)
- *fill*         0x08058bb1        0x3 37008
+                0x08059008       0x29 alert.o
+                0x08059008                List<AlertRecord>::next(void)
+ *fill*         0x08059031        0x3 37008
  .gnu.linkonce.t.Push__t4List1Z11AlertRecordP11AlertRecord
-                0x08058bb4      0x11d alert.o
-                0x08058bb4                List<AlertRecord>::Push(AlertRecord *)
- *fill*         0x08058cd1        0x3 37008
+                0x08059034      0x11d alert.o
+                0x08059034                List<AlertRecord>::Push(AlertRecord *)
+ *fill*         0x08059151        0x3 37008
  .gnu.linkonce.t.Pop__t4List1Z11AlertRecord
-                0x08058cd4       0x69 alert.o
-                0x08058cd4                List<AlertRecord>::Pop(void)
- *fill*         0x08058d3d        0x3 37008
+                0x08059154       0x69 alert.o
+                0x08059154                List<AlertRecord>::Pop(void)
+ *fill*         0x080591bd        0x3 37008
  .gnu.linkonce.t.__tf10AlertQueue
-                0x08058d40       0x2e alert.o
-                0x08058d40                AlertQueue type_info function
- *fill*         0x08058d6e        0x2 37008
+                0x080591c0       0x2e alert.o
+                0x080591c0                AlertQueue type_info function
+ *fill*         0x080591ee        0x2 37008
  .gnu.linkonce.t.PtSetArg__FP12Pt_arg_entryUlUlUl
-                0x08058d70       0x21 alert.o
-                0x08058d70                PtSetArg(Pt_arg_entry *, unsigned long, unsigned long, unsigned long)
- *fill*         0x08058d91        0x3 37008
+                0x080591f0       0x21 alert.o
+                0x080591f0                PtSetArg(Pt_arg_entry *, unsigned long, unsigned long, unsigned long)
+ *fill*         0x08059211        0x3 37008
  .gnu.linkonce.t.first__t4List1Z11AlertRecord
-                0x08058d94        0xd alert.o
-                0x08058d94                List<AlertRecord>::first(void)
- *fill*         0x08058da1        0x3 37008
+                0x08059214        0xd alert.o
+                0x08059214                List<AlertRecord>::first(void)
+ *fill*         0x08059221        0x3 37008
  .gnu.linkonce.t.GetSize__t4List1Z11AlertRecord
-                0x08058da4        0xf alert.o
-                0x08058da4                List<AlertRecord>::GetSize(void)
- *fill*         0x08058db3        0x1 37008
+                0x08059224        0xf alert.o
+                0x08059224                List<AlertRecord>::GetSize(void)
+ *fill*         0x08059233        0x1 37008
  .gnu.linkonce.t.last__t4List1Z11AlertRecord
-                0x08058db4       0x12 alert.o
-                0x08058db4                List<AlertRecord>::last(void)
- *fill*         0x08058dc6        0x2 37008
+                0x08059234       0x12 alert.o
+                0x08059234                List<AlertRecord>::last(void)
+ *fill*         0x08059246        0x2 37008
  .gnu.linkonce.t.PtGenTreeGetCurrent
-                0x08058dc8       0x41 archive.o
-                0x08058dc8                PtGenTreeGetCurrent
- *fill*         0x08058e09        0x3 37008
+                0x08059248       0x41 archive.o
+                0x08059248                PtGenTreeGetCurrent
+ *fill*         0x08059289        0x3 37008
+ .gnu.linkonce.t.__vc__t3Map1Z7Commandi
+                0x0805928c       0x2a cmd_pool.o
+                0x0805928c                Map<Command>::operator[](int)
+ *fill*         0x080592b6        0x2 37008
+ .gnu.linkonce.t.GetSize__t3Map1Z7Command
+                0x080592b8        0xf cmd_pool.o
+                0x080592b8                Map<Command>::GetSize(void)
+ *fill*         0x080592c7        0x1 37008
  .gnu.linkonce.t.GetByKey__t3Map1Z9DictEntryUl
-                0x08058e0c       0x75 draw.o
-                0x08058e0c                Map<DictEntry>::GetByKey(unsigned long)
- *fill*         0x08058e81        0x3 37008
+                0x080592c8       0x75 draw.o
+                0x080592c8                Map<DictEntry>::GetByKey(unsigned long)
+ *fill*         0x0805933d        0x3 37008
+ .gnu.linkonce.t.Push__t3Map1Z7CommandP7CommandUl
+                0x08059340      0x1d8 escalator.o
+                0x08059340                Map<Command>::Push(Command *, unsigned long)
  .gnu.linkonce.t.GetID__15metro_escalator
-                0x08058e84       0x16 escalator.o
-                0x08058e84                metro_escalator::GetID(void)
- *fill*         0x08058e9a        0x2 37008
+                0x08059518       0x16 escalator.o
+                0x08059518                metro_escalator::GetID(void)
+ *fill*         0x0805952e        0x2 37008
  .gnu.linkonce.t.GetNumber__15metro_escalator
-                0x08058e9c       0x16 escalator.o
-                0x08058e9c                metro_escalator::GetNumber(void)
- *fill*         0x08058eb2        0x2 37008
+                0x08059530       0x16 escalator.o
+                0x08059530                metro_escalator::GetNumber(void)
+ *fill*         0x08059546        0x2 37008
+ .gnu.linkonce.t.__7CommandUcUcii
+                0x08059548       0x3d escalator.o
+                0x08059548                Command::Command(unsigned char, unsigned char, int, int)
+ *fill*         0x08059585        0x3 37008
  .gnu.linkonce.t.__tf9LogFilter
-                0x08058eb4       0x2e filter.o
-                0x08058eb4                LogFilter type_info function
- *fill*         0x08058ee2        0x2 37008
+                0x08059588       0x2e filter.o
+                0x08059588                LogFilter type_info function
+ *fill*         0x080595b6        0x2 37008
  .gnu.linkonce.t.__t3Map1Z9DictEntry
-                0x08058ee4       0x85 main.o
-                0x08058ee4                Map<DictEntry>::Map(void)
- *fill*         0x08058f69        0x3 37008
+                0x080595b8       0x85 main.o
+                0x080595b8                Map<DictEntry>::Map(void)
+ *fill*         0x0805963d        0x3 37008
  .gnu.linkonce.t._._t3Map1Z9DictEntry
-                0x08058f6c       0x9d main.o
-                0x08058f6c                Map<DictEntry>::~Map(void)
- *fill*         0x08059009        0x3 37008
+                0x08059640       0x9d main.o
+                0x08059640                Map<DictEntry>::~Map(void)
+ *fill*         0x080596dd        0x3 37008
+ .gnu.linkonce.t.__t3Map1Z7Command
+                0x080596e0       0x85 main.o
+                0x080596e0                Map<Command>::Map(void)
+ *fill*         0x08059765        0x3 37008
+ .gnu.linkonce.t._._t3Map1Z7Command
+                0x08059768       0x9d main.o
+                0x08059768                Map<Command>::~Map(void)
+ *fill*         0x08059805        0x3 37008
  .gnu.linkonce.t.strchr__3stdPci
-                0x0805900c       0x33 main.o
-                0x0805900c                std::strchr(char *, int)
- *fill*         0x0805903f        0x1 37008
+                0x08059808       0x33 main.o
+                0x08059808                std::strchr(char *, int)
+ *fill*         0x0805983b        0x1 37008
  .gnu.linkonce.t.__tf9Cbuffer_c
-                0x08059040       0x2e cbuffer.o
-                0x08059040                Cbuffer_c type_info function
- *fill*         0x0805906e        0x2 37008
+                0x0805983c       0x2e cbuffer.o
+                0x0805983c                Cbuffer_c type_info function
+ *fill*         0x0805986a        0x2 37008
  .gnu.linkonce.t.strrchr__3stdPci
-                0x08059070       0x33 system.o
-                0x08059070                std::strrchr(char *, int)
- *fill*         0x080590a3        0x1 37008
+                0x0805986c       0x33 system.o
+                0x0805986c                std::strrchr(char *, int)
+ *fill*         0x0805989f        0x1 37008
  .gnu.linkonce.t.__t4List1Z9LogRecord
-                0x080590a4       0x7e log.o
-                0x080590a4                List<LogRecord>::List(void)
- *fill*         0x08059122        0x2 37008
+                0x080598a0       0x7e log.o
+                0x080598a0                List<LogRecord>::List(void)
+ *fill*         0x0805991e        0x2 37008
  .gnu.linkonce.t._._t4List1Z9LogRecord
-                0x08059124       0x85 log.o
-                0x08059124                List<LogRecord>::~List(void)
- *fill*         0x080591a9        0x3 37008
+                0x08059920       0x85 log.o
+                0x08059920                List<LogRecord>::~List(void)
+ *fill*         0x080599a5        0x3 37008
  .gnu.linkonce.t.Pop__t4List1Z9LogRecord
-                0x080591ac       0x69 log.o
-                0x080591ac                List<LogRecord>::Pop(void)
- *fill*         0x08059215        0x3 37008
+                0x080599a8       0x69 log.o
+                0x080599a8                List<LogRecord>::Pop(void)
+ *fill*         0x08059a11        0x3 37008
  .gnu.linkonce.t.Push__t4List1Z9LogRecordP9LogRecord
-                0x08059218      0x11d log.o
-                0x08059218                List<LogRecord>::Push(LogRecord *)
- *fill*         0x08059335        0x3 37008
+                0x08059a14      0x11d log.o
+                0x08059a14                List<LogRecord>::Push(LogRecord *)
+ *fill*         0x08059b31        0x3 37008
  .gnu.linkonce.t.next__t4List1Z9LogRecord
-                0x08059338       0x29 log.o
-                0x08059338                List<LogRecord>::next(void)
- *fill*         0x08059361        0x3 37008
+                0x08059b34       0x29 log.o
+                0x08059b34                List<LogRecord>::next(void)
+ *fill*         0x08059b5d        0x3 37008
  .gnu.linkonce.t.__tf3Log
-                0x08059364       0x2e log.o
-                0x08059364                Log type_info function
- *fill*         0x08059392        0x2 37008
+                0x08059b60       0x2e log.o
+                0x08059b60                Log type_info function
+ *fill*         0x08059b8e        0x2 37008
  .gnu.linkonce.t.__9LogRecord
-                0x08059394       0x3f log.o
-                0x08059394                LogRecord::LogRecord(void)
- *fill*         0x080593d3        0x1 37008
+                0x08059b90       0x3f log.o
+                0x08059b90                LogRecord::LogRecord(void)
+ *fill*         0x08059bcf        0x1 37008
  .gnu.linkonce.t.first__t4List1Z9LogRecord
-                0x080593d4        0xd log.o
-                0x080593d4                List<LogRecord>::first(void)
- *fill*         0x080593e1        0x3 37008
+                0x08059bd0        0xd log.o
+                0x08059bd0                List<LogRecord>::first(void)
+ *fill*         0x08059bdd        0x3 37008
  .gnu.linkonce.t.GetSize__t4List1Z9LogRecord
-                0x080593e4        0xf log.o
-                0x080593e4                List<LogRecord>::GetSize(void)
- *fill*         0x080593f3        0x1 37008
+                0x08059be0        0xf log.o
+                0x08059be0                List<LogRecord>::GetSize(void)
+ *fill*         0x08059bef        0x1 37008
  .gnu.linkonce.t.__tf6Signal
-                0x080593f4       0x32 esc_types.o
-                0x080593f4                Signal type_info function
- *fill*         0x08059426        0x2 37008
+                0x08059bf0       0x32 esc_types.o
+                0x08059bf0                Signal type_info function
+ *fill*         0x08059c22        0x2 37008
  .gnu.linkonce.t.__tf5Block
-                0x08059428       0x32 esc_types.o
-                0x08059428                Block type_info function
- *fill*         0x0805945a        0x2 37008
+                0x08059c24       0x32 esc_types.o
+                0x08059c24                Block type_info function
+ *fill*         0x08059c56        0x2 37008
  .gnu.linkonce.t.__tf4Type
-                0x0805945c       0x32 esc_types.o
-                0x0805945c                Type type_info function
- *fill*         0x0805948e        0x2 37008
+                0x08059c58       0x32 esc_types.o
+                0x08059c58                Type type_info function
+ *fill*         0x08059c8a        0x2 37008
  .gnu.linkonce.t.__tf6String
-                0x08059490       0x2e string.o
-                0x08059490                String type_info function
- *fill*         0x080594be        0x2 37008
+                0x08059c8c       0x2e string.o
+                0x08059c8c                String type_info function
+ *fill*         0x08059cba        0x2 37008
  .gnu.linkonce.t.Push__t3Map1Z9DictEntryP9DictEntryUl
-                0x080594c0      0x1d8 dictionary.o
-                0x080594c0                Map<DictEntry>::Push(DictEntry *, unsigned long)
+                0x08059cbc      0x1d8 dictionary.o
+                0x08059cbc                Map<DictEntry>::Push(DictEntry *, unsigned long)
  .gnu.linkonce.t.__tf5Sound
-                0x08059698       0x2e sound.o
-                0x08059698                Sound type_info function
- *fill*         0x080596c6        0x2 37008
+                0x08059e94       0x2e sound.o
+                0x08059e94                Sound type_info function
+ *fill*         0x08059ec2        0x2 37008
  .gnu.linkonce.t.__tf3Net
-                0x080596c8       0x2e router.o
-                0x080596c8                Net type_info function
- *fill*         0x080596f6        0x2 37008
+                0x08059ec4       0x2e router.o
+                0x08059ec4                Net type_info function
+ *fill*         0x08059ef2        0x2 37008
  .gnu.linkonce.t.__tf6Router
-                0x080596f8       0x2e router.o
-                0x080596f8                Router type_info function
-                0x08059726                _etext=.
-                0x08059726                PROVIDE (etext, .)
+                0x08059ef4       0x2e router.o
+                0x08059ef4                Router type_info function
+                0x08059f22                _etext=.
+                0x08059f22                PROVIDE (etext, .)
 
-.fini           0x08059726        0x8
+.fini           0x08059f22        0x8
  *(.fini)
- .fini          0x08059726        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- .fini          0x0805972b        0x3 /x86/lib/crtn.o
+ .fini          0x08059f22        0x5 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .fini          0x08059f27        0x3 /x86/lib/crtn.o
 
-.rodata         0x08059740     0x2d1c
+.rodata         0x08059f40     0x32ec
  *(.rodata)
- .rodata        0x08059740     0x1464 abmain.o
-                0x080598dc                ABN_mask_stop
-                0x080598f8                ABN_stopMsg
-                0x0805986c                ABN_Scheme
-                0x08059894                ABN_grey_stop
-                0x08059938                ABN_yellow_s_up
-                0x08059890                ABN_green_up
-                0x0805991c                ABN_blue_cont_down
-                0x08059864                ABN_AlertTime
-                0x0805987c                ABN_escalator_num
-                0x08059980                ABN_OneEscalatorLabel
-                0x080599d4                ABN_SignalPanel
-                0x08059910                ABN_block_yellow_led
-                0x080599c4                ABN_SetEscDownBtn
-                0x08059930                ABN_red_s_down
-                0x08059a08                ABN_ArchiveLogCancelBtn
-                0x080599b8                ABN_EscDirectionList
-                0x080599d8                ABN_mode_header
-                0x080598d0                ABN_yellow_led
-                0x08059878                ABN_Arrow
-                0x0805994c                ABN_LedBalloon
-                0x080598b0                ABN_led_tu
-                0x08059a1c                ABN_MoveDown
-                0x080599bc                ABN_SetEscReverseBtn
-                0x080599b4                ABN_EscConfig
-                0x080599c8                ABN_EscConfCancel
-                0x080599cc                ABN_EscConfDone
-                0x08059898                ABN_grey_down
-                0x08059960                ABN_AllTimeRangeBtn1
-                0x080598bc                ABN_red_down
-                0x080599e8                ABN_PanelTitle
-                0x080599e4                ABN_ReadyIndicator
-                0x080598c0                ABN_yellow_up
-                0x08059a04                ABN_ArchiveLogOpenBtn
-                0x08059884                ABN_left_scroll_disable
-                0x08059920                ABN_blue_red_up
-                0x080599b0                ABN_LogFilterOK
-                0x08059994                ABN_RangeEndNumeric
-                0x08059870                ABN_interface
-                0x08059834                ABN_main_wnd
-                0x080598a8                ABN_blue_up
-                0x08059838                ABN_os_container
-                0x0805999c                ABN_SysMsgBtn
-                0x08059954                ABN_StartMinNumeric
-                0x0805998c                ABN_RangeStartNumeric
-                0x08059974                ABN_StationList
-                0x08059904                ABN_block_blue_led
-                0x08059a18                ABN_MoveStop
-                0x08059964                ABN_EndMinNumeric
-                0x080598ec                ABN_log_ok_image
-                0x080599e0                ABN_ready_header
-                0x08059a0c                ABN_PrevCmdPullDlg
-                0x08059880                ABN_blocking
-                0x0805988c                ABN_station_wnd
-                0x08059998                ABN_AllRangeBtn
-                0x080598fc                ABN_warnMsg
-                0x08059888                ABN_right_scroll_disable
-                0x080598f0                ABN_log_net_image
-                0x08059940                ABN_green_down
-                0x080598a4                ABN_green_stop
-                0x080599fc                ABN_ArchiveLog
-                0x0805993c                ABN_yellow_s_down
-                0x08059978                ABN_OneEscalatorBtn
-                0x080598b4                ABN_red_up
-                0x080599dc                ABN_ModeIndicator
-                0x08059950                ABN_LogFilterDlg
-                0x08059914                ABN_grey_off
-                0x08059948                ABN_green_s_down
-                0x08059874                ABN_escalator_wnd
-                0x08059840                ABN_log_wnd
-                0x08059844                ABN_toolBar
-                0x080598d4                ABN_blue_led
-                0x0805995c                ABN_CalendarStart
-                0x080598b8                ABN_red_stop
-                0x080599a8                ABN_LocalMsgBtn
-                0x0805989c                ABN_led_b
-                0x08059828                ABI_interface
-                0x080598a0                ABN_blue_down
-                0x080599a0                ABN_AlertMsgBtn
-                0x08059928                ABN_blue_yellow_up
-                0x08059a10                ABN_EscalatorMenu
-                0x08059860                ABN_AlertOK
-                0x08059970                ABN_AllTimeRangeBtn2
-                0x08059918                ABN_blue_cont_up
-                0x08059a00                ABN_ArchiveLogWnd
-                0x08059924                ABN_blue_red_down
-                0x08059968                ABN_EndHourNumeric
-                0x08059958                ABN_StartHourNumeric
-                0x0805997c                ABN_RangeEscalatorBtn
-                0x080598c4                ABN_yellow_stop
-                0x08059984                ABN_OneEscalatorNumeric
-                0x080598c8                ABN_yellow_down
-                0x080598d8                ABN_mask_up
-                0x080598ac                ABN_green_led
-                0x08059a14                ABN_MoveUp
-                0x0805992c                ABN_blue_yellow_down
-                0x08059900                ABN_block_green_led
-                0x08059850                ABN_ResetFilter
-                0x080598cc                ABN_red_led
-                0x080598e4                ABN_cursor
-                0x0805982c                ABI_LogFilterDlg
-                0x0805983c                ABN_log_status
-                0x08059988                ABN_RangeStartLabel
-                0x080599c0                ABN_SetEscUpBtn
-                0x0805990c                ABN_block_red_led
-                0x080599a4                ABN_BlockMsgBtn
-                0x0805996c                ABN_CalendarEnd
-                0x080599f0                ABN_ArchiveFiles
-                0x08059854                ABN_ArchiveBtn
-                0x080599ac                ABN_LogFIlterCancel
-                0x08059944                ABN_green_s_up
-                0x080599ec                ABN_ArchiveDlg
-                0x080598f4                ABN_infoMsg
-                0x080598e8                ABN_log_alert_image
-                0x08059908                ABN_block_grey_led
-                0x080599f8                ABN_ArchiveCancelBtn
-                0x08059934                ABN_red_s_up
-                0x08059848                ABN_EscConfigBtn
-                0x08059868                ABN_AlertCounter
-                0x08059990                ABN_RangeEndLabel
-                0x0805985c                ABN_AlertMsg
-                0x080599f4                ABN_LoadArchiveBtn
-                0x0805984c                ABN_FilterBtn
-                0x080599d0                ABN_SignalDlg
-                0x080598e0                ABN_mask_down
-                0x08059858                ABN_AlertWnd
-                0x08059830                ABI_EscalatorMenu
- .rodata        0x0805aba4       0x93 alert.o
- .rodata        0x0805ac37       0x3b archive.o
- .rodata        0x0805ac72       0x3b ctrl_widget.o
- *fill*         0x0805acad       0x13
- .rodata        0x0805acc0      0x329 draw.o
- *fill*         0x0805afe9       0x17
- .rodata        0x0805b000      0x5d2 escalator.o
- *fill*         0x0805b5d2        0xe
- .rodata        0x0805b5e0       0xf7 filter.o
- *fill*         0x0805b6d7        0x9
- .rodata        0x0805b6e0      0x619 main.o
-                0x0805b6e0                ApOptions
- .rodata        0x0805bcf9        0xb cbuffer.o
- .rodata        0x0805bd04       0x74 system.o
- .rodata        0x0805bd78       0x52 station.o
- *fill*         0x0805bdca       0x16
- .rodata        0x0805bde0      0x24d log.o
- .rodata        0x0805c02d       0x1e goodies.o
- *fill*         0x0805c04b       0x15
- .rodata        0x0805c060      0x10c esc_types.o
- .rodata        0x0805c16c        0x8 string.o
- *fill*         0x0805c174        0xc
- .rodata        0x0805c180       0xd0 dictionary.o
- .rodata        0x0805c250       0x33 sound.o
- *fill*         0x0805c283       0x1d
- .rodata        0x0805c2a0      0x1b0 router.o
- .rodata        0x0805c450        0xc /x86/lib/libc.a(slog.o)
+ .rodata        0x08059f40     0x1644 abmain.o
+                0x0805a0dc                ABN_mask_stop
+                0x0805a0f8                ABN_stopMsg
+                0x0805a068                ABN_Scheme
+                0x0805a094                ABN_grey_stop
+                0x0805a138                ABN_yellow_s_up
+                0x0805a090                ABN_green_up
+                0x0805a11c                ABN_blue_cont_down
+                0x0805a060                ABN_AlertTime
+                0x0805a080                ABN_escalator_num
+                0x0805a184                ABN_OneEscalatorLabel
+                0x0805a214                ABN_CmdPoolDlgBtnClose
+                0x0805a1d8                ABN_SignalPanel
+                0x0805a110                ABN_block_yellow_led
+                0x0805a1c8                ABN_SetEscDownBtn
+                0x0805a130                ABN_red_s_down
+                0x0805a208                ABN_ArchiveLogCancelBtn
+                0x0805a1bc                ABN_EscDirectionList
+                0x0805a1dc                ABN_mode_header
+                0x0805a0d0                ABN_yellow_led
+                0x0805a07c                ABN_Arrow
+                0x0805a14c                ABN_LedBalloon
+                0x0805a0b0                ABN_led_tu
+                0x0805a23c                ABN_MoveDown
+                0x0805a1c0                ABN_SetEscReverseBtn
+                0x0805a1b8                ABN_EscConfig
+                0x0805a228                ABN_CmdPoolRwListEscal
+                0x0805a1cc                ABN_EscConfCancel
+                0x0805a1d0                ABN_EscConfDone
+                0x0805a098                ABN_grey_down
+                0x0805a15c                ABN_AllTimeRangeBtn1
+                0x0805a224                ABN_CmdPoolRwListStation
+                0x0805a0bc                ABN_red_down
+                0x0805a1ec                ABN_PanelTitle
+                0x0805a1e8                ABN_ReadyIndicator
+                0x0805a0c0                ABN_yellow_up
+                0x0805a20c                ABN_ArchiveLogOpenBtn
+                0x0805a088                ABN_left_scroll_disable
+                0x0805a120                ABN_blue_red_up
+                0x0805a1b4                ABN_LogFilterOK
+                0x0805a198                ABN_RangeEndNumeric
+                0x0805a074                ABN_interface
+                0x0805a038                ABN_main_wnd
+                0x0805a0a8                ABN_blue_up
+                0x0805a1a0                ABN_SysMsgBtn
+                0x0805a164                ABN_StartMinNumeric
+                0x0805a190                ABN_RangeStartNumeric
+                0x0805a178                ABN_StationList
+                0x0805a104                ABN_block_blue_led
+                0x0805a238                ABN_MoveStop
+                0x0805a170                ABN_EndMinNumeric
+                0x0805a0ec                ABN_log_ok_image
+                0x0805a034                ABI_PrevCmdPoolDlg
+                0x0805a1e4                ABN_ready_header
+                0x0805a084                ABN_blocking
+                0x0805a150                ABN_station_wnd
+                0x0805a19c                ABN_AllRangeBtn
+                0x0805a0fc                ABN_warnMsg
+                0x0805a08c                ABN_right_scroll_disable
+                0x0805a0f0                ABN_log_net_image
+                0x0805a140                ABN_green_down
+                0x0805a06c                ABN_LogJournalPanel
+                0x0805a0a4                ABN_green_stop
+                0x0805a200                ABN_ArchiveLog
+                0x0805a13c                ABN_yellow_s_down
+                0x0805a050                ABN_CmdPoolBtn
+                0x0805a17c                ABN_OneEscalatorBtn
+                0x0805a0b4                ABN_red_up
+                0x0805a1e0                ABN_ModeIndicator
+                0x0805a154                ABN_LogFilterDlg
+                0x0805a114                ABN_grey_off
+                0x0805a148                ABN_green_s_down
+                0x0805a078                ABN_escalator_wnd
+                0x0805a070                ABN_log_wnd
+                0x0805a03c                ABN_toolBar
+                0x0805a0d4                ABN_blue_led
+                0x0805a22c                ABN_CmdPoolRwListBtn
+                0x0805a158                ABN_CalendarStart
+                0x0805a0b8                ABN_red_stop
+                0x0805a1ac                ABN_LocalMsgBtn
+                0x0805a09c                ABN_led_b
+                0x0805a028                ABI_interface
+                0x0805a0a0                ABN_blue_down
+                0x0805a218                ABN_SendCommandBtn
+                0x0805a1a4                ABN_AlertMsgBtn
+                0x0805a128                ABN_blue_yellow_up
+                0x0805a230                ABN_EscalatorMenu
+                0x0805a05c                ABN_AlertOK
+                0x0805a16c                ABN_AllTimeRangeBtn2
+                0x0805a118                ABN_blue_cont_up
+                0x0805a204                ABN_ArchiveLogWnd
+                0x0805a124                ABN_blue_red_down
+                0x0805a174                ABN_EndHourNumeric
+                0x0805a160                ABN_StartHourNumeric
+                0x0805a220                ABN_CommandPoolRwLst
+                0x0805a210                ABN_PrevCmdPoolDlg
+                0x0805a180                ABN_RangeEscalatorBtn
+                0x0805a0c4                ABN_yellow_stop
+                0x0805a188                ABN_OneEscalatorNumeric
+                0x0805a0c8                ABN_yellow_down
+                0x0805a0d8                ABN_mask_up
+                0x0805a0ac                ABN_green_led
+                0x0805a234                ABN_MoveUp
+                0x0805a12c                ABN_blue_yellow_down
+                0x0805a100                ABN_block_green_led
+                0x0805a048                ABN_ResetFilter
+                0x0805a0cc                ABN_red_led
+                0x0805a0e4                ABN_cursor
+                0x0805a02c                ABI_LogFilterDlg
+                0x0805a18c                ABN_RangeStartLabel
+                0x0805a1c4                ABN_SetEscUpBtn
+                0x0805a10c                ABN_block_red_led
+                0x0805a1a8                ABN_BlockMsgBtn
+                0x0805a168                ABN_CalendarEnd
+                0x0805a1f4                ABN_ArchiveFiles
+                0x0805a04c                ABN_ArchiveBtn
+                0x0805a1b0                ABN_LogFIlterCancel
+                0x0805a144                ABN_green_s_up
+                0x0805a1f0                ABN_ArchiveDlg
+                0x0805a21c                ABN_ChancelCommandBtn
+                0x0805a0f4                ABN_infoMsg
+                0x0805a0e8                ABN_log_alert_image
+                0x0805a108                ABN_block_grey_led
+                0x0805a1fc                ABN_ArchiveCancelBtn
+                0x0805a134                ABN_red_s_up
+                0x0805a040                ABN_EscConfigBtn
+                0x0805a064                ABN_AlertCounter
+                0x0805a194                ABN_RangeEndLabel
+                0x0805a058                ABN_AlertMsg
+                0x0805a1f8                ABN_LoadArchiveBtn
+                0x0805a044                ABN_FilterBtn
+                0x0805a1d4                ABN_SignalDlg
+                0x0805a0e0                ABN_mask_down
+                0x0805a054                ABN_AlertWnd
+                0x0805a030                ABI_EscalatorMenu
+ .rodata        0x0805b584       0xa3 alert.o
+ .rodata        0x0805b627       0x4b archive.o
+ *fill*         0x0805b672        0x2
+ .rodata        0x0805b674      0x2b8 cmd_pool.o
+ .rodata        0x0805b92c       0x4b ctrl_widget.o
+ *fill*         0x0805b977        0x9
+ .rodata        0x0805b980      0x343 draw.o
+ *fill*         0x0805bcc3       0x1d
+ .rodata        0x0805bce0      0x643 escalator.o
+ *fill*         0x0805c323       0x1d
+ .rodata        0x0805c340      0x107 filter.o
+ *fill*         0x0805c447       0x19
+ .rodata        0x0805c460      0x629 main.o
+                0x0805c460                ApOptions
+ .rodata        0x0805ca89        0xb cbuffer.o
+ .rodata        0x0805ca94       0x84 system.o
+ .rodata        0x0805cb18       0x62 station.o
+ *fill*         0x0805cb7a        0x6
+ .rodata        0x0805cb80      0x25d log.o
+ .rodata        0x0805cddd       0x1e goodies.o
+ *fill*         0x0805cdfb        0x5
+ .rodata        0x0805ce00      0x11c esc_types.o
+ .rodata        0x0805cf1c        0x8 string.o
+ *fill*         0x0805cf24       0x1c
+ .rodata        0x0805cf40       0xe0 dictionary.o
+ .rodata        0x0805d020       0x33 sound.o
+ *fill*         0x0805d053        0xd
+ .rodata        0x0805d060      0x1c0 router.o
+ .rodata        0x0805d220        0xc /x86/lib/libc.a(slog.o)
  *(.rodata.*)
  *(.gnu.linkonce.r*)
 
 .rodata1
  *(.rodata1)
-                0x0805d45c                .=(ALIGN(0x1000)+(.&0xfff))
+                0x0805e22c                .=(ALIGN(0x1000)+(.&0xfff))
 
-.data           0x0805d460      0x828
+.data           0x0805e240      0x860
  *(.data)
- .data          0x0805d460        0x8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- *fill*         0x0805d468       0x18
- .data          0x0805d480      0x2a0 abmain.o
-                0x0805d5f8                ArchiveLog
-                0x0805d480                AbInternalLinks
-                0x0805d60c                PrevCmdPullDlg
-                0x0805d6c0                EscalatorMenu
-                0x0805d5b0                EscConfig
-                0x0805d584                interface
-                0x0805d598                LogFilterDlg
-                0x0805d5c8                SignalDlg
-                0x0805d700                AbContext
-                0x0805d570                main_wnd
-                0x0805d5e0                ArchiveDlg
- .data          0x0805d720      0x130 draw.o
-                0x0805d720                blockingNames
- *fill*         0x0805d850       0x10
- .data          0x0805d860       0x70 escalator.o
-                0x0805d8c4                control
-                0x0805d870                g_selectDirection
-                0x0805d8c0                curEscalator
-                0x0805d864                sendMutex
-                0x0805d884                mode_text
-                0x0805d878                metro_escalator::paneled
-                0x0805d87c                metro_escalator::reference
-                0x0805d8a0                ready_text
-                0x0805d880                metro_escalator::init_images
-                0x0805d86c                g_selectedEscalator
-                0x0805d874                g_paneledEsc
-                0x0805d860                metro_escalator::panel
- .data          0x0805d8d0       0x48 main.o
-                0x0805d8f0                g_msgDialogFont
-                0x0805d8d4                g_stations
-                0x0805d8d8                g_escalators
-                0x0805d90c                g_rightGate
-                0x0805d8dc                g_lineNum
-                0x0805d900                g_leftGate
-                0x0805d8ec                g_escTypeNum
-                0x0805d8e4                g_escalatorNum
-                0x0805d8f8                g_debugFile
-                0x0805d8fc                escal_count
-                0x0805d8e8                g_escTypes
-                0x0805d8d0                g_lines
-                0x0805d8f4                g_chanID
-                0x0805d8e0                g_stationNum
- *fill*         0x0805d918        0x8
- .data          0x0805d920      0x200 system.o
-                0x0805d920                g_CRCHi
-                0x0805da20                g_CRCLo
- .data          0x0805db20        0x4 station.o
-                0x0805db20                metro_station::reference
- .data          0x0805db24        0x8 sound.o
-                0x0805db24                RiffId
-                0x0805db28                WaveId
- .data          0x0805db2c        0x8 router.o
-                0x0805db2c                activeHost
-                0x0805db30                breakLine
- .data          0x0805db34        0x4 /x86/lib/libc.a(slog.o)
-                0x0805db34                _slogfd
+ .data          0x0805e240        0x8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ *fill*         0x0805e248       0x18
+ .data          0x0805e260      0x2c0 abmain.o
+                0x0805e414                ArchiveLog
+                0x0805e260                AbInternalLinks
+                0x0805e4c0                EscalatorMenu
+                0x0805e3cc                EscConfig
+                0x0805e3a0                interface
+                0x0805e3b4                LogFilterDlg
+                0x0805e3e4                SignalDlg
+                0x0805e500                AbContext
+                0x0805e38c                main_wnd
+                0x0805e3fc                ArchiveDlg
+                0x0805e428                PrevCmdPoolDlg
+ .data          0x0805e520      0x130 draw.o
+                0x0805e520                blockingNames
+ *fill*         0x0805e650       0x10
+ .data          0x0805e660       0x70 escalator.o
+                0x0805e6c4                control
+                0x0805e670                g_selectDirection
+                0x0805e6c0                curEscalator
+                0x0805e664                sendMutex
+                0x0805e684                mode_text
+                0x0805e678                metro_escalator::paneled
+                0x0805e67c                metro_escalator::reference
+                0x0805e6a0                ready_text
+                0x0805e680                metro_escalator::init_images
+                0x0805e66c                g_selectedEscalator
+                0x0805e674                g_paneledEsc
+                0x0805e660                metro_escalator::panel
+ .data          0x0805e6d0       0x48 main.o
+                0x0805e6f0                g_msgDialogFont
+                0x0805e6d4                g_stations
+                0x0805e6d8                g_escalators
+                0x0805e70c                g_rightGate
+                0x0805e6dc                g_lineNum
+                0x0805e700                g_leftGate
+                0x0805e6ec                g_escTypeNum
+                0x0805e6e4                g_escalatorNum
+                0x0805e6f8                g_debugFile
+                0x0805e6fc                escal_count
+                0x0805e6e8                g_escTypes
+                0x0805e6d0                g_lines
+                0x0805e6f4                g_chanID
+                0x0805e6e0                g_stationNum
+ *fill*         0x0805e718        0x8
+ .data          0x0805e720      0x200 system.o
+                0x0805e720                g_CRCHi
+                0x0805e820                g_CRCLo
+ .data          0x0805e920        0x4 station.o
+                0x0805e920                metro_station::reference
+ .data          0x0805e924        0x8 sound.o
+                0x0805e924                RiffId
+                0x0805e928                WaveId
+ .data          0x0805e92c        0x8 router.o
+                0x0805e92c                activeHost
+                0x0805e930                breakLine
+ .data          0x0805e934        0x4 /x86/lib/libc.a(slog.o)
+                0x0805e934                _slogfd
  *(.data.*)
  *(.gnu.linkonce.d*)
  .gnu.linkonce.d._vt.10AlertQueue
-                0x0805db38       0x18 alert.o
-                0x0805db38                AlertQueue virtual table
+                0x0805e938       0x18 alert.o
+                0x0805e938                AlertQueue virtual table
  .gnu.linkonce.d._vt.t4List1Z11AlertRecord
-                0x0805db50       0x18 alert.o
-                0x0805db50                List<AlertRecord> virtual table
+                0x0805e950       0x18 alert.o
+                0x0805e950                List<AlertRecord> virtual table
  .gnu.linkonce.d._vt.9LogFilter
-                0x0805db68       0x18 filter.o
-                0x0805db68                LogFilter virtual table
+                0x0805e968       0x18 filter.o
+                0x0805e968                LogFilter virtual table
+ .gnu.linkonce.d._vt.t3Map1Z7Command
+                0x0805e980       0x18 main.o
+                0x0805e980                Map<Command> virtual table
  .gnu.linkonce.d._vt.t3Map1Z9DictEntry
-                0x0805db80       0x18 main.o
-                0x0805db80                Map<DictEntry> virtual table
+                0x0805e998       0x18 main.o
+                0x0805e998                Map<DictEntry> virtual table
  .gnu.linkonce.d._vt.9Cbuffer_c
-                0x0805db98       0x18 cbuffer.o
-                0x0805db98                Cbuffer_c virtual table
+                0x0805e9b0       0x18 cbuffer.o
+                0x0805e9b0                Cbuffer_c virtual table
  .gnu.linkonce.d._vt.3Log
-                0x0805dbb0       0x18 log.o
-                0x0805dbb0                Log virtual table
+                0x0805e9c8       0x18 log.o
+                0x0805e9c8                Log virtual table
  .gnu.linkonce.d._vt.t4List1Z9LogRecord
-                0x0805dbc8       0x18 log.o
-                0x0805dbc8                List<LogRecord> virtual table
+                0x0805e9e0       0x18 log.o
+                0x0805e9e0                List<LogRecord> virtual table
  .gnu.linkonce.d._vt.4Type
-                0x0805dbe0       0x18 esc_types.o
-                0x0805dbe0                Type virtual table
+                0x0805e9f8       0x18 esc_types.o
+                0x0805e9f8                Type virtual table
  .gnu.linkonce.d._vt.5Block
-                0x0805dbf8       0x18 esc_types.o
-                0x0805dbf8                Block virtual table
+                0x0805ea10       0x18 esc_types.o
+                0x0805ea10                Block virtual table
  .gnu.linkonce.d._vt.6Signal
-                0x0805dc10       0x18 esc_types.o
-                0x0805dc10                Signal virtual table
+                0x0805ea28       0x18 esc_types.o
+                0x0805ea28                Signal virtual table
  .gnu.linkonce.d._vt.6String
-                0x0805dc28       0x18 string.o
-                0x0805dc28                String virtual table
+                0x0805ea40       0x18 string.o
+                0x0805ea40                String virtual table
  .gnu.linkonce.d._vt.5Sound
-                0x0805dc40       0x18 sound.o
-                0x0805dc40                Sound virtual table
+                0x0805ea58       0x18 sound.o
+                0x0805ea58                Sound virtual table
  .gnu.linkonce.d._vt.6Router
-                0x0805dc58       0x18 router.o
-                0x0805dc58                Router virtual table
+                0x0805ea70       0x18 router.o
+                0x0805ea70                Router virtual table
  .gnu.linkonce.d._vt.3Net
-                0x0805dc70       0x18 router.o
-                0x0805dc70                Net virtual table
+                0x0805ea88       0x18 router.o
+                0x0805ea88                Net virtual table
 
 .data1
  *(.data1)
 
-.eh_frame       0x0805dc88     0x21cc
+.eh_frame       0x0805eaa0     0x254c
  *(.eh_frame)
- .eh_frame      0x0805dc88       0x8c abmain.o
- .eh_frame      0x0805dd14      0x244 alert.o
- .eh_frame      0x0805df58       0xdc archive.o
- .eh_frame      0x0805e034       0x9c ctrl_widget.o
- .eh_frame      0x0805e0d0       0xc8 draw.o
- .eh_frame      0x0805e198      0x61c escalator.o
- .eh_frame      0x0805e7b4      0x26c filter.o
- .eh_frame      0x0805ea20      0x390 main.o
- .eh_frame      0x0805edb0       0xd8 cbuffer.o
- .eh_frame      0x0805ee88      0x1d0 system.o
- .eh_frame      0x0805f058       0x60 line.o
- .eh_frame      0x0805f0b8      0x100 station.o
- .eh_frame      0x0805f1b8      0x380 log.o
- .eh_frame      0x0805f538       0x6c goodies.o
- .eh_frame      0x0805f5a4      0x280 esc_types.o
- .eh_frame      0x0805f824      0x12c string.o
- .eh_frame      0x0805f950       0xb0 dictionary.o
- .eh_frame      0x0805fa00      0x10c sound.o
- .eh_frame      0x0805fb0c      0x310 router.o
- .eh_frame      0x0805fe1c       0x34 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
- .eh_frame      0x0805fe50        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .eh_frame      0x0805eaa0       0xa8 abmain.o
+ .eh_frame      0x0805eb48      0x260 alert.o
+ .eh_frame      0x0805eda8       0xf8 archive.o
+ .eh_frame      0x0805eea0      0x124 cmd_pool.o
+ .eh_frame      0x0805efc4       0xb8 ctrl_widget.o
+ .eh_frame      0x0805f07c      0x118 draw.o
+ .eh_frame      0x0805f194      0x698 escalator.o
+ .eh_frame      0x0805f82c      0x288 filter.o
+ .eh_frame      0x0805fab4      0x3ec main.o
+ .eh_frame      0x0805fea0       0xd8 cbuffer.o
+ .eh_frame      0x0805ff78      0x1ec system.o
+ .eh_frame      0x08060164       0x60 line.o
+ .eh_frame      0x080601c4      0x11c station.o
+ .eh_frame      0x080602e0      0x39c log.o
+ .eh_frame      0x0806067c       0x6c goodies.o
+ .eh_frame      0x080606e8      0x29c esc_types.o
+ .eh_frame      0x08060984      0x12c string.o
+ .eh_frame      0x08060ab0       0xcc dictionary.o
+ .eh_frame      0x08060b7c      0x10c sound.o
+ .eh_frame      0x08060c88      0x32c router.o
+ .eh_frame      0x08060fb4       0x34 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+ .eh_frame      0x08060fe8        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
 
 .gcc_except_table
-                0x0805fe54      0x42c
+                0x08060fec      0x444
  *(.gcc_except_table)
  .gcc_except_table
-                0x0805fe54       0xe6 alert.o
- *fill*         0x0805ff3a        0x2
+                0x08060fec       0xe6 alert.o
+ *fill*         0x080610d2        0x2
  .gcc_except_table
-                0x0805ff3c       0x48 escalator.o
+                0x080610d4       0x60 escalator.o
  .gcc_except_table
-                0x0805ff84       0x78 main.o
+                0x08061134       0x78 main.o
  .gcc_except_table
-                0x0805fffc       0x20 line.o
+                0x080611ac       0x20 line.o
  .gcc_except_table
-                0x0806001c       0x3c station.o
+                0x080611cc       0x3c station.o
  .gcc_except_table
-                0x08060058       0xe2 log.o
- *fill*         0x0806013a        0x2
+                0x08061208       0xe2 log.o
+ *fill*         0x080612ea        0x2
  .gcc_except_table
-                0x0806013c       0xcc esc_types.o
+                0x080612ec       0xcc esc_types.o
  .gcc_except_table
-                0x08060208       0x78 router.o
+                0x080613b8       0x78 router.o
 
-.ctors          0x08060280        0xc
+.ctors          0x08061430        0xc
  *crtbegin.o(.ctors)
  EXCLUDE_FILE ( *crtend.o)*(.ctors)
- .ctors         0x08060280        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- .ctors         0x08060284        0x4 main.o
- .ctors         0x08060288        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .ctors         0x08061430        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .ctors         0x08061434        0x4 main.o
+ .ctors         0x08061438        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
  *(SORT(.ctors.*))
  *(.ctors)
 
-.dtors          0x0806028c        0xc
+.dtors          0x0806143c        0xc
  *crtbegin.o(.dtors)
  EXCLUDE_FILE ( *crtend.o)*(.dtors)
- .dtors         0x0806028c        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- .dtors         0x08060290        0x4 main.o
- .dtors         0x08060294        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .dtors         0x0806143c        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .dtors         0x08061440        0x4 main.o
+ .dtors         0x08061444        0x4 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
  *(SORT(.dtors.*))
  *(.dtors)
 
-.got            0x08060298      0x258
+.got            0x08061448      0x25c
  *(.got.plt)
- .got.plt       0x08060298      0x250 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
-                0x08060298                _GLOBAL_OFFSET_TABLE_
+ .got.plt       0x08061448      0x254 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+                0x08061448                _GLOBAL_OFFSET_TABLE_
  *(.got)
- .got           0x080604e8        0x8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ .got           0x0806169c        0x8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
 
-.dynamic        0x080604f0       0xc8
+.dynamic        0x080616a4       0xc8
  *(.dynamic)
- .dynamic       0x080604f0       0xc8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
-                0x080604f0                _DYNAMIC
+ .dynamic       0x080616a4       0xc8 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+                0x080616a4                _DYNAMIC
 
 .sdata
  *(.sdata)
  *(.sdata.*)
  *(.gnu.linkonce.s.*)
-                0x080605b8                _edata=.
-                0x080605b8                PROVIDE (edata, .)
-                0x080605b8                __bss_start=.
+                0x0806176c                _edata=.
+                0x0806176c                PROVIDE (edata, .)
+                0x0806176c                __bss_start=.
 
 .sbss
  *(.dynsbss)
@@ -1101,100 +1154,101 @@ LOAD /x86/lib/crtn.o
  *(.sbss.*)
  *(.scommon)
 
-.bss            0x080605c0     0x1458
+.bss            0x08061780     0x1478
  *(.dynbss)
- .dynbss        0x080605c0       0xa4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
-                0x080605c0                PtFileSel
-                0x080605c4                errno
-                0x080605c8                PtButton
-                0x080605cc                _syspage_ptr
-                0x080605d0                PtDivider
-                0x080605d4                PtMenu
-                0x080605d8                PtPolygon
-                0x080605dc                PtGroup
-                0x080605e0                PtNumericInteger
-                0x080605e4                PtSeparator
-                0x080605e8                PtRect
-                0x080605ec                PtToggleButton
-                0x080605f0                PtClock
-                0x080605f4                PtRawList
-                0x080605f8                PtPane
-                0x080605fc                PtCalendar
-                0x08060600                PtList
-                0x08060604                PtLabel
-                0x08060608                PtMultiText
-                0x0806060c                PtComboBox
-                0x08060610                PtOSContainer
-                0x08060614                PtWindow
-                0x08060618                _Ap_
-                0x08060660                PtPanelGroup
+ .dynbss        0x08061780       0xa4 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+                0x08061780                PtFileSel
+                0x08061784                errno
+                0x08061788                PtButton
+                0x0806178c                _syspage_ptr
+                0x08061790                PtDivider
+                0x08061794                PtMenu
+                0x08061798                PtPolygon
+                0x0806179c                PtGroup
+                0x080617a0                PtNumericInteger
+                0x080617a4                PtSeparator
+                0x080617a8                PtRect
+                0x080617ac                PtToggleButton
+                0x080617b0                PtClock
+                0x080617b4                PtRawList
+                0x080617b8                PtPane
+                0x080617bc                PtCalendar
+                0x080617c0                PtList
+                0x080617c4                PtLabel
+                0x080617c8                PtMultiText
+                0x080617cc                PtComboBox
+                0x080617d0                PtOSContainer
+                0x080617d4                PtWindow
+                0x080617d8                _Ap_
+                0x08061820                PtPanelGroup
  *(.bss)
- .bss           0x08060664       0x18 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
- *fill*         0x0806067c        0x4
- .bss           0x08060680      0x1dc abmain.o
-                0x08060680                AbWidgets
- .bss           0x0806085c        0x8 escalator.o
-                0x08060860                ledRowCount
-                0x0806085c                led_count
- *fill*         0x08060864       0x1c
- .bss           0x08060880     0x10d0 main.o
-                0x08061540                escal
-                0x08060880                mainLog
-                0x08060960                g_sound
-                0x0806194c                SigpipeCount
-                0x080614c0                g_router
-                0x08061500                g_alertQueue
-                0x08061944                pingTID
-                0x08060940                g_msgDictionary
-                0x080608e0                g_archiveLog
-                0x080614e0                g_logFilter
-                0x08061948                timerTID
-                0x08061940                test_led
-                0x08061524                widget_dbase
-                0x08061528                translate_set
-                0x0806152c                cfg_file
+ .bss           0x08061824       0x18 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
+ *fill*         0x0806183c        0x4
+ .bss           0x08061840      0x1f8 abmain.o
+                0x08061840                AbWidgets
+ .bss           0x08061a38        0x8 escalator.o
+                0x08061a3c                ledRowCount
+                0x08061a38                led_count
+ .bss           0x08061a40     0x10f0 main.o
+                0x08062720                escal
+                0x08061a40                mainLog
+                0x08061b20                g_sound
+                0x08062b2c                SigpipeCount
+                0x08062680                g_router
+                0x080626e0                g_alertQueue
+                0x08062b24                pingTID
+                0x08061b00                g_msgDictionary
+                0x08061aa0                g_archiveLog
+                0x080626a0                g_CommandPool
+                0x080626c0                g_logFilter
+                0x08062b28                timerTID
+                0x08062b20                test_led
+                0x08062704                widget_dbase
+                0x08062708                translate_set
+                0x0806270c                cfg_file
  *(.bss.*)
  *(COMMON)
- COMMON         0x08061950       0x18 abmain.o
+ COMMON         0x08062b30       0x20 abmain.o
                                   0x0 (size before relaxing)
-                0x08061950                List<AlertRecord> type_info node
-                0x08061958                Map<DictEntry> type_info node
-                0x08061960                List<LogRecord> type_info node
- COMMON         0x08061968        0x8 alert.o
+                0x08062b30                List<AlertRecord> type_info node
+                0x08062b38                Map<Command> type_info node
+                0x08062b40                Map<DictEntry> type_info node
+                0x08062b48                List<LogRecord> type_info node
+ COMMON         0x08062b50        0x8 alert.o
                                   0x0 (size before relaxing)
-                0x08061968                AlertQueue type_info node
- *fill*         0x08061970       0x10
- COMMON         0x08061980       0x48 escalator.o
+                0x08062b50                AlertQueue type_info node
+ *fill*         0x08062b58        0x8
+ COMMON         0x08062b60       0x48 escalator.o
                                   0x0 (size before relaxing)
-                0x08061980                metro_escalator::images
- COMMON         0x080619c8        0x8 filter.o
+                0x08062b60                metro_escalator::images
+ COMMON         0x08062ba8        0x8 filter.o
                                   0x0 (size before relaxing)
-                0x080619c8                LogFilter type_info node
- COMMON         0x080619d0        0x8 cbuffer.o
+                0x08062ba8                LogFilter type_info node
+ COMMON         0x08062bb0        0x8 cbuffer.o
                                   0x0 (size before relaxing)
-                0x080619d0                Cbuffer_c type_info node
- COMMON         0x080619d8        0x8 log.o
+                0x08062bb0                Cbuffer_c type_info node
+ COMMON         0x08062bb8        0x8 log.o
                                   0x0 (size before relaxing)
-                0x080619d8                Log type_info node
- COMMON         0x080619e0       0x18 esc_types.o
+                0x08062bb8                Log type_info node
+ COMMON         0x08062bc0       0x18 esc_types.o
                                   0x0 (size before relaxing)
-                0x080619e0                Type type_info node
-                0x080619e8                Signal type_info node
-                0x080619f0                Block type_info node
- COMMON         0x080619f8        0x8 string.o
+                0x08062bc0                Type type_info node
+                0x08062bc8                Signal type_info node
+                0x08062bd0                Block type_info node
+ COMMON         0x08062bd8        0x8 string.o
                                   0x0 (size before relaxing)
-                0x080619f8                String type_info node
- COMMON         0x08061a00        0x8 sound.o
+                0x08062bd8                String type_info node
+ COMMON         0x08062be0        0x8 sound.o
                                   0x0 (size before relaxing)
-                0x08061a00                Sound type_info node
- COMMON         0x08061a08       0x10 router.o
+                0x08062be0                Sound type_info node
+ COMMON         0x08062be8       0x10 router.o
                                   0x0 (size before relaxing)
-                0x08061a08                Net type_info node
-                0x08061a10                Router type_info node
-                0x08061a18                .=ALIGN(0x4)
-                0x08061a18                .=ALIGN(0x4)
-                0x08061a18                _end=.
-                0x08061a18                PROVIDE (end, .)
+                0x08062be8                Net type_info node
+                0x08062bf0                Router type_info node
+                0x08062bf8                .=ALIGN(0x4)
+                0x08062bf8                .=ALIGN(0x4)
+                0x08062bf8                _end=.
+                0x08062bf8                PROVIDE (end, .)
 
 .stab
  *(.stab)
@@ -1214,78 +1268,81 @@ LOAD /x86/lib/crtn.o
 .stab.indexstr
  *(.stab.indexstr)
 
-.comment        0x00000000      0x36a
+.comment        0x00000000      0x390
  *(.comment)
  .comment       0x00000000       0x26 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
  .comment       0x00000026       0x26 abmain.o
  .comment       0x0000004c       0x26 alert.o
  .comment       0x00000072       0x26 archive.o
- .comment       0x00000098       0x26 ctrl_widget.o
- .comment       0x000000be       0x26 draw.o
- .comment       0x000000e4       0x26 escalator.o
- .comment       0x0000010a       0x26 filter.o
- .comment       0x00000130       0x26 main.o
- .comment       0x00000156       0x26 cbuffer.o
- .comment       0x0000017c       0x26 system.o
- .comment       0x000001a2       0x26 line.o
- .comment       0x000001c8       0x26 station.o
- .comment       0x000001ee       0x26 log.o
- .comment       0x00000214       0x26 goodies.o
- .comment       0x0000023a       0x26 esc_types.o
- .comment       0x00000260       0x26 string.o
- .comment       0x00000286       0x26 dictionary.o
- .comment       0x000002ac       0x26 sound.o
- .comment       0x000002d2       0x26 router.o
- .comment       0x000002f8       0x26 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
- .comment       0x0000031e       0x26 /x86/lib/libc.a(slog.o)
- .comment       0x00000344       0x26 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .comment       0x00000098       0x26 cmd_pool.o
+ .comment       0x000000be       0x26 ctrl_widget.o
+ .comment       0x000000e4       0x26 draw.o
+ .comment       0x0000010a       0x26 escalator.o
+ .comment       0x00000130       0x26 filter.o
+ .comment       0x00000156       0x26 main.o
+ .comment       0x0000017c       0x26 cbuffer.o
+ .comment       0x000001a2       0x26 system.o
+ .comment       0x000001c8       0x26 line.o
+ .comment       0x000001ee       0x26 station.o
+ .comment       0x00000214       0x26 log.o
+ .comment       0x0000023a       0x26 goodies.o
+ .comment       0x00000260       0x26 esc_types.o
+ .comment       0x00000286       0x26 string.o
+ .comment       0x000002ac       0x26 dictionary.o
+ .comment       0x000002d2       0x26 sound.o
+ .comment       0x000002f8       0x26 router.o
+ .comment       0x0000031e       0x26 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+ .comment       0x00000344       0x26 /x86/lib/libc.a(slog.o)
+ .comment       0x0000036a       0x26 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
 
-.debug          0x00000000   0x48cc30
+.debug          0x00000000   0x4def78
  *(.debug)
- .debug         0x00000000    0x4e0f4 abmain.o
- .debug         0x0004e0f4    0x4ce14 alert.o
- .debug         0x0009af08    0x4c478 archive.o
- .debug         0x000e7380    0x4c2bc ctrl_widget.o
- .debug         0x0013363c    0x4cc4c draw.o
- .debug         0x00180288    0x4f7d8 escalator.o
- .debug         0x001cfa60    0x4d7e4 filter.o
- .debug         0x0021d244    0x4e4f0 main.o
- .debug         0x0026b734     0x197c cbuffer.o
- .debug         0x0026d0b0    0x4cd34 system.o
- .debug         0x002b9de4    0x3ef2c line.o
- .debug         0x002f8d10    0x4c5dc station.o
- .debug         0x003452ec    0x4da38 log.o
- .debug         0x00392d24     0x1ea0 goodies.o
- .debug         0x00394bc4    0x4cd28 esc_types.o
- .debug         0x003e18ec     0x3274 string.o
- .debug         0x003e4b60    0x4c980 dictionary.o
- .debug         0x004314e0     0xe3ac sound.o
- .debug         0x0043f88c    0x4d23c router.o
- .debug         0x0048cac8      0x168 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+ .debug         0x00000000    0x4e578 abmain.o
+ .debug         0x0004e578    0x4d0a0 alert.o
+ .debug         0x0009b618    0x4c704 archive.o
+ .debug         0x000e7d1c    0x4e6a4 cmd_pool.o
+ .debug         0x001363c0    0x4c548 ctrl_widget.o
+ .debug         0x00182908    0x4d7a8 draw.o
+ .debug         0x001d00b0    0x50210 escalator.o
+ .debug         0x002202c0    0x4da4c filter.o
+ .debug         0x0026dd0c    0x4ee30 main.o
+ .debug         0x002bcb3c     0x197c cbuffer.o
+ .debug         0x002be4b8    0x4cfc0 system.o
+ .debug         0x0030b478    0x3ef2c line.o
+ .debug         0x0034a3a4    0x4c868 station.o
+ .debug         0x00396c0c    0x4dcc4 log.o
+ .debug         0x003e48d0     0x1ea0 goodies.o
+ .debug         0x003e6770    0x4cfb0 esc_types.o
+ .debug         0x00433720     0x3274 string.o
+ .debug         0x00436994    0x4cc08 dictionary.o
+ .debug         0x0048359c     0xe3ac sound.o
+ .debug         0x00491948    0x4d4c8 router.o
+ .debug         0x004dee10      0x168 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
 
-.line           0x00000000     0x6cf4
+.line           0x00000000     0x6f68
  *(.line)
  .line          0x00000000       0x76 abmain.o
  .line          0x00000076      0x328 alert.o
  .line          0x0000039e       0xc6 archive.o
- .line          0x00000464       0x6c ctrl_widget.o
- .line          0x000004d0      0x288 draw.o
- .line          0x00000758     0x1e94 escalator.o
- .line          0x000025ec      0xbb6 filter.o
- .line          0x000031a2      0xe40 main.o
- .line          0x00003fe2      0x274 cbuffer.o
- .line          0x00004256      0x45e system.o
- .line          0x000046b4       0xa8 line.o
- .line          0x0000475c      0x1a2 station.o
- .line          0x000048fe      0x7b0 log.o
- .line          0x000050ae      0x1de goodies.o
- .line          0x0000528c      0x526 esc_types.o
- .line          0x000057b2      0x26a string.o
- .line          0x00005a1c      0x1e8 dictionary.o
- .line          0x00005c04      0x56c sound.o
- .line          0x00006170      0xb84 router.o
+ .line          0x00000464      0x1c0 cmd_pool.o
+ .line          0x00000624       0x6c ctrl_widget.o
+ .line          0x00000690      0x346 draw.o
+ .line          0x000009d6     0x1ed0 escalator.o
+ .line          0x000028a6      0xb66 filter.o
+ .line          0x0000340c      0xe4a main.o
+ .line          0x00004256      0x274 cbuffer.o
+ .line          0x000044ca      0x45e system.o
+ .line          0x00004928       0xa8 line.o
+ .line          0x000049d0      0x1a2 station.o
+ .line          0x00004b72      0x7b0 log.o
+ .line          0x00005322      0x1de goodies.o
+ .line          0x00005500      0x526 esc_types.o
+ .line          0x00005a26      0x26a string.o
+ .line          0x00005c90      0x1e8 dictionary.o
+ .line          0x00005e78      0x56c sound.o
+ .line          0x000063e4      0xb84 router.o
 
-.debug_srcinfo  0x00000000      0x2c4
+.debug_srcinfo  0x00000000      0x2e8
  *(.debug_srcinfo)
  .debug_srcinfo
                 0x00000000       0x24 abmain.o
@@ -1294,39 +1351,41 @@ LOAD /x86/lib/crtn.o
  .debug_srcinfo
                 0x00000048       0x24 archive.o
  .debug_srcinfo
-                0x0000006c       0x24 ctrl_widget.o
+                0x0000006c       0x24 cmd_pool.o
  .debug_srcinfo
-                0x00000090       0x24 draw.o
+                0x00000090       0x24 ctrl_widget.o
  .debug_srcinfo
-                0x000000b4       0x24 escalator.o
+                0x000000b4       0x24 draw.o
  .debug_srcinfo
-                0x000000d8       0x24 filter.o
+                0x000000d8       0x24 escalator.o
  .debug_srcinfo
-                0x000000fc       0x2c main.o
+                0x000000fc       0x24 filter.o
  .debug_srcinfo
-                0x00000128       0x24 cbuffer.o
+                0x00000120       0x2c main.o
  .debug_srcinfo
-                0x0000014c       0x24 system.o
+                0x0000014c       0x24 cbuffer.o
  .debug_srcinfo
-                0x00000170       0x24 line.o
+                0x00000170       0x24 system.o
  .debug_srcinfo
-                0x00000194       0x24 station.o
+                0x00000194       0x24 line.o
  .debug_srcinfo
-                0x000001b8       0x2c log.o
+                0x000001b8       0x24 station.o
  .debug_srcinfo
-                0x000001e4       0x24 goodies.o
+                0x000001dc       0x2c log.o
  .debug_srcinfo
-                0x00000208       0x24 esc_types.o
+                0x00000208       0x24 goodies.o
  .debug_srcinfo
-                0x0000022c       0x2c string.o
+                0x0000022c       0x24 esc_types.o
  .debug_srcinfo
-                0x00000258       0x24 dictionary.o
+                0x00000250       0x2c string.o
  .debug_srcinfo
-                0x0000027c       0x24 sound.o
+                0x0000027c       0x24 dictionary.o
  .debug_srcinfo
-                0x000002a0       0x24 router.o
+                0x000002a0       0x24 sound.o
+ .debug_srcinfo
+                0x000002c4       0x24 router.o
 
-.debug_sfnames  0x00000000      0x4c2
+.debug_sfnames  0x00000000      0x502
  *(.debug_sfnames)
  .debug_sfnames
                 0x00000000       0x3d abmain.o
@@ -1335,122 +1394,128 @@ LOAD /x86/lib/crtn.o
  .debug_sfnames
                 0x0000007a       0x3f archive.o
  .debug_sfnames
-                0x000000b9       0x43 ctrl_widget.o
+                0x000000b9       0x40 cmd_pool.o
  .debug_sfnames
-                0x000000fc       0x3c draw.o
+                0x000000f9       0x43 ctrl_widget.o
  .debug_sfnames
-                0x00000138       0x41 escalator.o
+                0x0000013c       0x3c draw.o
  .debug_sfnames
-                0x00000179       0x3e filter.o
+                0x00000178       0x41 escalator.o
  .debug_sfnames
-                0x000001b7       0x48 main.o
+                0x000001b9       0x3e filter.o
  .debug_sfnames
-                0x000001ff       0x3f cbuffer.o
+                0x000001f7       0x48 main.o
  .debug_sfnames
-                0x0000023e       0x3e system.o
+                0x0000023f       0x3f cbuffer.o
  .debug_sfnames
-                0x0000027c       0x3c line.o
+                0x0000027e       0x3e system.o
  .debug_sfnames
-                0x000002b8       0x3f station.o
+                0x000002bc       0x3c line.o
  .debug_sfnames
-                0x000002f7       0x44 log.o
+                0x000002f8       0x3f station.o
  .debug_sfnames
-                0x0000033b       0x3f goodies.o
+                0x00000337       0x44 log.o
  .debug_sfnames
-                0x0000037a       0x41 esc_types.o
+                0x0000037b       0x3f goodies.o
  .debug_sfnames
-                0x000003bb       0x4a string.o
+                0x000003ba       0x41 esc_types.o
  .debug_sfnames
-                0x00000405       0x42 dictionary.o
+                0x000003fb       0x4a string.o
  .debug_sfnames
-                0x00000447       0x3d sound.o
+                0x00000445       0x42 dictionary.o
  .debug_sfnames
-                0x00000484       0x3e router.o
+                0x00000487       0x3d sound.o
+ .debug_sfnames
+                0x000004c4       0x3e router.o
 
-.debug_aranges  0x00000000      0x544
+.debug_aranges  0x00000000      0x600
  *(.debug_aranges)
  .debug_aranges
-                0x00000000       0x4c abmain.o
+                0x00000000       0x54 abmain.o
  .debug_aranges
-                0x0000004c       0x4c alert.o
+                0x00000054       0x54 alert.o
  .debug_aranges
-                0x00000098       0x44 archive.o
+                0x000000a8       0x4c archive.o
  .debug_aranges
-                0x000000dc       0x44 ctrl_widget.o
+                0x000000f4       0x4c cmd_pool.o
  .debug_aranges
-                0x00000120       0x44 draw.o
+                0x00000140       0x4c ctrl_widget.o
  .debug_aranges
-                0x00000164       0x54 escalator.o
+                0x0000018c       0x4c draw.o
  .debug_aranges
-                0x000001b8       0x4c filter.o
+                0x000001d8       0x5c escalator.o
  .debug_aranges
-                0x00000204       0x84 main.o
+                0x00000234       0x54 filter.o
  .debug_aranges
-                0x00000288       0x34 cbuffer.o
+                0x00000288       0x8c main.o
  .debug_aranges
-                0x000002bc       0x44 system.o
+                0x00000314       0x34 cbuffer.o
  .debug_aranges
-                0x00000300       0x2c line.o
+                0x00000348       0x4c system.o
  .debug_aranges
-                0x0000032c       0x44 station.o
+                0x00000394       0x2c line.o
  .debug_aranges
-                0x00000370       0x4c log.o
+                0x000003c0       0x4c station.o
  .debug_aranges
-                0x000003bc       0x2c goodies.o
+                0x0000040c       0x54 log.o
  .debug_aranges
-                0x000003e8       0x5c esc_types.o
+                0x00000460       0x2c goodies.o
  .debug_aranges
-                0x00000444       0x34 string.o
+                0x0000048c       0x64 esc_types.o
  .debug_aranges
-                0x00000478       0x44 dictionary.o
+                0x000004f0       0x34 string.o
  .debug_aranges
-                0x000004bc       0x34 sound.o
+                0x00000524       0x4c dictionary.o
  .debug_aranges
-                0x000004f0       0x54 router.o
+                0x00000570       0x34 sound.o
+ .debug_aranges
+                0x000005a4       0x5c router.o
 
 .debug_pubnames
-                0x00000000     0x23f8
+                0x00000000     0x2900
  *(.debug_pubnames)
  .debug_pubnames
-                0x00000000      0xb74 abmain.o
+                0x00000000      0xc74 abmain.o
  .debug_pubnames
-                0x00000b74      0x17f alert.o
+                0x00000c74      0x1af alert.o
  .debug_pubnames
-                0x00000cf3      0x105 archive.o
+                0x00000e23      0x135 archive.o
  .debug_pubnames
-                0x00000df8       0xd8 ctrl_widget.o
+                0x00000f58      0x13d cmd_pool.o
  .debug_pubnames
-                0x00000ed0       0xe0 draw.o
+                0x00001095      0x108 ctrl_widget.o
  .debug_pubnames
-                0x00000fb0      0x42f escalator.o
+                0x0000119d      0x134 draw.o
  .debug_pubnames
-                0x000013df      0x229 filter.o
+                0x000012d1      0x474 escalator.o
  .debug_pubnames
-                0x00001608      0x387 main.o
+                0x00001745      0x259 filter.o
  .debug_pubnames
-                0x0000198f       0x66 cbuffer.o
+                0x0000199e      0x3d9 main.o
  .debug_pubnames
-                0x000019f5      0x182 system.o
+                0x00001d77       0x66 cbuffer.o
  .debug_pubnames
-                0x00001b77       0x27 line.o
+                0x00001ddd      0x1b2 system.o
  .debug_pubnames
-                0x00001b9e       0xef station.o
+                0x00001f8f       0x27 line.o
  .debug_pubnames
-                0x00001c8d      0x1d8 log.o
+                0x00001fb6      0x11f station.o
  .debug_pubnames
-                0x00001e65       0x30 goodies.o
+                0x000020d5      0x208 log.o
  .debug_pubnames
-                0x00001e95      0x1a0 esc_types.o
+                0x000022dd       0x30 goodies.o
  .debug_pubnames
-                0x00002035       0x7a string.o
+                0x0000230d      0x1d0 esc_types.o
  .debug_pubnames
-                0x000020af       0xcb dictionary.o
+                0x000024dd       0x7a string.o
  .debug_pubnames
-                0x0000217a       0x87 sound.o
+                0x00002557       0xfb dictionary.o
  .debug_pubnames
-                0x00002201      0x1ea router.o
+                0x00002652       0x87 sound.o
  .debug_pubnames
-                0x000023eb        0xd /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+                0x000026d9      0x21a router.o
+ .debug_pubnames
+                0x000028f3        0xd /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
 
 .debug_info
  *(.debug_info)
@@ -1486,27 +1551,28 @@ LOAD /x86/lib/crtn.o
  *(.debug_varnames)
 OUTPUT(spider elf32-i386)
 
-.note           0x00000000      0x1cc
+.note           0x00000000      0x1e0
  .note          0x00000000       0x14 /usr/lib/gcc-lib/ntox86/2.95.2/crtbeginC++.o
  .note          0x00000014       0x14 abmain.o
  .note          0x00000028       0x14 alert.o
  .note          0x0000003c       0x14 archive.o
- .note          0x00000050       0x14 ctrl_widget.o
- .note          0x00000064       0x14 draw.o
- .note          0x00000078       0x14 escalator.o
- .note          0x0000008c       0x14 filter.o
- .note          0x000000a0       0x14 main.o
- .note          0x000000b4       0x14 cbuffer.o
- .note          0x000000c8       0x14 system.o
- .note          0x000000dc       0x14 line.o
- .note          0x000000f0       0x14 station.o
- .note          0x00000104       0x14 log.o
- .note          0x00000118       0x14 goodies.o
- .note          0x0000012c       0x14 esc_types.o
- .note          0x00000140       0x14 string.o
- .note          0x00000154       0x14 dictionary.o
- .note          0x00000168       0x14 sound.o
- .note          0x0000017c       0x14 router.o
- .note          0x00000190       0x14 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
- .note          0x000001a4       0x14 /x86/lib/libc.a(slog.o)
- .note          0x000001b8       0x14 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o
+ .note          0x00000050       0x14 cmd_pool.o
+ .note          0x00000064       0x14 ctrl_widget.o
+ .note          0x00000078       0x14 draw.o
+ .note          0x0000008c       0x14 escalator.o
+ .note          0x000000a0       0x14 filter.o
+ .note          0x000000b4       0x14 main.o
+ .note          0x000000c8       0x14 cbuffer.o
+ .note          0x000000dc       0x14 system.o
+ .note          0x000000f0       0x14 line.o
+ .note          0x00000104       0x14 station.o
+ .note          0x00000118       0x14 log.o
+ .note          0x0000012c       0x14 goodies.o
+ .note          0x00000140       0x14 esc_types.o
+ .note          0x00000154       0x14 string.o
+ .note          0x00000168       0x14 dictionary.o
+ .note          0x0000017c       0x14 sound.o
+ .note          0x00000190       0x14 router.o
+ .note          0x000001a4       0x14 /usr/lib/gcc-lib/ntox86/2.95.2/exceptions/libgcc.a(_cmpdi2.o)
+ .note          0x000001b8       0x14 /x86/lib/libc.a(slog.o)
+ .note          0x000001cc       0x14 /usr/lib/gcc-lib/ntox86/2.95.2/crtendC++.o

@@ -17,9 +17,9 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 #include <stdarg.h>
 
 //  #define WORD_OF (data, i) (word)((data>>i*16) & 0xFFFF)
+
 #define LOBYTE(data)	(data & 0x00FF)
 #define HIBYTE(data)	(data & 0xFF00) >> 8
-word CRC(const byte* buffer, int size);
 
 //#define ERROR(S) error_msg(__FILE__, __LINE__, S)
 //#define ERROR error_msg(__FILE__, __LINE__)
@@ -43,6 +43,9 @@ long file_size(FILE *fp);
 
 int extract_string(const char* src, char* dst, char first, char last);
 int translate_string(const char* src, char* dst, struct PxTransCtrl* trans_set);
+
+
+word CRC(const byte* buffer, int size);
 
 // Widget helpers
 unsigned long get_widget_scalar(PtWidget_t *widget, long type);
