@@ -18,9 +18,6 @@
 #define	BLOCK_COLOR		Pg_RED
 #define	RECEIVE_TIMEOUT		1
 
-#define CHECK_ADDRESS(addr) if (addr > 247) { SysMessage(ERROR_MSG, "Incorrect device address (%d)", addr); return 0; }
-#define CHECK_ORDER(lo, hi)	if (hi < lo) { SysMessage(ERROR_MSG, "Last address of requested block less then first"); return 0; }
-
 PtWidget_t*	metro_escalator::panel = NULL;
 pthread_mutex_t sendMutex = PTHREAD_MUTEX_INITIALIZER;
 metro_escalator* g_selectedEscalator = NULL;
@@ -198,10 +195,9 @@ void metro_escalator::UpdateEscalator()
 
 	if (enabled)
 	{
-//		printf("Enabled\n");
+		
 		if (online == 1)
 		{
-//			printf("Online mode %d %d\n", dataBlock.mode, dataBlock.status);
 			if (dataBlock.mode == 3)
 			{
 				switch(dataBlock.status)
@@ -805,7 +801,7 @@ void* Run(void* arg)
 						}
 						break;
 					case 4:
-						// пришел б~~ок
+						// пришел блок
 //						printf("In block %d esc %d\n", input[0], curEscalator->GetNumber());
 						if ((input[0] == curEscalator->GetNumber()) && input[2] == 76)
 						{
@@ -1275,6 +1271,16 @@ int PopupControlMenu( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 	metro_escalator*	curEscalator;
 	
 	PtGetResource(widget, Pt_ARG_POINTER, &curEscalator, 0);
+	
+
+//	begin: remove it!
+
+	
+	g_selectedEscalator = curEscalator;		
+	ApCreateModule(ABM_EscalatorMenu, widget, cbinfo);
+
+//	end: remove it!
+
 		
 	if (curEscalator->enabled && (curEscalator->online == 1) && (curEscalator->dataBlock.mode == 3))
 	{
@@ -1318,6 +1324,13 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 int MoveDown( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
+//(const byte escalator_id, const byte command, const int id_station, const int escalator_number) 
+Command *cmd=new Command(g_selectedEscalator->id, 0xE1, g_selectedEscalator->stationID, g_selectedEscalator->number);
+
+//begin: Remove it!!!
+g_CommandPool.Push(cmd);
+//end: Remove it!!!
+
 	if (g_selectedEscalator && g_selectedEscalator->enabled && g_selectedEscalator->online
 		&& (g_selectedEscalator->dataBlock.mode == 3))
 	{
@@ -1326,16 +1339,24 @@ int MoveDown( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		else if (g_selectedEscalator->prefDirection == DIRECTION_UP)
 		{
 			if (ConfirmDirection() == 1)
-				g_selectedEscalator->SendCommand(0xE1);
+				{
+				g_CommandPool.Push(cmd);
+//				g_selectedEscalator->SendCommand(0xE1); // commented for command pool
+				};
 		}
 //		else if ((g_selectedEscalator->prefDirection == DIRECTION_REVERSE) && (g_selectedEscalator->direction == DIRECTION_UP))
 		else if (g_selectedEscalator->prefDirection == DIRECTION_REVERSE)
 		{		
 			if (ConfirmDirection() == 1)
-				g_selectedEscalator->SendCommand(0xE1);
+				{
+				g_CommandPool.Push(cmd);
+//				g_selectedEscalator->SendCommand(0xE1);  // commented for command pool
+				}
 		}		
-		else
-			g_selectedEscalator->SendCommand(0xE1);
+		else	{
+				g_CommandPool.Push(cmd);
+//				g_selectedEscalator->SendCommand(0xE1);  // commented for command pool
+				};
 	}
 
 	return( Pt_CONTINUE );

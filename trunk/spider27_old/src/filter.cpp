@@ -225,7 +225,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 		}
 		
 	mainLog.FilterLogWnd();	
-
+/*
 	if (changed)
 	{
 		PtSetArg(&args[0], Pt_ARG_TEXT_STRING,  &message, strlen(message));
@@ -234,7 +234,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 	}
 
 		printf("Live\n");
-				
+*/				
 	return( Pt_CONTINUE );
 
 	}
@@ -525,11 +525,11 @@ int ResetFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo 
 	g_logFilter.messages.alertMsg = 1;
 	g_logFilter.messages.blockMsg = 1;
 	g_logFilter.messages.localMsg = 1;
-
+/*
 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING,  &message, strlen(message));
 	PtSetArg(&args[1], Pt_ARG_COLOR,  Pg_BLACK, 0);	
 	PtSetResources(ABW_log_status, 2, args);
-	
+*/
 	mainLog.FilterLogWnd();	
 	return( Pt_CONTINUE );
 

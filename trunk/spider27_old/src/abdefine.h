@@ -11,16 +11,12 @@ extern const int ABI_LogFilterDlg;
 #define ABM_LogFilterDlg                     &AbInternalLinks[ABI_LogFilterDlg]
 extern const int ABI_EscalatorMenu;
 #define ABM_EscalatorMenu                    &AbInternalLinks[ABI_EscalatorMenu]
+extern const int ABI_PrevCmdPoolDlg;
+#define ABM_PrevCmdPoolDlg                   &AbInternalLinks[ABI_PrevCmdPoolDlg]
 
 /* 'main_wnd' Window link */
 extern const int ABN_main_wnd;
 #define ABW_main_wnd                         AbGetABW( ABN_main_wnd )
-extern const int ABN_os_container;
-#define ABW_os_container                     AbGetABW( ABN_os_container )
-extern const int ABN_log_status;
-#define ABW_log_status                       AbGetABW( ABN_log_status )
-extern const int ABN_log_wnd;
-#define ABW_log_wnd                          AbGetABW( ABN_log_wnd )
 extern const int ABN_toolBar;
 #define ABW_toolBar                          AbGetABW( ABN_toolBar )
 extern const int ABN_EscConfigBtn;
@@ -31,6 +27,8 @@ extern const int ABN_ResetFilter;
 #define ABW_ResetFilter                      AbGetABW( ABN_ResetFilter )
 extern const int ABN_ArchiveBtn;
 #define ABW_ArchiveBtn                       AbGetABW( ABN_ArchiveBtn )
+extern const int ABN_CmdPoolBtn;
+#define ABW_CmdPoolBtn                       AbGetABW( ABN_CmdPoolBtn )
 extern const int ABN_AlertWnd;
 #define ABW_AlertWnd                         AbGetABW( ABN_AlertWnd )
 extern const int ABN_AlertMsg;
@@ -43,6 +41,10 @@ extern const int ABN_AlertCounter;
 #define ABW_AlertCounter                     AbGetABW( ABN_AlertCounter )
 extern const int ABN_Scheme;
 #define ABW_Scheme                           AbGetABW( ABN_Scheme )
+extern const int ABN_LogJournalPanel;
+#define ABW_LogJournalPanel                  AbGetABW( ABN_LogJournalPanel )
+extern const int ABN_log_wnd;
+#define ABW_log_wnd                          AbGetABW( ABN_log_wnd )
 
 /* 'interface' Picture link */
 extern const int ABN_interface;
@@ -59,8 +61,6 @@ extern const int ABN_left_scroll_disable;
 #define ABW_left_scroll_disable              AbGetABW( ABN_left_scroll_disable )
 extern const int ABN_right_scroll_disable;
 #define ABW_right_scroll_disable             AbGetABW( ABN_right_scroll_disable )
-extern const int ABN_station_wnd;
-#define ABW_station_wnd                      AbGetABW( ABN_station_wnd )
 extern const int ABN_green_up;
 #define ABW_green_up                         AbGetABW( ABN_green_up )
 extern const int ABN_grey_stop;
@@ -157,26 +157,28 @@ extern const int ABN_green_s_down;
 #define ABW_green_s_down                     AbGetABW( ABN_green_s_down )
 extern const int ABN_LedBalloon;
 #define ABW_LedBalloon                       AbGetABW( ABN_LedBalloon )
+extern const int ABN_station_wnd;
+#define ABW_station_wnd                      AbGetABW( ABN_station_wnd )
 
 /* 'LogFilterDlg' Dialog link */
 extern const int ABN_LogFilterDlg;
 #define ABW_LogFilterDlg                     AbGetABW( ABN_LogFilterDlg )
-extern const int ABN_StartMinNumeric;
-#define ABW_StartMinNumeric                  AbGetABW( ABN_StartMinNumeric )
-extern const int ABN_StartHourNumeric;
-#define ABW_StartHourNumeric                 AbGetABW( ABN_StartHourNumeric )
 extern const int ABN_CalendarStart;
 #define ABW_CalendarStart                    AbGetABW( ABN_CalendarStart )
 extern const int ABN_AllTimeRangeBtn1;
 #define ABW_AllTimeRangeBtn1                 AbGetABW( ABN_AllTimeRangeBtn1 )
-extern const int ABN_EndMinNumeric;
-#define ABW_EndMinNumeric                    AbGetABW( ABN_EndMinNumeric )
-extern const int ABN_EndHourNumeric;
-#define ABW_EndHourNumeric                   AbGetABW( ABN_EndHourNumeric )
+extern const int ABN_StartHourNumeric;
+#define ABW_StartHourNumeric                 AbGetABW( ABN_StartHourNumeric )
+extern const int ABN_StartMinNumeric;
+#define ABW_StartMinNumeric                  AbGetABW( ABN_StartMinNumeric )
 extern const int ABN_CalendarEnd;
 #define ABW_CalendarEnd                      AbGetABW( ABN_CalendarEnd )
 extern const int ABN_AllTimeRangeBtn2;
 #define ABW_AllTimeRangeBtn2                 AbGetABW( ABN_AllTimeRangeBtn2 )
+extern const int ABN_EndMinNumeric;
+#define ABW_EndMinNumeric                    AbGetABW( ABN_EndMinNumeric )
+extern const int ABN_EndHourNumeric;
+#define ABW_EndHourNumeric                   AbGetABW( ABN_EndHourNumeric )
 extern const int ABN_StationList;
 #define ABW_StationList                      AbGetABW( ABN_StationList )
 extern const int ABN_OneEscalatorBtn;
@@ -257,14 +259,28 @@ extern const int ABN_ArchiveLog;
 #define ABW_ArchiveLog                       AbGetABW( ABN_ArchiveLog )
 extern const int ABN_ArchiveLogWnd;
 #define ABW_ArchiveLogWnd                    AbGetABW( ABN_ArchiveLogWnd )
-extern const int ABN_ArchiveLogOpenBtn;
-#define ABW_ArchiveLogOpenBtn                AbGetABW( ABN_ArchiveLogOpenBtn )
 extern const int ABN_ArchiveLogCancelBtn;
 #define ABW_ArchiveLogCancelBtn              AbGetABW( ABN_ArchiveLogCancelBtn )
+extern const int ABN_ArchiveLogOpenBtn;
+#define ABW_ArchiveLogOpenBtn                AbGetABW( ABN_ArchiveLogOpenBtn )
 
-/* 'PrevCmdPullDlg' Dialog link */
-extern const int ABN_PrevCmdPullDlg;
-#define ABW_PrevCmdPullDlg                   AbGetABW( ABN_PrevCmdPullDlg )
+/* 'PrevCmdPoolDlg' Dialog link */
+extern const int ABN_PrevCmdPoolDlg;
+#define ABW_PrevCmdPoolDlg                   AbGetABW( ABN_PrevCmdPoolDlg )
+extern const int ABN_CmdPoolDlgBtnClose;
+#define ABW_CmdPoolDlgBtnClose               AbGetABW( ABN_CmdPoolDlgBtnClose )
+extern const int ABN_SendCommandBtn;
+#define ABW_SendCommandBtn                   AbGetABW( ABN_SendCommandBtn )
+extern const int ABN_ChancelCommandBtn;
+#define ABW_ChancelCommandBtn                AbGetABW( ABN_ChancelCommandBtn )
+extern const int ABN_CommandPoolRwLst;
+#define ABW_CommandPoolRwLst                 AbGetABW( ABN_CommandPoolRwLst )
+extern const int ABN_CmdPoolRwListStation;
+#define ABW_CmdPoolRwListStation             AbGetABW( ABN_CmdPoolRwListStation )
+extern const int ABN_CmdPoolRwListEscal;
+#define ABW_CmdPoolRwListEscal               AbGetABW( ABN_CmdPoolRwListEscal )
+extern const int ABN_CmdPoolRwListBtn;
+#define ABW_CmdPoolRwListBtn                 AbGetABW( ABN_CmdPoolRwListBtn )
 
 #define AbGetABW( n ) ( AbWidgets[ n ].wgt )
 
