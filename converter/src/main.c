@@ -64,6 +64,16 @@ main_WndOpenFile( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 	if (DlgStatus==0 && info.ret==Pt_FSDIALOG_BTN1)
 		{
+
+
+   if (	options_mode==0) 
+      {
+       read_messages (info.path);
+       }
+      else 
+       {
+       Move_Data(info.path);
+       };
 		printf ("\nSelected file :\n%s\n",info.path);
 		};
 
@@ -80,7 +90,7 @@ exit_nicely(PGconn *conn)
 }
 
 
-int Move_Data (file_name)
+int Move_Data (char *file_name)
 {
 
 char *pghost, *pgport, *pgoptions, *pgtty, *dbName, *query_text ;
@@ -260,3 +270,7 @@ releazed_app( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 	}
 
+int read_messages (char *filename)
+{
+return(Pt_CONTINUE);
+}
