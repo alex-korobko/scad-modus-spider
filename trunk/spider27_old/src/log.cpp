@@ -76,29 +76,29 @@ int Log::AddMessage(int msgID, int stationID, int escalatorID, time_t* saveTime,
 
 int Log::Save(const char* fileName)
 {
-	int		logFile;
+	FILE	*logFile;
 	dword	size;
 	char	signature[] = "LOGDAT";
 	LogRecord* curRecord;
 	
-	if ((logFile = open(fileName, O_RDWR | O_CREAT, O_BINARY)) < 0)
+	if ((logFile = fopen(fileName, "w")))
 	{
 		SysMessage(ERROR_MSG, "Fail to open log file [%s]", strerror(errno));
 		return 0;
 	}
 		
-	write(logFile, signature, strlen(signature));
+	fwrite(signature, strlen(signature),1,logFile);
 	size = records.GetSize();
-	write(logFile, &size, sizeof(size));
+	fwrite(&size, sizeof(size),1,logFile);
 	records.first();
 	while((curRecord = records.next()) != NULL)
 	{
-		write(logFile, &curRecord->msgID, sizeof(curRecord->msgID));
-		write(logFile, &curRecord->stationID, sizeof(curRecord->stationID));
-		write(logFile, &curRecord->escalatorID, sizeof(curRecord->escalatorID));
-		write(logFile, &curRecord->saveTime, sizeof(curRecord->saveTime));			
+		fwrite( &curRecord->msgID, sizeof(curRecord->msgID),1,logFile);
+		fwrite(&curRecord->stationID, sizeof(curRecord->stationID),1,logFile);
+		fwrite(&curRecord->escalatorID, sizeof(curRecord->escalatorID),1,logFile);
+		fwrite(&curRecord->saveTime, sizeof(curRecord->saveTime),1,logFile);			
 	}
-	close(logFile);
+	fclose(logFile);
 	SysMessage(INFO_MSG, "Save current log");
 
 	return 1;

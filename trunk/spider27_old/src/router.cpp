@@ -1,8 +1,8 @@
 /*******************************************************************************
- Programming - Alexander Klimenko
- Project - MetroNET
+ Programming - Alexander Klimenko, Alexei Korobko
+ Project - MetroNET, spider27_old
  Started at 27.12.00
- Last updated at 28.10.2002
+ Last updated at 29.06.2003
  Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 *******************************************************************************/
 
@@ -18,13 +18,12 @@ typedef struct {
 } RouteMsg;
 
 int 	activeHost = 0, breakLine = 0;
-int AsynchResponse(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic);
 int ChangeRoute(struct in_addr* dest, struct in_addr *gateway, int flags, int cmd);
-char	lineStatusRID[] = ".1.3.6.1.2.1.2.2.1.8.2";
 
 Net::Net()
 {
 	ip = 0;
+	curr_gateway_ip=0;
 	broken = 0;
 	next = NULL;
 	prev = NULL;
@@ -39,13 +38,6 @@ Router::Router()
 	routeTable = NULL;
 	leftLineTail = leftLine = new Net;
 	rightLineTail = rightLine = new Net;
-
-	init_mib();
-	init_snmp();
-
-	reqOidLen = sizeof(reqOid)/sizeof(reqOid[0]);
-	if (!read_objid(lineStatusRID, reqOid, &reqOidLen))
-	      SysMessage(ERROR_MSG, "can't read id %s", lineStatusRID);
 }
 
 void Router::AddLeftLeafGate(char* gate)
@@ -81,19 +73,24 @@ int Router::LoadLeft(const char* filename)
 	FILE*	fd;
 	char	addr[16];
 	Net* 	net = NULL;
+	struct in_addr tmp_IP1,tmp_IP2;
 
-	fd = fopen(filename, "rt");
+	fd = fopen(filename, "r");
 	if (fd)
 	{
 		fscanf(fd, "%d\n", &tableSize);		
-		if (tableSize)
+		if (tableSize!=EOF)
 		{
 			for(int i=0; i<tableSize; i++)
-			{
+			{	
 				fscanf(fd, "%s\n", addr);
-				printf("Load net %s\n", addr);
 				net = new Net;
 				net->ip = inet_addr(addr);
+				net->curr_gateway_ip=leftGate.s_addr;
+
+			 tmp_IP1.s_addr=net->ip;
+			 tmp_IP2.s_addr=net->curr_gateway_ip;
+
 				if (net)
 				{
 					leftLineTail->next = net;
@@ -112,15 +109,12 @@ int Router::LoadLeft(const char* filename)
 					return 0;
 				}
 			}
-			net->broken = -1;
-
 			fclose(fd);
 			return 1;
 		}
 		fclose(fd);
 		return 0;
 	}
-	
 	return 0;
 }
 
@@ -129,12 +123,11 @@ int Router::LoadRight(const char* filename)
 	FILE*	fd;
 	char	addr[16];
 	Net* 	net = NULL;
-
-	fd = fopen(filename, "rt");
+	fd = fopen(filename, "r");
 	if (fd)
 	{
 		fscanf(fd, "%d\n", &tableSize);		
-		if (tableSize)
+		if (tableSize!=EOF)
 		{
 			for(int i=0; i<tableSize; i++)
 			{
@@ -142,6 +135,7 @@ int Router::LoadRight(const char* filename)
 				printf("Load net %s\n", addr);
 				net = new Net;
 				net->ip = inet_addr(addr);
+				net->curr_gateway_ip=rightGate.s_addr;
 				if (net)
 				{
 					rightLineTail->next = net;
@@ -160,8 +154,6 @@ int Router::LoadRight(const char* filename)
 					return 0;
 				}
 			}
-			net->broken = -1;
-
 			fclose(fd);
 			return 1;
 		}
@@ -199,8 +191,236 @@ void* Routing(void* arg)
 	}
 }
 
+
+int ConnectToServer(in_addr_t addr, int port)
+{
+	int		sock;
+	struct	sockaddr_in address;
+	fd_set	readFD, writeFD, exFD;
+	struct timeval timeout;
+	int		flags;
+	int		result;
+
+	address.sin_addr.s_addr = addr;
+	address.sin_port = htons(port);
+	address.sin_family = AF_INET;
+
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (!sock)
+	{
+		printf( "fail to create sock [%s]", strerror(errno));
+		return 0;
+	}
+
+	if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+	{
+		printf ("fail to get file status flags [%s]", strerror(errno));
+		close(sock);
+		return 0;
+	}
+	
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+		printf("fail to set file status flags [%s]", strerror(errno));
+		close(sock);
+		return 0;
+	}
+
+	if ((result = connect(sock, (sockaddr*)&address, sizeof(address))) && errno != EINPROGRESS)
+	{
+		printf("fail to connect [%s]", strerror(errno));
+		close(sock);
+		return 0;
+	}
+
+	if (!result)
+	{
+		if (fcntl(sock, F_SETFL, flags) < 0)
+		{
+			printf("fail to set file status flags [%s]", strerror(errno));
+			close(sock);
+			return 0;
+		}
+		
+		return sock;
+	}
+
+	FD_ZERO(&readFD);
+	FD_SET(sock, &readFD);
+	writeFD = readFD;
+	exFD = readFD;
+
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+
+	result = select(sock + 1, &readFD, &writeFD, &exFD, &timeout);
+	if (result < 0)
+	{
+		printf("fail to select socket [%s]", strerror(errno));
+		close(sock);
+		return 0;
+	}
+	else if (!result)
+	{
+		printf("connect timeout expected [%s]", strerror(errno));
+		close(sock);
+		return 0;
+	}
+	else if (IsConnected(sock, &readFD, &writeFD, &exFD))
+	{
+		if (fcntl(sock, F_SETFL, flags) < 0)
+		{
+			printf("fail to set file status flags [%s]", strerror(errno));
+			close(sock);
+			return 0;
+		}
+		
+		return sock;
+	}
+	else
+	{
+		close(sock);
+		return 0;
+	}
+}
+
+
+int Receive(int sock, byte* buffer, int size)
+{
+	int readNum;
+
+	while (size > 0)
+	{
+    		readNum = recv(sock, buffer, 1, 0);
+    		if (readNum < 0)
+    		{
+        		if (errno == EINTR)
+            		continue;
+        		printf ("fail to receive data [%s]", strerror(errno));
+        		return 0;
+    		}
+    		if (readNum == 0)
+    		{
+        		printf ("fail to receive data [%s]", strerror(errno));
+        		return 0;
+    		}
+    		buffer += readNum;
+    		size -= readNum;
+	}
+
+	return 1;
+}
+
 void Router::Loop()
 {
+	Net*	curNet;
+	char	buffer[8];
+	int sock;
+	in_addr_t host_addr;
+	struct in_addr tmp_IP1, tmp_IP2;
+	
+ //  startup all hosts
+	curNet = leftLine->next;
+	printf("\nScan left\n");
+	while(curNet)
+	{
+		host_addr = (3 << 24) | curNet->ip;		
+		
+		sleep(15);
+		if (!(sock = ConnectToServer(host_addr, 7)))
+		{
+			 tmp_IP1.s_addr=curNet->ip;
+			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
+// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (old left)\n",inet_ntoa(tmp_IP2));
+// End: Printing 	current routing state
+			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
+	
+			if (curNet->curr_gateway_ip == leftGate.s_addr)
+			   {
+				curNet->curr_gateway_ip = rightGate.s_addr;
+				}
+			else { 
+				curNet->curr_gateway_ip = leftGate.s_addr;
+					};
+			 tmp_IP1.s_addr=curNet->ip;
+			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
+
+// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (new left)\n",inet_ntoa(tmp_IP2));
+// End: Printing 	current routing state
+
+			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
+			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; } ;
+		} ;
+		send(sock, "REQUEST", 7, 0);
+	
+		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;}  else { curNet->broken = 0;};
+		
+		buffer[7] = 0;
+		close(sock);
+		
+		
+		curNet = curNet->next;
+	};
+
+
+
+
+	curNet = rightLine->next;
+
+	printf("\nScan right\n");
+	while(curNet)
+	{
+		host_addr = (3 << 24) | curNet->ip;		
+		sleep(15);
+		if (!(sock = ConnectToServer(host_addr, 7)))
+		{
+			 tmp_IP1.s_addr=curNet->ip;
+			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
+
+// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (old right)\n",inet_ntoa(tmp_IP2));
+// End: Printing 	current routing state
+
+			 
+			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
+	
+			if (curNet->curr_gateway_ip == leftGate.s_addr)
+			   {
+				curNet->curr_gateway_ip = rightGate.s_addr;
+				}
+			else { 
+				curNet->curr_gateway_ip = leftGate.s_addr;
+					};
+			 tmp_IP1.s_addr=curNet->ip;
+			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
+
+// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (new right)\n",inet_ntoa(tmp_IP2));
+// End: Printing 	current routing state
+
+
+			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
+			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; } ;
+		} ;
+		send(sock, "REQUEST", 7, 0);
+	
+		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;}  else { curNet->broken = 0;};
+		
+		buffer[7] = 0;
+		close(sock);
+		
+		
+		curNet = curNet->next;
+	};
+
+
+/*
 	struct snmp_pdu 		*req;
 	struct snmp_session 	sess;
 	in_addr					addr;
@@ -212,7 +432,7 @@ void Router::Loop()
 	in_addr netAddr;
 	int						reroute = 0;
 
-  /* startup all hosts */
+ //  startup all hosts
 
 	curNet = leftLine->next;
 
@@ -389,39 +609,7 @@ void Router::Loop()
 		curNet = curNet->next;
 	}
 //	printf("End scan\n");
-}
-
-int AsynchResponse(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic)
-{
-	Net* net = (Net*)magic;
-//	struct snmp_pdu *req;
-	struct variable_list *vars;
-
-	if (operation == RECEIVED_MESSAGE)
-	{
-  		if (pdu->errstat == SNMP_ERR_NOERROR)
-		{
-			for(vars = pdu->variables; vars; vars = vars->next_variable)
-    				if (vars->type == ASN_INTEGER)
-    				{
-//		        		printf("Status %d\n", *(vars->val.integer));
-					switch(*(vars->val.integer))
-					{
-						case 1:
-							break;
-						default:
-							breakLine = 1;
-							break;
-					}
-  		      	}
-    		}
-	}
-  	else
-	    	breakLine = 1;
-
- 	activeHost = 0;
-	
-	return 1;
+*/
 }
 
 int ChangeRoute(struct in_addr* dest, struct in_addr *gateway, int flags, int cmd)
@@ -479,29 +667,3 @@ int ChangeRoute(struct in_addr* dest, struct in_addr *gateway, int flags, int cm
   	return 1;
 }
 
-int SendRouteMsg(in_addr* host, in_addr* gate)
-{
-	int 		sock;
- 	struct sockaddr_in address;
-
-	return 0;
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		SysMessage(ERROR_MSG,"fail to create socket [%s]", strerror(errno));
-		return 0;
-	}
-
-	address.sin_addr = *host;
-	address.sin_port = htons(2005);
-	address.sin_family = AF_INET;
-	
-	if (connect(sock, (struct sockaddr*)&address, sizeof(address)) < 0)
-	{
-		SysMessage(ERROR_MSG,"fail to connect [%s]", strerror(errno));
-		return 0;
-	}
-
-	send(sock, gate, sizeof(in_addr), 0);
-	return 1;
-}
