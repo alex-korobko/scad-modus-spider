@@ -1,2 +1,1 @@
-MYHDR = global.h cbuffer.h system.h line.h station.h  sound.h router.h\
-	log.h esc_types.h goodies.h map.h alert.h filter.h string.h dictionary.h
+MYHDR =../alert.h ../defines.h ../system.h  ../esc_types.h ../contain_metro_escalator_types.h ../escalator.h ../contain_metro_escalators.h ../command.h ../contain_cmd_pool.h ../station.h ../contain_metro_stations.h ../line.h ../contain_metro_lines.h ../dictionary.h ../contain_msg_dict.h ../router.h ../contain_log_rec.h

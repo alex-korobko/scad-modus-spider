@@ -1,16 +1,6 @@
 #ifndef __SOUND_H__
 #define __SOUND_H__
 
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/asoundlib.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <pthread.h>
-
 typedef struct
 {
     char    tag[4];
@@ -37,6 +27,7 @@ typedef struct
 class Sound
 {
 protected:
+/*
 	snd_pcm_t 	*pcmHandle;
     	int     			card;
 	int     			dev;
@@ -46,7 +37,7 @@ protected:
     	snd_pcm_channel_params_t 	pcmParams;
     	snd_pcm_channel_setup_t 	pcmSetup;
 	char*			filename;
-
+*/
 public:
 	Sound();
 	virtual ~Sound();

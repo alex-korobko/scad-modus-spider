@@ -1,175 +1,153 @@
-/* Standard headers */
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+/* Y o u r   D e s c r i p t i o n                       */
+/*                            AppBuilder Photon Code Lib */
+/*                                         Version 2.01  */
 
-#include <assert.h>
-
-/* Local headers */
-#include "ablibs.h"
 #include "global.h"
-#include "abimport.h"
-#include "proto.h"
 
-#include "sound.h"
-#include "alert.h"
+/*
+int
+ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
-AlertQueue::AlertQueue()
-{
-	lastMsgLength = 0;
-}
-
-AlertQueue::~AlertQueue()
-{
-	AlertRecord		*curRecord;
-	
-	alerts.first();
-	while(curRecord = alerts.next())
 	{
-		delete[] curRecord->msg;
-		delete curRecord;
-	}	
-}
 
-int AlertQueue::AddAlert(const char* msg)
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+
+
+	return( Pt_CONTINUE );
+
+	}
+
+*/
+
+void  alerts_container::push_back(alert_record new_alert_record) 
 {
-	PtMultiTextAttributes_t	attributes;
-	AlertRecord		*record;
-	int		msgLength;
 	PtArg_t		arg;
-	char		buffer[20];
-	int			counter;
+	vector<char> tmp_str;
+	tmp_str.resize(20);
+	PtMultiTextAttributes_t	*attributes=PtMultiTextCreateAttributes(NULL);
 	
-	if (!msg)
-		return 0;
-		
-	record = new AlertRecord;
-	assert(record);
+	
+	PtMultiTextModifyText(ABW_AlertMsg, 
+										0,
+										0,
+										-1,
+										new_alert_record.get_string().c_str(),
+										new_alert_record.get_string().size(),
+										attributes,
+										Pt_MT_TEXT_COLOR);
 
-	msgLength = 	strlen(msg);
-	record->time = time(NULL);
-	record->msg = new char[msgLength+1];
-	assert(record->msg);
-	strcpy(record->msg, msg);
-	
-	alerts.Push(record);
-		
-	attributes.font = Pt_DEFAULT_FONT;
-	attributes.background_color = Pt_DEFAULT_COLOR;
-	attributes.text_color = Pt_DEFAULT_COLOR;
-/*	switch(type)
-	{
-		case 0:
-			attributes.text_color = PgRGB(255,0,0);
-			break;
-		case 1:
-			attributes.text_color = PgRGB(0,120,0);
-			break;
-		case 2:
-			attributes.text_color = PgRGB(0,0,120);
-			break;
-		default:
-			attributes.text_color = Pt_DEFAULT_COLOR;
-			break;			
-	}*/
-	
-	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, msg, strlen(msg), &attributes, Pt_MT_TEXT_COLOR);
-	lastMsgLength = msgLength;
-	
-	counter = alerts.GetSize();
-	itoa(counter, buffer, 10);
-	
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
-	PtSetResources(ABW_AlertCounter, 1, &arg);
-	
-	if (counter == 1)
+	if (alerts_stack.empty()) // will adding first alert
 	{
 		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED | Pt_GHOST);
 		PtSetResources(ABW_AlertOK, 1, &arg); 
 	}
+
+	alerts_stack.push_back(new_alert_record);
+
+	itoa(alerts_stack.size(), &tmp_str[0], 10);
 	
-	strftime(buffer, 20, "%H:%M:%S", localtime(&record->time));
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
+	PtSetArg(&arg, Pt_ARG_TEXT_STRING, &tmp_str[0], 0);
+	PtSetResources(ABW_AlertCounter, 1, &arg);
+	
+	time_t tmp_time=new_alert_record.get_time();	
+	
+	strftime(&tmp_str[0], tmp_str.size(), "%H:%M:%S", localtime (&tmp_time) );
+	PtSetArg(&arg, Pt_ARG_TEXT_STRING, &tmp_str[0], 0);
 	PtSetResources(ABW_AlertTime, 1, &arg);
 	
-//	g_sound.Play("test.wav");
+//	g_sound.play("test.wav");
+};		
+
+
+void  alerts_container::pop_back() 
+{
+	PtArg_t		arg;
+	PtMultiTextAttributes_t	*attributes=PtMultiTextCreateAttributes(NULL);
+
+	alerts_stack.pop_back();
+
+	if (!alerts_stack.empty())
+	{					
+		vector<char> tmp_str;
+		tmp_str.resize(20);
+
+		PtMultiTextModifyText(ABW_AlertMsg, 
+											0,
+											0,
+											-1,
+											alerts_stack.rbegin()->get_string().c_str(),
+											alerts_stack.rbegin()->get_string().size(),
+											attributes,
+											Pt_MT_TEXT_COLOR);
+
+		itoa(alerts_stack.size(), &tmp_str[0], 10);
 	
-	return 1;
-}
+		PtSetArg(&arg, Pt_ARG_TEXT_STRING, &tmp_str[0], 0);
+		PtSetResources(ABW_AlertCounter, 1, &arg);
+
+		time_t tmp_time=alerts_stack.rbegin()->get_time();		
+		strftime(&tmp_str[0], tmp_str.size(), "%H:%M:%S", localtime(&tmp_time) );
+		PtSetArg(&arg, Pt_ARG_TEXT_STRING, &tmp_str[0], 0);
+		PtSetResources(ABW_AlertTime, 1, &arg);
+
+	} else {
+		PtMultiTextModifyText(ABW_AlertMsg, 
+											0,
+											0,
+											-1,
+											"",
+											0,
+											attributes,
+											Pt_MT_TEXT_COLOR);
+
+		PtSetArg(&arg, Pt_ARG_TEXT_STRING, "0", 0);
+		PtSetResources(ABW_AlertCounter, 1, &arg);
+		
+		PtSetArg(&arg, Pt_ARG_TEXT_STRING, "", 0);
+		PtSetResources(ABW_AlertTime, 1, &arg);	
+		
+		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
+		PtSetResources(ABW_AlertOK, 1, &arg); 
+	};
+
+};
+
 
 int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
-	AlertRecord		*curRecord;
-	PtMultiTextAttributes_t	attributes;
-	AlertRecord		*record;
-	int		msgLength;
 	PtArg_t		arg;
-	char		buffer[20];
-	int			counter;
-	int lastMsgLength;
-	
-//	g_alertQueue.alerts.last();
-	record = g_alertQueue.alerts.Pop();
-	if (record)
-	{
-		lastMsgLength = strlen(record->msg);	
-		delete[] record->msg;
-		delete record;	
-	}
-	
-	record = g_alertQueue.alerts.last();
-	if (record)
-	{
-	msgLength = 	strlen(record->msg);
-			
-	attributes.font = Pt_DEFAULT_FONT;
-	attributes.background_color = Pt_DEFAULT_COLOR;
-	attributes.text_color = Pt_DEFAULT_COLOR;
 
-	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, record->msg, strlen(record->msg), &attributes, Pt_MT_TEXT_COLOR);
-	counter = g_alertQueue.alerts.GetSize();
-	itoa(counter, buffer, 10);
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
-	PtSetResources(ABW_AlertCounter, 1, &arg);
-	
-	strftime(buffer, 20, "%H:%M:%S", localtime(&record->time));
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
-	PtSetResources(ABW_AlertTime, 1, &arg);
-	}
-	else
+	if (!g_alerts.empty())
 	{
-	attributes.font = Pt_DEFAULT_FONT;
-	attributes.background_color = Pt_DEFAULT_COLOR;
-	attributes.text_color = Pt_DEFAULT_COLOR;
-	
-	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, "", 0, &attributes, Pt_MT_TEXT_COLOR);
+		g_alerts.pop_back();
+	} else { //it`s impossible - pop_back of last alert mast turn off button
+		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
+		PtSetResources(ABW_AlertOK, 1, &arg); 	
+	};
 
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, "0", 0);
-	PtSetResources(ABW_AlertCounter, 1, &arg);
-		
-	PtSetArg(&arg, Pt_ARG_TEXT_STRING, "", 0);
-	PtSetResources(ABW_AlertTime, 1, &arg);	
-	}	
-	
 	return( Pt_CONTINUE );
 }
 
 
 int
 ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
 	PtArg_t		arg;
-	int 	counter = g_alertQueue.alerts.GetSize();
-	
-		if (!counter)
-		{
+	if (g_alerts.empty())
+	{
 		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
 		PtSetResources(ABW_AlertOK, 1, &arg); 
-		}
+	}
 		
 	return( Pt_CONTINUE );
 
 	}
-

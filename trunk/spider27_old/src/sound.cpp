@@ -1,4 +1,4 @@
-#include "sound.h"
+#include "global.h"
 
 const char *RiffId = "RIFF";
 const char *WaveId = "WAVE";
@@ -8,13 +8,16 @@ int CheckHdr(FILE * fp);
 
 Sound::Sound()
 {
+/*
 	card = 0;
 	dev = 0;
 	pcmHandle = NULL;
+*/
 }
 
 Sound::~Sound()
 {
+/*
 	if (pcmHandle)
 	    	snd_pcm_plugin_flush(pcmHandle, SND_PCM_CHANNEL_PLAYBACK);
 
@@ -27,10 +30,12 @@ Sound::~Sound()
 	card = 0;
 	dev = 0;
 	pcmHandle = NULL;
+*/
 }
 
 int Sound::Init()
 {
+/*
  	if (snd_pcm_open_preferred(&pcmHandle, &card, &dev, SND_PCM_OPEN_PLAYBACK) < 0)
  		return 0;
 
@@ -76,12 +81,13 @@ int Sound::Init()
 
 	if (snd_mixer_open(&mixHandle, card, pcmSetup.mixer_device) < 0)
 		return 0;
-
+*/
 	return 1;	
 }
 
 int Sound::Play(char* name)
 {
+/*
 	pthread_attr_t      attr;
 	
 	return 0;
@@ -95,12 +101,13 @@ int Sound::Play(char* name)
 		printf("Error: start thread\n");
 		return 0;
 	}
-
+*/
     	return 1;
 }
 
 int FindTag (FILE * fp, const char *tag)
 {
+/*
     	int     	retVal = 0;
     	RiffTag tagBfr = {"", 0};
 
@@ -120,10 +127,13 @@ int FindTag (FILE * fp, const char *tag)
 
     	// Return the result of our operation
     	return retVal;
+  */
+  return 1;
 }
 
 int CheckHdr(FILE * fp)
 {
+/*
     	RiffHdr riffHdr = {"", 0};
 
     	// Read the header and, if successful, play the file
@@ -133,12 +143,14 @@ int CheckHdr(FILE * fp)
 
     	if (strncmp (riffHdr.riff, RiffId, strlen(RiffId)) || strncmp(riffHdr.wave, WaveId, strlen(WaveId)))
         	return -1;
+*/
 
    	return 0;
 }
 
 void* Player(void* arg)
 {
+/*
 	FILE*		fd;
 	WaveHdr	wavHdr;
 	int		samples;
@@ -215,6 +227,6 @@ void* Player(void* arg)
     }
 
     fclose(fd);
-    
+*/    
     return 0;
 }
