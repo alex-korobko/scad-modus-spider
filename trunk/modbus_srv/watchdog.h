@@ -33,7 +33,7 @@ if (interval==1) {sleep_interval=200000;};
 
 while(1){
 	out8(port_nmap, (uint8_t) interval);
-	printf ("Out to port %d\n", (uint8_t) interval);
+//	printf ("Out to port %d\n", (uint8_t) interval);
 	usleep (sleep_interval);
 	}
 }

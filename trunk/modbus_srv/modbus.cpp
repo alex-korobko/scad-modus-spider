@@ -22,6 +22,8 @@ Copyright (C) 2000 - 2002 SCAD Ltd. (software development group)
 #define CHECK_ADDRESS(addr) if (addr > 247) { Log(ERROR, "Incorrect device address (%d)", addr); return 0; }
 #define CHECK_ORDER(lo, hi)	if (hi < lo) { Log(ERROR, "Last address of requested block less then first"); return 0; }
 
+#define TC_FLUSH_COUNT 10
+
 CmdPool 				outBuffer;
 pthread_mutex_t 	mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  		condvar = PTHREAD_COND_INITIALIZER;
@@ -147,6 +149,7 @@ void* Receiver(void* arg)
 	byte			input[MODBUS_BUFFER_SIZE];
 	int				size = 0;
 	int				noResponse = 0;
+	int 			count_tcflush;
 	
 /* Начало переменные для учета времени */
 	uint64_t before_all, after_all,before=0,after=0, cps = SYSPAGE_ENTRY( qtime )->cycles_per_sec;
@@ -155,7 +158,7 @@ void* Receiver(void* arg)
 	int debug_cou;
 /*Конец - отладочная переменная */
 
-	// если не передан указатель на ModBus_c - до свиданья
+	// если не передан указаль на ModBus_c - до свиданья
 	if (!arg)
 	{
 		Log(ERROR, "pointer to ModBus intstance not initialized");
@@ -238,8 +241,10 @@ void* Receiver(void* arg)
 
 		// выжидаем паузу между пакетами
 		readFd = allFd;
+		count_tcflush=0;
 		do
 		{
+			
 			if (g_debugMode) {before=ClockCycles();};
 			result = select(port + 1, &readFd, NULL, NULL, &silenceTimeout);
 			if (g_debugMode) {after=ClockCycles();};
@@ -258,8 +263,13 @@ void* Receiver(void* arg)
 				// если что-то есть в буффере - очистить
 				tcflush(port, TCIOFLUSH);
 				Log(DEBUG, "Flush garbage into COM-port\n");
+				count_tcflush++;
+				if (count_tcflush>TC_FLUSH_COUNT) 		
+						break;
 			}
-			
+		
+					
+											
 		} while (result > 0);
 
 		if (result < 0)
@@ -275,7 +285,7 @@ void* Receiver(void* arg)
 		if (g_debugMode) {before_all=ClockCycles();};
 		write(port, &output[2], size-2);
 	
-		if (tcdrain(port)<0) {Log(ERROR,"In tcdrain [%s]",strerror(errno));};
+//		if (tcdrain(port)<0) {Log(ERROR,"In tcdrain [%s]",strerror(errno));};
 		if (g_debugMode) {before=ClockCycles();};
 //		usleep((int)((size+2)*timeout*1000000));
 
