@@ -1,12 +1,9 @@
 #include "global.h"
 
-const char *RiffId = "RIFF";
-const char *WaveId = "WAVE";
+string riff_Id("RIFF");
+string wave_Id("WAVE");
 
-int FindTag (FILE * fp, const char *tag);
-int CheckHdr(FILE * fp);
-
-Sound::Sound()
+sound::sound()
 {
 /*
 	card = 0;
@@ -15,7 +12,7 @@ Sound::Sound()
 */
 }
 
-Sound::~Sound()
+sound::~sound()
 {
 /*
 	if (pcmHandle)
@@ -33,7 +30,7 @@ Sound::~Sound()
 */
 }
 
-int Sound::Init()
+bool sound::init()
 {
 /*
  	if (snd_pcm_open_preferred(&pcmHandle, &card, &dev, SND_PCM_OPEN_PLAYBACK) < 0)
@@ -82,15 +79,14 @@ int Sound::Init()
 	if (snd_mixer_open(&mixHandle, card, pcmSetup.mixer_device) < 0)
 		return 0;
 */
-	return 1;	
+	return true;	
 }
 
-int Sound::Play(char* name)
+bool sound::play(string name)
 {
 /*
 	pthread_attr_t      attr;
 	
-	return 0;
 
 	filename = name;
 	pthread_attr_init(&attr);
@@ -102,10 +98,10 @@ int Sound::Play(char* name)
 		return 0;
 	}
 */
-    	return 1;
+    	return true;
 }
 
-int FindTag (FILE * fp, const char *tag)
+static bool find_tag (FILE * fp, string tag)
 {
 /*
     	int     	retVal = 0;
@@ -128,10 +124,10 @@ int FindTag (FILE * fp, const char *tag)
     	// Return the result of our operation
     	return retVal;
   */
-  return 1;
+  return true;
 }
 
-int CheckHdr(FILE * fp)
+static bool check_hdr(FILE * fp)
 {
 /*
     	RiffHdr riffHdr = {"", 0};
@@ -145,7 +141,7 @@ int CheckHdr(FILE * fp)
         	return -1;
 */
 
-   	return 0;
+   	return true;
 }
 
 void* Player(void* arg)

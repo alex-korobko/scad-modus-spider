@@ -320,4 +320,6 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 
 };
 
+extern system_settings g_system_settings;
+
 #endif

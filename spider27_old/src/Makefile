@@ -1,5 +1,7 @@
 include abplatform
 
+.POHNY: shr app proto install test create_test
+
 shr:
 	for i in ${DIRS} ; do (cd $$i && $(MAKE) shr) ; done
 
@@ -14,3 +16,9 @@ clean:
 
 install:
 	for i in ${DIRS} ; do (cd $$i && $(MAKE) install) ; done
+
+test: 
+	echo  '//Don`t edit that file! It was created automatically\n#define __UNIT_TESTING__' > test_cond.h
+
+untest: 
+	echo  '//Don`t edit that file! It was created automatically' > test_cond.h

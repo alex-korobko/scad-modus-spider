@@ -44,6 +44,9 @@
 
 using namespace std;
 
+//Automatically generated file that contain defenition __UNIT_TESTING__ if compiling with unit tests
+#include "test_cond.h"
+
 #include "defines.h"
 
 #include "system.h"
@@ -88,9 +91,20 @@ extern cmd_pool_container g_CommandPool;
 #include "contain_log_rec.h"
 extern log_records_container  g_main_log, g_archive_log;
 
-// #include "sound.h"
+#include "sound.h"
+extern sound g_sound;
 
 #include "alert.h"
 extern alerts_container g_alerts;
+
+extern int g_chanID;
+extern pthread_t	g_pingTID, g_timerTID;
+
+
+#ifdef __UNIT_TESTING__
+#include "unit_tests/unit_tests.h"
+#endif
+
+
 
 #endif

@@ -4,16 +4,16 @@
 
 ifdef DBG
 DBG_RELEASE = -O3 -fomit-frame-pointer
-DBG_DEBUG = -O0 -g
+DBG_DEBUG = -g
 DEBUG=$(DBG_$(DBG))
 endif
 
 ifndef DEBUG
-DEBUG = -g -O0
+DEBUG = -g
 endif
 
 ifndef OPTIM
-OPTIM = -O
+OPTIM = -O0
 endif
 
 include	../abOfiles
@@ -35,10 +35,10 @@ CC  = qcc
 CXX = qcc
 LD  = qcc
 
-CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I.
+CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I. -I /usr/local/include/ -L /usr/local/lib/
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) -lphexlib -lsocket $(ABLIB) $(PHABOPTS)
-SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket  $(ABLIB) $(PHABOPTS)
+SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket -lcppunit $(ABLIB) $(PHABOPTS) 
 
 VPATH = ..
 

@@ -33,4 +33,6 @@ class alerts_container
 		void  pop_back();
 };
 
+extern alerts_container g_alerts;
+
 #endif

@@ -1,1 +1,1 @@
-ABOBJ = abmain.o alert.o callbacks.o draw.o escalator.o main.o 
+ABOBJ = abmain.o callbacks.o draw.o main.o 

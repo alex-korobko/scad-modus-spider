@@ -24,7 +24,7 @@ typedef struct
     short   bitsPerSample;
 } WaveHdr;
 
-class Sound
+class sound
 {
 protected:
 /*
@@ -39,10 +39,10 @@ protected:
 	char*			filename;
 */
 public:
-	Sound();
-	virtual ~Sound();
-	int Init();
-	int Play(char* filename);
+	sound();
+	~sound();
+	bool init();
+	bool play(string filename);
 	friend void* Player(void* arg);
 };
 

@@ -88,4 +88,7 @@ return (true);
 
 }; // class metro_escalators_container
 
+
+extern  metro_escalators_container g_escalators;
+
 #endif
