@@ -35,10 +35,10 @@ CC  = qcc
 CXX = qcc
 LD  = qcc
 
-CFLAGS  = -V$(PLATFORM) -w5 $(OPTIM) $(DEBUG) $(PHABOPTS) -I.
+CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I.
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -V$(PLATFORM) -Bstatic $(DEBUG) -l phexlib -l socket $(ABLIB) $(PHABOPTS)
-SDFLAGS = -V$(PLATFORM) -Bdynamic $(DEBUG) -l phexlib -l socket -l asound $(ABLIB) $(PHABOPTS)
+LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) -lphexlib -lsocket $(ABLIB) $(PHABOPTS)
+SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket  $(ABLIB) $(PHABOPTS)
 
 VPATH = ..
 
