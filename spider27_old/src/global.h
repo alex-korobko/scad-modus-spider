@@ -1,110 +1,96 @@
-/* Header "global" for probe Application */
-
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
-#define __DEBUG__
+#include <Ap.h>
+#include <Ph.h>
 
-#ifdef DEFINE_GLOBALS
-
-#define GLOBAL
-#define INIT(x) = x
-
-#else
-
-#define GLOBAL extern
-#define INIT(x)
-
-#endif
-
-/* global variables */
+#include <photon/PxProto.h>
+#include <photon/Pf.h>
 
 #include <sys/socket.h>
+#include <sys/syspage.h>
+#include <sys/dcmd_chr.h>
+#include <sys/neutrino.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+// #include <sys/asoundlib.h>
+#include <sys/select.h>
+#include <sys/slog.h>
+#include <sys/slogcodes.h>
 
-// #include "map.h"
-#include "list.h"
-#include "log.h"
-#include "router.h"
+#include <net/route.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-// pre-release
+#include <pthread.h>
 
-#include "defines.h"
-#include "esc_types.h"
-#include "alert.h"
-#include "filter.h"
-#include "dictionary.h"
-#include "sound.h"
-#include "line.h"
-#include "station.h"
-#include "escalator.h"
-#include "cmd_pool.h"
+#include <fcntl.h>
+#include <devctl.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
 
-#include <list>
+#include <string>
 #include <map>
+#include <list>
+#include <vector>
+#include <algorithm>
 
-//void SlidePanel();
+/* Local headers */
+#include "ablibs.h"
+#include "abimport.h"
+#include "proto.h"
 
 using namespace std;
 
-GLOBAL ApDBase_t*  widget_dbase;
-GLOBAL struct PxTransCtrl* translate_set; 
-//GLOBAL int panelized INIT(0);
-GLOBAL Log mainLog;
-GLOBAL Log 		g_archiveLog;
-GLOBAL metro_line*			g_lines INIT(NULL);
-GLOBAL metro_station*		g_stations INIT(NULL);
-GLOBAL metro_escalator*		g_escalators INIT(NULL);
-GLOBAL int						g_lineNum INIT(0);
-GLOBAL int						g_stationNum  INIT(0);
-GLOBAL int						g_escalatorNum  INIT(0);
-GLOBAL map<int, DictEntry, DictEntry::ltint>	g_msgDictionary;
-GLOBAL Sound					g_sound;
-GLOBAL	 Router					g_router;
-GLOBAL	 list<Command>		g_CommandPool;
+#include "defines.h"
 
-// pre-release
-GLOBAL Type 	*g_escTypes INIT(0);
-GLOBAL int 		g_escTypeNum INIT(0);
-GLOBAL LogFilter		g_logFilter;
+#include "system.h"
+extern system_settings g_system_settings ;
 
-GLOBAL AlertQueue		g_alertQueue;
-GLOBAL uchar_t*			g_msgDialogFont INIT(0);
-GLOBAL int				g_chanID INIT(-1);
-GLOBAL FILE*			g_debugFile INIT(0);
+#include "router.h"
+extern router g_router;
+/*****************************************************************************
+*	Container class for messages dictionary - wrapper of STL container map 			*
+*	Container class for metro escalator types - wrapper of STL container map*
+*	Container class for metro escalators - wrapper of STL container map 						*
+*	Container class for metro stations - wrapper of STL container map 								*
+*	Container class for metro liness - wrapper of STL container map 										*
+*	Container class for command pool - wrapper of STL container list 									*
+*	Container class for log records - wrapper of STL container vector 			*
+*	Container class for alerts - wrapper of STL container vector with stack functions*
+*****************************************************************************/
+#include "dictionary.h"
+#include "contain_msg_dict.h"
+extern msg_dict_container g_msgDictionary;
 
-#define		ERROR_MSG	0
-#define		DEBUG_MSG	1
-#define		INFO_MSG		2
+#include "esc_types.h"
+#include "contain_metro_escalator_types.h"
+extern esc_types_container g_metro_escalator_types;
 
-// COLORS
-#define		RED_BTN_COLOR				PgRGB(210,0,0)
-#define		BLUE_TEXT_COLOR				PgRGB(63,58,110)
-#define		BLUE_BTN_COLOR				PgRGB(61,87,181)
-#define		LIGHTBLUE_BTN_COLOR		PgRGB(182,202,255)
-#define		GREEN_BTN_COLOR				PgRGB(52, 134, 34)
-#define		YELLOW_TEXT_COLOR		PgRGB(254, 254, 85)
-#define		DISABLE_BTN_COLOR			PgRGB(190, 190, 190)
-#define		DISABLE_TEXT_COLOR		PgRGB(100, 100, 100)
-#define		PANEL_COLOR					PgRGB(170, 185, 202)
+#include "escalator.h"
+#include "contain_metro_escalators.h"
+extern  metro_escalators_container g_escalators;
 
-#define		ALL_ESCALATORS 			for(int i=0; i<g_escalatorNum; i++)
+#include "station.h"
+#include "contain_metro_stations.h"
+extern metro_stations_container g_stations;
 
-#define		SYSTEM_TIMER			_PULSE_CODE_MINAVAIL
-#define		PING_TIMEOUT			2000000 // мкс
-#define		SYSTEM_TICK				1 // c
+#include "line.h"
+#include "contain_metro_lines.h"
+extern metro_lines_container g_lines;
 
-#define		DIRECTION_STOP		0
-#define		DIRECTION_UP			1
-#define		DIRECTION_DOWN		2
-#define		DIRECTION_REVERSE		3
+#include "command.h"
+#include "contain_cmd_pool.h"
+extern cmd_pool_container g_CommandPool;
 
-#define		STATE_UP_PE			2
-#define		STATE_DOWN_PE		3
-#define		STATE_UP_SE			4
-#define		STATE_DOWN_SE		5
-#define		STATE_STOP				6
+#include "contain_log_rec.h"
+extern log_records_container  g_main_log, g_archive_log;
 
-#define CHECK_ADDRESS(addr) if (addr > 247) { SysMessage(ERROR_MSG, "Incorrect device address (%d)", addr); return 0; }
-#define CHECK_ORDER(lo, hi)	if (hi < lo) { SysMessage(ERROR_MSG, "Last address of requested block less then first"); return 0; }
+// #include "sound.h"
+
+#include "alert.h"
+extern alerts_container g_alerts;
 
 #endif

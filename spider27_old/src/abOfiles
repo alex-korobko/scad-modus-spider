@@ -1,1 +1,1 @@
-ABOBJ = abmain.o alert.o archive.o cmd_pool.o ctrl_widget.o draw.o escalator.o filter.o main.o 
+ABOBJ = abmain.o alert.o callbacks.o draw.o escalator.o main.o 

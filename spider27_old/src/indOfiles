@@ -1,2 +1,1 @@
-MYOBJ = cbuffer.o system.o line.o station.o log.o goodies.o esc_types.o string.o dictionary.o \
-	sound.o router.o
+MYOBJ = system.o command.o esc_types.o station.o router.o

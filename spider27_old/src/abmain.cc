@@ -47,7 +47,8 @@ main ( int argc, char *argv[] )
 
 	{
 
-	_Ap_.Ap_winstate = 0;
+	_Ap_.Ap_winpos.x  = _Ap_.Ap_winpos.y  = AB_LOCKED;
+	_Ap_.Ap_winsize.y = _Ap_.Ap_winsize.x = AB_LOCKED;
 
 	/* AppBuilder Initialization */
 	ApInitialize( argc, argv, &AbContext );
@@ -66,25 +67,25 @@ main ( int argc, char *argv[] )
 
 static const ApClassTab_t ClassTable[] = {
 	{ "PtWindow", &PtWindow },
-	{ "PtPane", &PtPane },
-	{ "PtClock", &PtClock },
+	{ "PtFileSel", &PtFileSel },
 	{ "PtButton", &PtButton },
-	{ "PtMultiText", &PtMultiText },
-	{ "PtLabel", &PtLabel },
+	{ "PtOSContainer", &PtOSContainer },
 	{ "PtRawList", &PtRawList },
 	{ "PtDivider", &PtDivider },
-	{ "PtRect", &PtRect },
-	{ "PtPanelGroup", &PtPanelGroup },
-	{ "PtCalendar", &PtCalendar },
-	{ "PtToggleButton", &PtToggleButton },
-	{ "PtNumericInteger", &PtNumericInteger },
-	{ "PtComboBox", &PtComboBox },
-	{ "PtGroup", &PtGroup },
-	{ "PtSeparator", &PtSeparator },
+	{ "PtPane", &PtPane },
 	{ "PtList", &PtList },
+	{ "PtLabel", &PtLabel },
+	{ "PtGroup", &PtGroup },
+	{ "PtToggleButton", &PtToggleButton },
 	{ "PtMenu", &PtMenu },
-	{ "PtOSContainer", &PtOSContainer },
-	{ "PtFileSel", &PtFileSel },
+	{ "PtPanelGroup", &PtPanelGroup },
+	{ "PtNumericInteger", &PtNumericInteger },
+	{ "PtCalendar", &PtCalendar },
+	{ "PtSeparator", &PtSeparator },
+	{ "PtComboBox", &PtComboBox },
+	{ "PtRect", &PtRect },
+	{ "PtClock", &PtClock },
+	{ "PtMultiText", &PtMultiText },
 	{ NULL, NULL }
 	};
 

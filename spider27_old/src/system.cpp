@@ -1,16 +1,4 @@
-/*******************************************************************************
-Programming - Alexander Klimenko
-Project - MetroNET
-Started at 27.12.00
-Last updated at 03.01.01
-Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
-*******************************************************************************/
-
-#include <photon/PxProto.h>
-#include <sys/slog.h>
-#include <sys/slogcodes.h>
 #include "global.h"
-#include "system.h"
 
 byte g_CRCHi[] = {
 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
@@ -55,139 +43,131 @@ byte g_CRCLo[] = {
 };
 
 
-void error_msg(char* file_name, int line, const char* msg)
+void system_settings::sys_message(const int type, const string mess_text)
 {
-    if (!msg)
-		printf("Error in %s at line %d: %s\n", file_name, line, strerror(errno));
-    else
-		printf("Error in %s at line %d: %s\n", file_name, line, msg);
-}
+string buffer;
+buffer.reserve(mess_text.size()+12);
 
-long file_size(FILE *fp)
-{
-	long int save_pos;
-	long size_of_file;
-	
-	save_pos = ftell(fp);
-	
-	fseek(fp, 0L, SEEK_END);
-	
-	size_of_file = ftell(fp);
-
-	fseek(fp, save_pos, SEEK_SET);
-	
-	return size_of_file;
-}
-
-int extract_string(const char* src, char* dst, char first, char last)
-{
-	char *first_char, *last_char;
-	int size;
-	
-	first_char = strchr((char*)src, first);
-	if (!first_char)
-		return 0;
-	last_char = strrchr((char*)src, last);
-	if (!last_char)
-		return 0;
-	size = last_char - first_char - 1;
-	memcpy(dst, first_char + 1, size);
-	dst[size] = '\0';	
-	
-	return 1;
-}
-	
-int translate_string(const char* src, char* dst, struct PxTransCtrl* trans_set)
-{	
-    char *translated;
-    int src_len, dst_len, taken, made;
-    
-    src_len = strlen(src);
-    if (src != NULL &&
-	(translated = (char*)malloc((src_len + 1) * MB_LEN_MAX)) != NULL)
-    {
-	if ((dst_len = PxTranslateToUTF(trans_set, src, src_len + 1, &taken,
-					translated, (src_len + 1) * MB_LEN_MAX,
-					&made)) != -1)
-	{
-	    strcpy(dst, translated);
-	    free(translated);
-	    return 1;
-	}
-	else
-	{
-	    free(translated);
-	    return 0;
-	}
-    }
-    else
-      return 0;
-}
-
-unsigned long get_widget_scalar(PtWidget_t *widget, long type)
-{
-	PtArg_t arg;
-	PtSetArg(&arg, type, 0, 0);
-	PtGetResources(widget, 1, &arg);
-	return arg.value;
-}
-
-void SysMessage(int type, const char* message, ...)
-{
-	va_list	arg;
-	va_start(arg, message);
-	char	buffer[256] = { 0 };
-	
 	switch(type)
 	{
-		case ERROR_MSG:
-			strcat(buffer, "ERROR: ");
-			strcat(buffer, message);
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer, arg);
+		case system_settings::ERROR_MSG:
+			buffer="ERROR: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
 			break;
-		case INFO_MSG:
-			strcat(buffer, "INFO: ");
-			strcat(buffer, message);
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_INFO, buffer, arg);
+		case system_settings::INFO_MSG:
+			buffer="INFO: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_INFO, buffer.c_str(), NULL);
       		break;
-		case DEBUG_MSG:
-			strcat(buffer, "DEBUG: ");
-			strcat(buffer, message);			
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_DEBUG1, buffer, arg);
+		case system_settings::DEBUG_MSG:
+			buffer="DEBUG: ";
+			buffer+=mess_text;			
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_DEBUG1, buffer.c_str(), NULL);
       		break;
+      	default:
+			buffer="UNDEFINED: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
+			break;
+
 	}
 }
 
-word CRC(const byte* buffer, int size)
+void system_settings::message_window (int type, string mess_text)
+{
+PhImage_t *window_icon;
+string window_title;
+
+	switch(type)
+	{
+		case system_settings::ERROR_MSG:
+			window_icon=ApGetImageRes(widget_dbase, "stopMsg");
+			window_title="Ошибка !";
+			
+			break;
+		case system_settings::INFO_MSG:
+			window_icon=ApGetImageRes(widget_dbase, "infoMsg");
+			window_title="Информация";
+			
+      		break;
+		case system_settings::WARN_MSG:
+			window_icon=ApGetImageRes(widget_dbase, "warnMsg");
+			window_title="Внимание !";
+
+      		break;
+      	default:
+ 			window_icon=ApGetImageRes(widget_dbase, "stopMsg");
+			window_title="Важное сообщение";
+			
+			break;
+
+	};
+
+	if (!font_for_messages_small.empty() || !font_for_messages_large.empty() )
+	{
+	PtNotice(main_window, 
+					NULL, 
+					window_title.c_str(),
+					window_icon, 
+					mess_text.c_str(), 
+					(const char*) &font_for_messages_small[0], 
+					"Ok", 
+					(const char*) &font_for_messages_large[0],
+					Pt_MODAL | Pt_CENTER);
+	} else {
+			string mess ="ERROR: Can`t found small or large font for message window";
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, mess.c_str(), NULL);
+
+		PtNotice(main_window, 
+					NULL, 
+					window_title.c_str(),
+					window_icon, 
+					mess_text.c_str(), 
+					NULL, 
+					"Ok", 
+					NULL,
+					Pt_MODAL | Pt_CENTER);
+
+	}; 
+};
+
+word system_settings::crc(vector<byte> buffer)
 {
 	byte highCRC = 0xFF;
 	byte lowCRC = 0xFF;
 	word	index;
 	
-	while (size--)
+	if ( buffer.empty()) return(0);
+	
+	for (vector<byte>::iterator iter= buffer.begin();
+			iter!= buffer.end();
+			iter++)
 	{
-		index = highCRC ^ *buffer++;
+		index = highCRC ^ *iter;
 		highCRC = lowCRC ^ g_CRCHi[index];
 		lowCRC = g_CRCLo[index];
 	}
 
 	return (highCRC << 8 | lowCRC);
-}
+};
 
-int SaveDirections(const char* fileName)
+int system_settings::save_directions(const string file_name)
 {
+/*
 	FILE*		handle;
 	dword	id;
 	int			direction;	
 
-	handle = fopen(fileName, "wb");
+	handle = fopen(file_name.c_str(), "wb");
+
 	if (!handle)
 		return 0;
 	
-	if (!g_escalatorNum)
+	if (g_escalators.empty())
 		return 0;
 			
-	fwrite(&g_escalatorNum, sizeof(g_escalatorNum), 1,  handle);
+	fwrite(&g_escalators.size(), sizeof(g_escalators.size()), 1,  handle);
 	
 	for(int i=0; i<g_escalatorNum; i++)
 	{
@@ -197,12 +177,13 @@ int SaveDirections(const char* fileName)
 	}
 	
 	fclose(handle);
-	
+*/	
 	return 1;
-}
+};
 
-int LoadDirections(const char* fileName)
+int system_settings::load_directions( const string file_name)
 {
+/*
 	FILE*		handle;
 	int			id, count = -1;
 	int			direction;	
@@ -232,7 +213,7 @@ int LoadDirections(const char* fileName)
 	}
 	
 	fclose(handle);
-	
+*/	
 	return 1;
-}
+};
 
