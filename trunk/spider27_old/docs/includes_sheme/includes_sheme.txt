@@ -1,0 +1,59 @@
+global.h
+		#include "abimport.h"
+		#include "defines.h"
+		#include "system.h"
+		#include "log.h"
+		#include "router.h"
+		#include "esc_types.h"
+		#include "alert.h"
+		#include "filter.h"
+		#include "contain_metro_escalators.h"
+		#include "contain_metro_stations.h"
+		#include "contain_metro_lines.h"
+		#include "contain_cmd_pool.h"
+		#include "contain_msg_dict.h"
+
+system.h
+		#include "global.h"
+
+log.h
+		#include "abimport.h"
+		#include "global.h"
+		#include "contain_log_rec.h"
+		#include "dictionary.h"
+
+router.h
+		#include "global.h"
+
+defines.h
+
+esc_types.h
+		#include "global.h"
+		
+alert.h
+		#include "global.h"
+
+filter.h
+		#include "global.h"
+
+contain_metro_escalators.h
+		#include "escalator.h"
+
+contain_metro_stations.h
+		#include "station.h"
+
+contain_metro_lines.h
+		#include "line.h"
+
+contain_cmd_pool.h
+		#include "command.h"
+
+contain_msg_dict.h
+		#include "dictionary.h"
+
+escalator.h
+		#include "global.h"
+
+
+station.h
+		
