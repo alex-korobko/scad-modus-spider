@@ -21,3 +21,17 @@
 #  and value is a single-quote delimited value.
 # For example:
 #*.gif -k 'b'
+#Images
+*.gif -k 'b'
+*.jpg -k 'b'
+*.jpeg -k 'b'
+*.bmp -k 'b'
+#PhAB binary resources
+*.wgtw -k 'b'
+*.wgtd -k 'b'
+*.wgtm -k 'b'
+*.wgtp -k 'b'
+*.wgti -k 'b'
+*.dfn -k 'b'
+*.wsp -k 'b'
+
