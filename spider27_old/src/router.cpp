@@ -336,7 +336,7 @@ void Router::Loop()
 
 	 tmp_IP2.s_addr=host_addr;
 // Begin: Printing 	current routing state
-			printf("\n Change routing to host %s\n", inet_ntoa(tmp_IP2));
+	printf("\n Change routing to host %s\n", inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 
 		sleep(10);

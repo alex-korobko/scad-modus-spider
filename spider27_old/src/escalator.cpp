@@ -7,6 +7,7 @@
 *******************************************************************************/
 
 #include <Ph.h>
+#include <time.h>
 #include "escalator.h"
 #include "abimport.h"
 #include "global.h"
@@ -627,6 +628,7 @@ void* Run(void* arg)
 	int			result;
 	int			counter = 0;
 	int			lose = 0;
+	int 		time_correct_int=0;	
 	
 	curEscalator = (metro_escalator*)arg;
 	if (!curEscalator)
@@ -666,7 +668,11 @@ void* Run(void* arg)
 			// если эскалатор не включен - выход
 			if (!curEscalator->enabled)
 				return 0;
-
+/*
+// Установка времени				
+			if (time_correct_int==0) curEscalator->SendTime();
+			if (++time_correct_int>TIME_CORR_INTER) time_correct_int=0;
+*/			
 			readNum = SendBuffer(sock, output, size, input);			
 						 			
  			printf ("Readnum %d\n", readNum);
@@ -690,10 +696,10 @@ void* Run(void* arg)
 				}
 			
 				// DEBUG dump modbus packet
-				fprintf(g_debugFile, "Packet [%d] tid %d socket %d:\n", curEscalator->id, pthread_self(), sock);
-				for(int i=0; i<readNum; i++)
-					fprintf(g_debugFile, "%0x ", input[i]);
-				fprintf(g_debugFile, "\n\n"); 
+//				fprintf(g_debugFile, "Packet [%d] tid %d socket %d:\n", curEscalator->id, pthread_self(), sock);
+//				for(int i=0; i<readNum; i++)
+//					fprintf(g_debugFile, "%0x ", input[i]);
+//				fprintf(g_debugFile, "\n\n"); 
 				// DEBUG
 
 				// проверяем команду
@@ -953,6 +959,80 @@ int metro_escalator::SendCommand(byte cmd)
 
 	return exitCode;
 }
+
+
+int metro_escalator::SendTime()
+{
+
+	byte		buffer[19];
+	word		crc, reg_time_t;
+	time_t 	time_now;
+	int			exitCode;
+	
+/*
+// Начало: Проверка  - убрать
+	tm temp_time;
+	
+	temp_time.tm_sec=10;
+	temp_time.tm_min=11;
+	temp_time.tm_hour=18;
+	
+	temp_time.tm_mday=6;
+	temp_time.tm_mon=0;
+	temp_time.tm_year=103;
+	temp_time.tm_wday=1;
+	temp_time.tm_yday=6;
+	temp_time.tm_isdst=1;
+	
+// Конец: Проверка  - убрать
+*/
+	CHECK_ADDRESS(id);
+	
+	printf("Send time to %d\n", number);
+	
+	buffer[0] = buffer[1] = buffer[2] = buffer[3] = buffer[4] = 0;
+	buffer[5] = 13;
+	buffer[6] = number;	// адрес устройства
+	buffer[7] = 16;		// команда
+	// начиная со второго регистра (нумерация с 0)
+	buffer[8] = 0;
+	buffer[9] = 1;
+	//два регистра
+	buffer[10] = 0;
+	buffer[11] = 2;
+	//счетчик байт
+	buffer[12] = 4;
+	
+	//текущее время
+//	time_now=mktime(&temp_time);
+	time_now=time(NULL);
+	// получение старшего слова
+	reg_time_t=(word)((time_now>>1*16) & 0xFFFF);
+
+	buffer[13] = HIBYTE(reg_time_t);
+	buffer[14] = LOBYTE(reg_time_t);
+	
+	// получение младшего слова	
+	reg_time_t=(word)((time_now>>0*16) & 0xFFFF);
+	buffer[15] = HIBYTE(reg_time_t);
+	buffer[16] = LOBYTE(reg_time_t);
+
+	crc = CRC(&buffer[6], 11);
+	buffer[17] = HIBYTE(crc);
+	buffer[18] = LOBYTE(crc);
+
+
+
+	pthread_mutex_lock (&mutex);
+	if (!outBuffer.Add(buffer, 19))
+		exitCode = 0;
+	else
+		exitCode = 1;
+	pthread_mutex_unlock (&mutex);
+
+	return exitCode;
+}
+
 
 int metro_escalator::CheckStatus()
 {

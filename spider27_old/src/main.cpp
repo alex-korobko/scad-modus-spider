@@ -49,8 +49,11 @@ sig_atomic_t SigpipeCount;
 enum {lineRead = 1, stationRead, escalatorRead};
 
 /* Application Options string */
+
 const char ApOptions[] =
-	AB_OPTIONS ""; /* Add your options in the "" */
+	AB_OPTIONS "";
+
+/* Add your options in the "" */
 
 void SigpipeHandler (int SignalNumber)
 {
@@ -552,7 +555,7 @@ int Initialize( int argc, char *argv[] )
     	}
 
 	// запускаем поток роутера
-	//g_router.Start();
+//	g_router.Start();
 	
 	// канал для пульсов
 	g_chanID = PhChannelAttach(0, -1, NULL);
