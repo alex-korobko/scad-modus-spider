@@ -92,7 +92,7 @@ static const ApEventLink_t AbLinks_ArchiveLog[] = {
 
 static const ApEventLink_t AbLinks_PrevCmdPoolDlg[] = {
 	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "CmdPoolDlgBtnClose", 2009, NULL, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SendCommandBtn", 2009, OnClickSendCommandBtn, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SendCommandButton", 2009, OnClickSendCommandBtn, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "CommandPoolRwLst", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_command_pool_item, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "CommandPoolRwLst", 1012, ReleazeCmdPoolList, 0, 0, 0, 0, },
 	{ 0 }

@@ -47,6 +47,11 @@ int translate_string(const char* src, char* dst, struct PxTransCtrl* trans_set);
 
 word CRC(const byte* buffer, int size);
 
+// PtGenLists and childs parameters
+#define		COLUMN_LEFT_MARGIN  5
+#define		ROW_HEIGHT		18
+
+
 // Widget helpers
 unsigned long get_widget_scalar(PtWidget_t *widget, long type);
 
