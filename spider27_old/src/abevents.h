@@ -57,7 +57,6 @@ static const ApEventLink_t AbLinks_LogFilterDlg[] = {
 	};
 
 static const ApEventLink_t AbLinks_EscConfig[] = {
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscConfig", 10003, ResizeEscConfig, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscConfig", 1012, FillEscConfList, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscDirectionList", 23010, SelectEscalatorDirection, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscReverseBtn", 2009, SetReverseEscalator, 0, 0, 0, 0, },

@@ -196,7 +196,6 @@ template <class T> T* Map<T>::First()
 template <class T> T* Map<T>::Last()
 {
 	Cursor = Tail;
-
 	return Cursor->Data;
 }
 

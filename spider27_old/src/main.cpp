@@ -50,12 +50,12 @@ const char ApOptions[] =
 	
 void* PingThread(void* arg)
 {
+SysMessage(INFO_MSG,"In PingThread");				 	
 	while(1)
 	{
+
 		ALL_ESCALATORS
 	 	{
-	 	
-	 	//commented this lines by kor 23-01-2003 to dispetcher`s paralleling
 	 		if ((g_escalators[i].online ==1) && g_escalators[i].enabled)
 	 		{
 	 			if (g_escalators[i].sleepticks >= 1)
@@ -76,31 +76,9 @@ void* PingThread(void* arg)
 	 			else
 	 				g_escalators[i].sleepticks++;	 		
 	 		}
-	 		
-	 		/*
-	 		if ((g_escalators[i].online ==1) && g_escalators[i].enabled)
-	 		{
- 				g_escalators[i].CheckStatus();	
-	 			if (g_escalators[i].sleepticks >= 1)
-	 			{
-	 				g_escalators[i].sleepticks = 0;
-	 			}
-	 			else
-	 				g_escalators[i].sleepticks++;
-	 		}
-	 		else if (g_escalators[i].enabled)
-	 		{
-				g_escalators[i].CheckStatus();	
-				if (g_escalators[i].sleepticks >= 5)
-	 			{
-	 				g_escalators[i].sleepticks = 0;
-	 			}
-	 			else
-	 				g_escalators[i].sleepticks++;	 		
-	 		}
-		*/
-	 		
+		
  		}
+
  		usleep(PING_TIMEOUT);
  	}
 }
@@ -114,18 +92,19 @@ void* TimerThread(void *arg)
 	struct itimerspec timer;
 	int             conID;
 	int             timeoutChannel;
-	
 	if ((timeoutChannel = ChannelCreate(0)) == -1)
 	{
 		SysMessage(ERROR_MSG,"Can't create timeout channel [%s]", strerror(errno));
 		return 0;
 	}
-
+	
+	
 	conID = ConnectAttach(0, 0, timeoutChannel, 0, 0);
 	if (conID == -1) {
 		SysMessage(ERROR_MSG,"Attach channel [%s]", strerror(errno));
 		return 0;
 	}
+	
 	
 	SIGEV_PULSE_INIT(&event, conID, SIGEV_PULSE_PRIO_INHERIT, SYSTEM_TIMER, 0);
 
@@ -133,6 +112,7 @@ void* TimerThread(void *arg)
 	{
 		SysMessage(ERROR_MSG,"Fail to create system timer [%s]", strerror(errno));
 	}
+
 	
 	timer.it_value.tv_sec = 1;
 	timer.it_value.tv_nsec = 0;
@@ -144,10 +124,14 @@ void* TimerThread(void *arg)
 	while (1)
 	{
 		recvID = MsgReceive(timeoutChannel, &pulse, sizeof(pulse), NULL);
+		
+		if (recvID==-1)  SysMessage(ERROR_MSG,"MsgReceive [%s]", strerror(errno));
+	
 		if (recvID == 0) {
+		SysMessage(INFO_MSG,"In  recvID [%d]", recvID);		
 			if (pulse.code == SYSTEM_TIMER) 
 			{
-				mainLog.Rotate();
+			mainLog.Rotate();
 			}
 		}
 	}
@@ -306,8 +290,8 @@ int LoadMap(const char* fileName)
 						case DIRECTION_DOWN:
 							g_escalators[escalatorCount].prefDirection = DIRECTION_DOWN;
 							break;
-						case 3:
-							g_escalators[escalatorCount].prefDirection = 3;
+						case DIRECTION_REVERSE:
+							g_escalators[escalatorCount].prefDirection = DIRECTION_REVERSE;
 							break;
 						default:
 							break;
@@ -381,22 +365,24 @@ int CreateScheme()
 			temp[j].x = temp[j].x*size->w/100;
 			temp[j].y = temp[j].y*size->h/100;
 		}
+		
 	 	PtSetArg(&args[0], Pt_ARG_COLOR, g_lines[i].color, 0);
 	 	PtSetArg(&args[1], Pt_ARG_POINTS, temp, g_lines[i].stationCount);	 	
 	 	PtSetArg(&args[2], Pt_ARG_LINE_WIDTH, 6, 0);
 	    g_lines[i].line = PtCreateWidget(PtPolygon, ABW_Scheme, 3, args);
         	delete[] temp;
         	temp = NULL;
-	    if (!g_lines[i].line || PtRealizeWidget(g_lines[i].line) == -1)
+        	j= PtRealizeWidget(g_lines[i].line);
+	    if (!g_lines[i].line || j== -1)
       		return 0;
 	}
+
 	for(i=0; i<g_stationNum; i++)
 	{
 		PtSetParentWidget(ABW_Scheme);
 		if (!g_stations[i].create_wnd(widget_dbase, ABW_Scheme, size->w, size->h, -1, -1))
 			return 0;
 	}
-	
 	return 1;
 }
 
@@ -406,7 +392,8 @@ int ResizeScheme( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 	PhPoint_t	*temp = NULL;
 	PhPoint_t	point;
 	PhDim_t		*wndSize;
-	
+	int flg;
+		
 	PtContainerCallback_t	*data = (PtContainerCallback_t*)cbinfo->cbdata;
 	for(int i=0; i<g_lineNum; i++)
 	{
@@ -422,6 +409,7 @@ int ResizeScheme( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 				temp[j].x = temp[j].x*data->new_dim.w/100;
 				temp[j].y = temp[j].y*data->new_dim.h/100;
 			}
+			
 		 	PtSetArg(&arg, Pt_ARG_POINTS, temp, g_lines[i].stationCount);	 	
 		 	PtSetResources(g_lines[i].line, 1, &arg);
  	        	delete[] temp;
@@ -431,19 +419,16 @@ int ResizeScheme( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 	for(int i=0; i<g_stationNum; i++)
 	{
 		if (g_stations[i].wnd)
-		{
+		{		
 			PtSetArg(&arg, Pt_ARG_DIM, &wndSize, 0);
 			PtGetResources(g_stations[i].wnd, 1, &arg);
 			point.x = g_stations[i].xcoord*data->new_dim.w/100 - wndSize->w/2;
 			point.y = g_stations[i].ycoord*data->new_dim.h/100 - wndSize->h/2;
+
 	 		PtSetArg(&arg, Pt_ARG_POS, &point, 0);
 	 		PtSetResources(g_stations[i].wnd, 1, &arg);		
 	 	}
 	}
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -487,14 +472,16 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 
 int Initialize( int argc, char *argv[] )
 {
+	PtInputId_t *InputRes=NULL;
     	/* eliminate 'unreferenced' warnings */
     	argc = argc, argv = argv;
-    	
+   
     	g_debugFile = fopen("debug.log", "a+");
     	if (!g_debugFile)
     		PtExit(EXIT_FAILURE);
 
 	// загружаем библиотеку виджетов
+
   	widget_dbase = ApOpenDBase(ABM_interface);	
     
     	SysMessage(INFO_MSG, "Spider: startup");
@@ -558,7 +545,8 @@ int Initialize( int argc, char *argv[] )
 	else
 		SysMessage(INFO_MSG, "Create pulse channel (id=%d)", g_chanID);
 
-    	if (PtAppAddInput(NULL, 0, PulseReceiver, NULL) == NULL)
+	InputRes=PtAppAddInput(NULL, 0, PulseReceiver, NULL);
+    	if (InputRes== NULL)
     	{
 		ERROR_BOX("Ошибка регистрации обработчика пульсов");
           PtExit(EXIT_FAILURE);
@@ -617,19 +605,17 @@ int Uninitialize(PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo)
 
 	// закрываем библоиотеку виджетов
 	ApCloseDBase(widget_dbase);
-	
-	//free_escalator_types();    
-	
+		
 	fclose(g_debugFile);
-
 	return( Pt_CONTINUE );
 }
 
 int RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	// создаем схему
+
 	CreateScheme();
-	
+
 	// загружаем журнал
 	mainLog.Load("main.log");
 
@@ -638,18 +624,13 @@ int RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 	
 	// добавляем сообщение
 	mainLog.AddMessage(143, 0, 0); // Program started
-
-	/* eliminate 'unreferenced' warnings */	
-    	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-  
+ 
     	return( Pt_CONTINUE );	
 }
 
 int CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 	
 	mainLog.AddMessage(144, 0, 0); // Program closed
 
@@ -658,15 +639,14 @@ int CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 int FillEscConfList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
-
-		 metro_station** stations;
+     	 metro_station** stations;
 		metro_escalator*		curEscalator;
 		char	**strList;
 		char	*name;
 		const char *directionStr[] = { "не установлено", "подъем", "спуск" ,"реверсивный"};
-		int		count = 0;
+		int		flg, count = 0;
 		char		str[128], str1[128];
-		
+	
 	strList = new (char*)[g_escalatorNum];	
 	for(int i=0; i<g_escalatorNum; i++)
 	{		
@@ -675,14 +655,13 @@ int FillEscConfList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbi
 		
 		sprintf(strList[i], "%s\t%d\t%s", str, g_escalators[i].GetNumber(), directionStr[g_escalators[i].prefDirection]);
 	}
-
+	
 		PtListAddItems(ABW_EscDirectionList, (const char**)strList, g_escalatorNum, 0);	
+
+	//Уже было закомменчено.
    	//PtSetResource(ABW_EscDirectionList, Pt_ARG_POINTER, strList, 0);
  
  	delete[] strList;  		
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -698,22 +677,8 @@ int OpenArchive( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *
 		return Pt_IGNORE;
 	}
 
-	/* eliminate 'unreferenced' warnings */
-	link_instance = link_instance, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
 
-int
-ResizeEscConfig( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
-	return( Pt_CONTINUE );
-
-	}
 

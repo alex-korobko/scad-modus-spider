@@ -37,14 +37,15 @@ void FillStationList()
 	for(int i=0; i<g_stationNum; i++)
 	{
 		g_stations[i].Name.Get(name, 128);
+
 		PtListAddItems(ABW_StationList,(const char**)&name, 1, 0);
-	}		
+	}
+// Уже было закомменчено		
 //	PtSetResource(list_widget, Pt_ARG_POINTER, this, 0);
 	delete[] name;
 }
 
 int SelectOneEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
 	PtArg_t	arg;
 	
@@ -54,8 +55,6 @@ int SelectOneEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 //	{
 //	}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 
@@ -76,9 +75,6 @@ int SelectRangeEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 //	PtSetArg(&arg, Pt_ARG_ONOFF_STATE, 0, 0);	
 //	PtSetResources(ABW_OneEscalatorBtn, 1, &arg);	
 //	}
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}
@@ -88,11 +84,9 @@ int CreateFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbi
 
 	{
         PhPointerEvent_t *event;
+		
 
  	    ApCreateModule(ABM_LogFilterDlg, widget, cbinfo);
-  
-        /* eliminate 'unreferenced' warnings */
-        widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
         return( Pt_CONTINUE );
 	}
@@ -103,7 +97,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 	{
 		PtArg_t		args[2];
 		time_t*		date;
-		int				elapsed = 0;
+		int				elapsed = 0, flg;
 		int index;
 		int				changed = 0;
 		char			message[] = "Внимание! В журнале включен фильтр сообщений";
@@ -119,9 +113,9 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 		if (index)
 			changed = 1;
 		g_logFilter.stationIndex = index;
-				
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_SysMsgBtn, 1, args);		
+		
 		if (args[0].value & Pt_SET)
 			g_logFilter.messages.sysMsg = 1;
 		else
@@ -129,7 +123,6 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 			changed = 1;
 			g_logFilter.messages.sysMsg = 0;
 		}
-		
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_AlertMsgBtn, 1, args);		
 		if (args[0].value & Pt_SET)
@@ -142,6 +135,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_BlockMsgBtn, 1, args);		
+		
 		if (args[0].value & Pt_SET)
 			g_logFilter.messages.blockMsg = 1;
 		else
@@ -152,6 +146,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_LocalMsgBtn, 1, args);		
+		
 		if (args[0].value & Pt_SET)
 			g_logFilter.messages.localMsg = 1;
 		else
@@ -159,9 +154,10 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 			g_logFilter.messages.localMsg = 0;
 			changed = 1;
 		}
-
+		
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_AllTimeRangeBtn1, 1, args);		
+
 		if (args[0].value & Pt_SET)
 		{
 			g_logFilter.allTime = 1;
@@ -175,13 +171,13 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 			PtSetArg(&args[0], Pt_ARG_CALENDAR_TIME_T, &date, 0);
 			PtGetResources(ABW_CalendarStart, 1, args);		
 			memcpy(&g_logFilter.startTime, date, sizeof(time_t));
+			memcpy(&g_logFilter.endTime, date, sizeof(time_t));
+			elapsed += 3600*args[0].value;
 
 			PtGetResources(ABW_CalendarEnd, 1, args);		
-			memcpy(&g_logFilter.endTime, date, sizeof(time_t));
-
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_StartHourNumeric, 1, args);
-			elapsed += 3600*args[0].value;
+
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_StartMinNumeric, 1, args);
 			elapsed += 60*args[0].value;
@@ -190,6 +186,7 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 		
 		
 			elapsed = 0;
+			
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_EndHourNumeric, 1, args);
 			elapsed += 3600*args[0].value;
@@ -205,19 +202,24 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 			changed = 1;
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
 		PtGetResources(ABW_OneEscalatorBtn, 1, args);
+		
 		if (args[0].value & Pt_SET)
 		{
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_OneEscalatorNumeric, 1, args);
+
 			g_logFilter.firstEscalatorNum = g_logFilter.lastEscalatorNum = args[0].value;
 		}
 		else
 		{
+		
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_RangeStartNumeric, 1, args);
+
 			g_logFilter.firstEscalatorNum =  args[0].value;
 			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
 			PtGetResources(ABW_RangeEndNumeric, 1, args);
+
 			g_logFilter.lastEscalatorNum =  args[0].value;
 		}
 		}
@@ -233,9 +235,6 @@ int SetLogFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 		printf("Live\n");
 				
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}
@@ -246,11 +245,12 @@ int RealizeFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 	{
 	time_t	curTime;
 	struct tm curTimeTM;
-		PtArg_t		arg;
+	PtArg_t		arg;
 	char *str[] = {"Все станци"};
-
+	int flg;
 	PtListAddItems(ABW_StationList, (const char**)str, 1, 0);
 	FillStationList();
+	
 	PtSetArg(&arg, Pt_ARG_CBOX_SEL_ITEM, 1, 0);
 	PtSetResources(ABW_StationList, 1, &arg);
 
@@ -266,6 +266,7 @@ int RealizeFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 	if (g_logFilter.startTime)
 	{
 		localtime_r(&g_logFilter.startTime, &curTimeTM);
+	
 		PtSetArg(&arg, Pt_ARG_NUMERIC_VALUE, curTimeTM.tm_hour, 0);
 		PtSetResources(ABW_StartHourNumeric, 1, &arg);
 		PtSetArg(&arg, Pt_ARG_NUMERIC_VALUE, curTimeTM.tm_min, 0);
@@ -301,7 +302,6 @@ int RealizeFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		PtSetResource(ABW_AllTimeRangeBtn1, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
 		PtSetResource(ABW_AllTimeRangeBtn2, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
 	}
-
 	PtSetResource(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM, g_logFilter.stationIndex + 1, 0);
 	metro_station*	selectedStation =  &g_stations[g_logFilter.stationIndex];
 
@@ -314,9 +314,10 @@ int RealizeFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		PtSetResource(ABW_OneEscalatorNumeric, Pt_ARG_NUMERIC_MAX, maxNum, 0);
 		PtSetResource(ABW_RangeStartNumeric, Pt_ARG_NUMERIC_MAX, maxNum, 0);
 		PtSetResource(ABW_RangeEndNumeric, Pt_ARG_NUMERIC_MAX, maxNum, 0);
-
+		
 		if (g_logFilter.firstEscalatorNum == g_logFilter.lastEscalatorNum)
 		{			
+
 			PtSetResource(ABW_OneEscalatorLabel, Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST | Pt_BLOCKED);
 			PtSetResource(ABW_OneEscalatorNumeric, Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST | Pt_BLOCKED);
 			PtSetResource(ABW_OneEscalatorBtn, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
@@ -335,9 +336,6 @@ int RealizeFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		}
 	}
 
-	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 
@@ -348,6 +346,7 @@ int EnableAllTimeRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 
 	{
 		PtArg_t		arg;
+		
 	PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST | Pt_BLOCKED);
 	PtSetResources(ABW_CalendarStart, 1, &arg);	
 	PtSetResources(ABW_StartHourNumeric, 1, &arg);	
@@ -362,10 +361,6 @@ int EnableAllTimeRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 	else if (widget == ABW_AllTimeRangeBtn2)
 		PtSetResources(ABW_AllTimeRangeBtn1, 1, &arg);
 
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}
@@ -375,6 +370,7 @@ int DisableAllTimeRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 
 	{
 		PtArg_t		arg;
+
 	PtSetArg(&arg, Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST | Pt_BLOCKED);
 	PtSetResources(ABW_CalendarStart, 1, &arg);	
 	PtSetResources(ABW_StartHourNumeric, 1, &arg);	
@@ -388,10 +384,6 @@ int DisableAllTimeRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 		PtSetResources(ABW_AllTimeRangeBtn2, 1, &arg);
 	else if (widget == ABW_AllTimeRangeBtn2)
 		PtSetResources(ABW_AllTimeRangeBtn1, 1, &arg);
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}
@@ -401,12 +393,13 @@ int SelectFilterStation( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 
 	{
 		PtArg_t		arg;
-
+		
 		metro_station*	selectedStation;
 
 		int index = get_widget_scalar(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM) - 2;
 		if (index >= 0)
 		{
+		
 			PtSetArg(&arg, Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST | Pt_BLOCKED);
 			PtSetResources(ABW_RangeEscalatorBtn, 1, &arg);
 			PtSetResources(ABW_OneEscalatorLabel, 1, &arg);
@@ -425,8 +418,6 @@ int SelectFilterStation( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 			PtSetResources(ABW_RangeEndNumeric, 1, &arg);
 		}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 
@@ -458,10 +449,7 @@ int ActivateOneEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 	PtSetArg(&arg, Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST | Pt_BLOCKED);
 	PtSetResources(ABW_OneEscalatorLabel, 1, &arg);
 	PtSetResources(ABW_OneEscalatorNumeric, 1, &arg);
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
+	
 	return( Pt_CONTINUE );
 
 	}
@@ -471,6 +459,7 @@ int ActivateRangeEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 
 	{
 		PtArg_t		arg;
+		
 
 	PtSetArg(&arg, Pt_ARG_ONOFF_STATE, 0, 0);	
 	PtSetResources(ABW_OneEscalatorBtn, 1, &arg);	
@@ -491,9 +480,6 @@ int ActivateRangeEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 	PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST | Pt_BLOCKED);
 	PtSetResources(ABW_OneEscalatorLabel, 1, &arg);
 	PtSetResources(ABW_OneEscalatorNumeric, 1, &arg);
-	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 
@@ -503,16 +489,17 @@ int ActivateRangeEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 int SelectAllRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 		PtArg_t		arg;
-
-		int index = get_widget_scalar(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM) - 1;
+		int index;
+		
+		index = get_widget_scalar(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM) - 1;
+		if (index >= 0)	
+		{
 		PtSetArg(&arg, Pt_ARG_NUMERIC_VALUE, 1, 0);
 		PtSetResources(ABW_RangeStartNumeric, 1, &arg);
 		PtSetArg(&arg, Pt_ARG_NUMERIC_VALUE, g_stations[index].escalatorNum, 0);
 		PtSetResources(ABW_RangeEndNumeric, 1, &arg);
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
+		};
+		
 	return( Pt_CONTINUE );
 }
 
@@ -520,9 +507,6 @@ int SelectAllRange( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 int ShowFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 	{
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 
@@ -545,11 +529,8 @@ int ResetFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo 
 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING,  &message, strlen(message));
 	PtSetArg(&args[1], Pt_ARG_COLOR,  Pg_BLACK, 0);	
 	PtSetResources(ABW_log_status, 2, args);
-
+	
 	mainLog.FilterLogWnd();	
-/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}

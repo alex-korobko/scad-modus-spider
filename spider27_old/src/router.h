@@ -11,11 +11,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <snmp/asn1.h>
-#include <snmp/snmp_api.h>
-#include <snmp/snmp.h>
-#include <snmp/snmp_client.h>
-#include <snmp/mib.h>
 #include <string.h>
 
 enum {addRoute, delRoute};

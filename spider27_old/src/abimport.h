@@ -63,7 +63,6 @@ int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_
 int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetupPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int DiscardBlocking( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int ResizeEscConfig( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int OnChancelDirections( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int FillEscConfList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );

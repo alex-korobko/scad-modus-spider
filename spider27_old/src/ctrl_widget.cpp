@@ -27,20 +27,16 @@ void fill_signal_blocks(int type_num);
 
 int realize_log_wnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
+		
         PtSetResource(widget, Pt_ARG_TOP_ITEM_POS, 2, 0);
-
-        /* eliminate 'unreferenced' warnings */
-        widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
+		
         return( Pt_CONTINUE );
 }
+
 int
 select_escalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 	{
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 

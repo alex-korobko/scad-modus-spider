@@ -17,10 +17,6 @@
 int RealizeArchiveWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	g_archiveLog.AttachWnd(widget);
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -28,10 +24,6 @@ int RealizeArchiveWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *c
 int UnrealizeArchiveWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	g_archiveLog.DetachWnd();
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -39,16 +31,14 @@ int UnrealizeArchiveWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 int LoadArchive( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	PtFileSelItem_t*	item;
-
+	
 	item = PtFSGetCurrent(ABW_ArchiveFiles);
+	
 	if (item)
 	{
 		g_archiveLog.Clear();
 		g_archiveLog.Load(item->fullpath);
 	}
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }

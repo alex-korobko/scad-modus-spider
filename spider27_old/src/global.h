@@ -90,6 +90,7 @@ GLOBAL FILE*			g_debugFile INIT(0);
 #define		DIRECTION_STOP		0
 #define		DIRECTION_UP			1
 #define		DIRECTION_DOWN		2
+#define		DIRECTION_REVERSE		3
 
 #define		STATE_UP_PE			2
 #define		STATE_DOWN_PE		3
