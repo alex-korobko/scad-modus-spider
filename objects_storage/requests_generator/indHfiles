@@ -1,0 +1,9 @@
+HEADERS=test_cond.h \
+        generator_exception.h\
+	generator_logger.h\
+        mock_generator.h
+
+
+ifdef UNIT_TESTING
+HEADERS+=mock_generator_test.h
+endif

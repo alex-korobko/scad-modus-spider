@@ -1,0 +1,523 @@
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+
+<font color="red">
+Все значения, занимающие более одного байта, имеют порядок следования старшим байтом вперед.</font>
+<br>
+<a href="#common_commands">Общие команды</a><br>
+<ul>
+<li><a href="#common_unknown_command">Тип дискриминатора не поддерживается</a>
+</ul>
+<br>
+<a href="#pri_commands">Команды PRI</a><br>
+<ul>
+<li><a href="#pri_request_to_occupate">Запрос на занятие канала</a>
+<li><a href="#pri_request_to_free">Запрос на освобождение канала</a>
+
+<li><a href="#pri_answer_to_occupate">Ответ канал успешно занят</a>
+<li><a href="#pri_answer_to_free">Ответ канал успешно освобожден</a>
+
+<li><a href="#pri_error_in_occupation">Ошибка невозможно занять канал</a>
+<li><a href="#pri_error_in_free">Ошибка невозможно освободить канал</a>
+
+<li><a href="#pri_unknown_command">Ошибка команда с таким кодом не поддерживается</a>
+<li><a href="#pri_bad_command">Ошибочная команда</a>
+</ul>
+
+
+<br>
+<br>
+<hr width="95%" height="1">
+<br><center><h2><a name="common_commands"> Общие команды
+</a></h2></center></center><br>
+<hr width="95%" height="1">
+<br>
+<a name="common_unknown_command">
+<center><b><i>
+Тип дискриминатора не поддерживается</i></b></center></a><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды<br>
+                                   такой же, как у команды запроса</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 0</td>
+</tr>
+
+<tr>
+   <td colspan="4">Данная команда генерируется хранилищем,<br>когда не 
+                            найден обработчик, соответствующий данному коду дискриминатора<br>
+                             Прочие поля как в команде запросе</td>
+</tr>
+</table>
+<br>
+<br>
+<hr width="95%" height="1">
+<br><center><h2><a name="pri_commands"> Команды PRI
+</a></h2></center></center><br>
+<hr width="95%" height="1">
+<br>
+<center><b><i><a name="pri_request_to_occupate">
+Запрос на занятие канала</a></i></b></center><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 01</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">4</td>
+   <td width="70%">Номер УПО</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">5</td>
+   <td width="70%">Номер канала IE1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">6</td>
+   <td width="70%">Номер канала E1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">7</td>
+   <td width="70%">Канальный интервал канала B</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">8</td>
+   <td width="70%">Номер канала B</td>
+   <td width="5%">2</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">9</td>
+   <td width="70%">Исключительное/предпочтительное<br>занятие канала</td>
+   <td width="5%">1</td>
+   <td width="15%">Исключительное!=0<br>предпочтительное==0</td>
+</tr>
+</table>
+<br>
+<br>
+<center><b><i><a name="pri_request_to_free">
+Запрос на освобождение канала</a></i></b></center><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 02</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">4</td>
+   <td width="70%">Номер УПО</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">5</td>
+   <td width="70%">Номер канала IE1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">6</td>
+   <td width="70%">Номер канала E1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">7</td>
+   <td width="70%">Канальный интервал канала B</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">8</td>
+   <td width="70%">Номер канала B</td>
+   <td width="5%">2</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+<br>
+<br>
+<center><b><i><a name="pri_answer_to_occupate">
+Ответ канал успешно занят</a></i></b></center><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 11</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">4</td>
+   <td width="70%">Номер УПО</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">5</td>
+   <td width="70%">Номер канала IE1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">6</td>
+   <td width="70%">Номер канала E1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">7</td>
+   <td width="70%">Канальный интервал канала B</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">8</td>
+   <td width="70%">Номер канала B</td>
+   <td width="5%">2</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+<br>
+<br>
+<center><b><i>
+<a name="pri_answer_to_occupate">Ответ канал успешно освобожден</a></i></b></center><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 12</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">4</td>
+   <td width="70%">Номер УПО</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">5</td>
+   <td width="70%">Номер канала IE1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">6</td>
+   <td width="70%">Номер канала E1</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">7</td>
+   <td width="70%">Канальный интервал канала B</td>
+   <td width="5%">1</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+
+<tr>
+   <td width="10%">8</td>
+   <td width="70%">Номер канала B</td>
+   <td width="5%">2</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+<br>
+<br>
+<center><b><i><a name="pri_error_in_occupation">
+Ошибка невозможно занять канал</a></i></b></center><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 101</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+
+<br>
+<br>
+<a name="pri_error_in_free">
+<center><b><i>
+Ошибка невозможно освободить канал</i></b></center></a><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 102</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+
+<br>
+<br>
+<a name="pri_unknown_command">
+<center><b><i>
+Ошибка команда с таким кодом не поддерживается</i></b></center></a><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 102</td>
+</tr>
+
+<tr>
+   <td width="10%">3</td>
+   <td width="70%">Идентификатор потока</td>
+   <td width="5%">4</td>
+   <td width="15%">&nbsp;</td>
+</tr>
+</table>
+
+<br>
+<br>
+<a name="pri_unknown_command">
+<center><b><i>
+Ошибка команда с таким кодом не поддерживается</i></b></center></a><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 201</td>
+</tr>
+
+<tr>
+   <td colspan="4">Данная команда генерируется хранилищем, когда код команды запроса не поддерживается<br>Прочие поля как в команде запросе</td>
+</tr>
+</table>
+
+<br>
+<a name="pri_bad_command">
+<center><b><i>
+Ошибочная команда</i></b></center></a><br>
+<table align="center" border="1" cellspacing="0" cellpadding="0" width="95%">
+<tr>
+   <td width="10%">Номер<br>поля</td>
+   <td width="70%">Описание поля</td>
+   <td width="5%">Длина,<br>байт</td>
+   <td width="15%">Примечание</td>
+</tr>
+
+<tr>
+   <td width="10%">1</td>
+   <td width="70%">Дискриминатор</td>
+   <td width="5%">1</td>
+   <td width="15%">Тип обработчика команды</td>
+</tr>
+
+<tr>
+   <td width="10%">2</td>
+   <td width="70%">Код команды</td>
+   <td width="5%">1</td>
+   <td width="15%">Код команды 202</td>
+</tr>
+
+<tr>
+   <td colspan="4">Данная команда генерируется хранилищем, когда в коде команды запроса не найдено ни одного информативного поля</td>
+</tr>
+</table>
+
+</body>
+</html>
+

@@ -1,0 +1,11 @@
+MYIPATH = -I.\
+        -I../objects_stor_classes/\
+        -I../objects_stor_classes/dbwrappers\
+        -I../objects_stor_classes/jobs_data_managers\
+	-I../unit_tests\
+	-I../\
+	-I /usr/local/include
+
+ifdef LINTER_DBWRAPPER
+MYIPATH+= -I /opt/linter/intlib
+endif

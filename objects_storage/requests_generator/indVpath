@@ -1,0 +1,3 @@
+VPATH = ../unit_tests\
+      :../requests_generator_classes\
+      :../
