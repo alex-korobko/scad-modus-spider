@@ -1,0 +1,2 @@
+MYOBJ = cbuffer.o system.o line.o station.o log.o goodies.o esc_types.o string.o dictionary.o \
+	sound.o router.o
