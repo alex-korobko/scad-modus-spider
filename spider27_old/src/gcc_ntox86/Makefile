@@ -38,7 +38,7 @@ LD  = qcc
 CFLAGS  = -V$(PLATFORM) -w5 $(OPTIM) $(DEBUG) $(PHABOPTS) -I.
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -V$(PLATFORM) -Bstatic $(DEBUG) -l phexlib -l socket $(ABLIB) $(PHABOPTS)
-SDFLAGS = -V$(PLATFORM) -Bdynamic $(DEBUG) -l phexlib -l socket -l asound -l snmp $(ABLIB) $(PHABOPTS)
+SDFLAGS = -V$(PLATFORM) -Bdynamic $(DEBUG) -l phexlib -l socket -l asound $(ABLIB) $(PHABOPTS)
 
 VPATH = ..
 
