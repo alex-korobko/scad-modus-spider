@@ -52,20 +52,18 @@ g_stations.insert(g_stations.upper_bound(2), metro_stations_container::pair_metr
 void test_erase()
 {
 metro_stations_container::iterator_metro_stations tmp_iter;
-
-CPPUNIT_ASSERT(g_stations.size()==3);
+metro_stations_container::size_type_metro_stations old_size=g_stations.size();
+CPPUNIT_ASSERT(old_size==3);
+CPPUNIT_ASSERT(!g_stations.empty());
 
 tmp_iter=g_stations.find(1);
 CPPUNIT_ASSERT( tmp_iter!=g_stations.end());
 g_stations.erase(tmp_iter);
+CPPUNIT_ASSERT(!g_stations.empty());
+CPPUNIT_ASSERT(old_size==g_stations.size()+1);
 
-tmp_iter=g_stations.find(2);
-CPPUNIT_ASSERT( tmp_iter!=g_stations.end());
-g_stations.erase(tmp_iter);
-
-tmp_iter=g_stations.find(3);
-CPPUNIT_ASSERT( tmp_iter!=g_stations.end());
-g_stations.erase(tmp_iter);
+g_stations.erase(g_stations.begin(),
+							g_stations.end());
 
 CPPUNIT_ASSERT(g_stations.empty());
 CPPUNIT_ASSERT(g_stations.size()==0);
@@ -154,6 +152,29 @@ tmp_stations.insert(tmp_stations.upper_bound(2), metro_stations_container::pair_
 		
 		tmp_iter1++;
 	}
+
+	//test stations id in lines container
+	
+	//test line with id 1 it may contain two stations id  - with id 1 and 2
+	metro_lines_container::iterator_metro_lines iter_line=g_lines.find(1);
+	CPPUNIT_ASSERT(iter_line!=g_lines.end());
+	CPPUNIT_ASSERT(iter_line->second.size_stations_id()==2);
+	metro_line::iterator_stations_id iter_station_id=iter_line->second.begin_stations_id();
+	CPPUNIT_ASSERT(*iter_station_id==1);
+	iter_station_id++;
+	CPPUNIT_ASSERT(*iter_station_id==2);
+
+	iter_line=g_lines.find(2);
+	CPPUNIT_ASSERT(iter_line!=g_lines.end());
+	CPPUNIT_ASSERT(iter_line->second.size_stations_id()==1);
+	iter_station_id=iter_line->second.begin_stations_id();
+	CPPUNIT_ASSERT(*iter_station_id==3);
+
+	iter_line=g_lines.find(3);
+	CPPUNIT_ASSERT(iter_line!=g_lines.end());
+	CPPUNIT_ASSERT(iter_line->second.size_stations_id()==0);
+	CPPUNIT_ASSERT(iter_line->second.empty_stations_id());
+
 
 };
 
