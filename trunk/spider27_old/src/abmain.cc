@@ -80,7 +80,7 @@ static const ApClassTab_t ClassTable[] = {
 	{ "PtNumericInteger", &PtNumericInteger },
 	{ "PtCalendar", &PtCalendar },
 	{ "PtList", &PtList },
-	{ "PtGroup", &PtGroup },
+	{ "PtComboBox", &PtComboBox },
 	{ "PtMenu", &PtMenu },
 	{ "PtOSContainer", &PtOSContainer },
 	{ "PtFileSel", &PtFileSel },

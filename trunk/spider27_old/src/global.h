@@ -59,6 +59,7 @@ extern router g_router;
 *	Container class for messages dictionary - wrapper of STL container map 			*
 *	Container class for metro devices types - wrapper of STL container map*
 *	Container class for metro escalators - wrapper of STL container map 						*
+*Container class for morning start items of escalators - wrapper of STL container map*
 *	Container class for metro stations - wrapper of STL container map 								*
 *	Container class for metro liness - wrapper of STL container map 										*
 *	Container class for command pool - wrapper of STL container list 									*
@@ -75,6 +76,7 @@ extern msg_dict_container g_msg_dictionary;
 #include "contain_metro_devices_types.h"
 extern devices_types_container g_metro_devices_types;
 
+#include "contain_morning_start.h"
 #include "line.h"
 #include "contain_metro_lines.h"
 extern metro_lines_container g_lines;
@@ -125,6 +127,7 @@ extern pthread_t	g_pingTID, g_timerTID;
 #include "unit_tests/contain_metro_devices_types_test.h"
 #include "unit_tests/escalator_test.h"
 #include "unit_tests/contain_metro_escalators_test.h"
+#include "unit_tests/contain_morning_start_test.h"
 
 #include "unit_tests/unit_tests.h"
 

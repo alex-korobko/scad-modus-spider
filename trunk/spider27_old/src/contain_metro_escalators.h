@@ -17,9 +17,12 @@ struct ltint
 	};
 
 typedef  map <int, metro_escalator, ltint> metro_escalators_map;	
+
 metro_escalators_map	container_metro_escalators;
+
 typedef metro_escalators_map::iterator  iterator_metro_escalators;	
 typedef metro_escalators_map::value_type pair_metro_escalators;	
+typedef metro_escalators_map::size_type size_type_metro_escalators;	
 
 iterator_metro_escalators current_escalator;
 iterator_metro_escalators current_escalator_in_directions;
@@ -48,33 +51,26 @@ wrappers of current STL escalator`s container metods
 */
 
 iterator_metro_escalators begin() {return (container_metro_escalators.begin());};
-iterator_metro_escalators end() {return (container_metro_escalators.end());};
+iterator_metro_escalators end(){return (container_metro_escalators.end());};
 
 iterator_metro_escalators find(const int key) { return (container_metro_escalators.find(key)); };
 iterator_metro_escalators upper_bound(const int key) { return container_metro_escalators.upper_bound(key); };
 
 void erase (iterator_metro_escalators iter) { container_metro_escalators.erase(iter); };
+void erase (iterator_metro_escalators iter_beg,
+					iterator_metro_escalators iter_end) { container_metro_escalators.erase(iter_beg, iter_end); };
 iterator_metro_escalators insert (iterator_metro_escalators iter, const pair_metro_escalators& obj) 
 {
   return (container_metro_escalators.insert(iter, obj)); 
 }
 
 bool empty() const { return (container_metro_escalators.empty());}
-int size() const {return (container_metro_escalators.size());};
+size_type_metro_escalators size() const {return (container_metro_escalators.size());};
+
 /*
 Other functions
 */
-bool save_directions (string file_name)
-{
-return (true);
-};
-
-bool load_directions (string file_name)
-{
-return (true);
-};
-
-bool load_escalators (string file_name)
+bool save (string file_name)
 {
 return (true);
 };
@@ -107,27 +103,39 @@ function write error message and return false.
 	directoin - last used direction of escalator.
 See system_settings::DIRECTION_... for details. If not present
 or not recognized (not ...STOP or .._DOWN or ..._UP) 
-set system_settings::DIRECTION_STOP.
+function write error message and return false.
+   day_start mode or morning start  - everyday, never,
+even days, odd days. See system_settings::START_DAY_MODE_...
+for emplimination details.
+	start_hour hour of morning start.
+   	start_min minute of morning start.
 	predef_directoin - predefined direction of escalator.
 See system_settings::DIRECTION_... for details. If not present
 or not recognized (not ...REVERSE or .._DOWN or ..._UP)  
-set system_settings::DIRECTION_REVERSE.
+function write error message and return false.
 */
 
 bool 
 	load_escalator_parameters (metro_stations_container *metro_stat_obj)
 {
-enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, IP_ADDRESS, DIRECTION, PREDEFINED_DIRECTION, ENTRIES_COUNT};
+enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER,
+			IP_ADDRESS, DIRECTION, START_DAY_MODE, START_HOUR, START_MINUTE, 
+			PREDEFINED_DIRECTION, ENTRIES_COUNT};
 
 const char *entry_name_c_str;
 string entry_name;
+
 vector<char> temp_str(512);
 vector<string> entries_names(ENTRIES_COUNT);
+
 int id_escalator=-1, id_station=-1, esc_type=-1, number=-1,
-	predef_direction=-1, direction=-1, enabled=-1;
+	predef_direction=-1, direction=-1, start_day_mode=-1, 
+	start_hour=-1, start_minute=-1,  enabled=-1;
+
 in_addr_t ip=INADDR_NONE;
 
-system_settings::strings_container directions_strings=sys_sett_obj->get_directions_strings();
+system_settings::strings_container directions_strings_engl=sys_sett_obj->get_directions_engl_strings();
+system_settings::strings_container start_days_modes_strings_engl=sys_sett_obj->get_start_days_modes_engl_strings();
 system_settings::strings_container outer_states_strings=sys_sett_obj->get_outer_states_strings();
 
 entries_names[ID]="id";
@@ -137,6 +145,9 @@ entries_names[ENABLED]="enabled";
 entries_names[NUMBER]="num";
 entries_names[IP_ADDRESS]="ip";
 entries_names[DIRECTION]="direction";
+entries_names[START_DAY_MODE]="start day mode";
+entries_names[START_HOUR]="start hour";
+entries_names[START_MINUTE]="start minute";
 entries_names[PREDEFINED_DIRECTION]="predef_direction";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -261,45 +272,96 @@ if (entry_name.compare(entries_names[ID])==0)
 	}else if (entry_name.compare(entries_names[DIRECTION])==0) { 	
 			int temp_int;
 
-			temp_int=system_settings::DIRECTION_STOP;
-			if (directions_strings[temp_int].compare(&temp_str[0])==0) 
+			temp_int=system_settings::DIRECTION_UP;
+			if (directions_strings_engl[temp_int].compare(&temp_str[0])==0) 
 				{
 					direction = temp_int;					
 				} else {
-					temp_int=system_settings::DIRECTION_UP;
-					if (directions_strings[temp_int].compare(&temp_str[0])==0) 
+					temp_int=system_settings::DIRECTION_DOWN;
+					if (directions_strings_engl[temp_int].compare(&temp_str[0])==0) 
 						{
 							direction = temp_int;					
 						} else {
-							temp_int=system_settings::DIRECTION_DOWN;
-							if (directions_strings[temp_int].compare(&temp_str[0])==0) 
-								{
-									direction = temp_int;					
-								} else {
-										string message("Wrong escalator direction  ");
-										message+=&temp_str[0];
-										sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
+							string message("Wrong escalator direction  ");
+							message+=&temp_str[0];
+							sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
 
-										direction = system_settings::DIRECTION_STOP;
+							return(false);
+						};
+				};				
+
+	}else if (entry_name.compare(entries_names[START_DAY_MODE])==0) { 	
+			int temp_int;
+
+			temp_int=system_settings::START_DAY_MODE_NEVER;
+			if (start_days_modes_strings_engl[temp_int].compare(&temp_str[0])==0) 
+				{
+					start_day_mode = temp_int;					
+				} else {
+					temp_int=system_settings::START_DAY_MODE_EVERYDAY;
+					if (start_days_modes_strings_engl[temp_int].compare(&temp_str[0])==0) 
+						{
+							start_day_mode = temp_int;					
+						} else {
+							temp_int=system_settings::START_DAY_MODE_EVEN;
+							if (start_days_modes_strings_engl[temp_int].compare(&temp_str[0])==0) 
+								{
+									start_day_mode = temp_int;					
+								} else {
+										temp_int=system_settings::START_DAY_MODE_ODD;
+										if (start_days_modes_strings_engl[temp_int].compare(&temp_str[0])==0) 
+										{
+											start_day_mode = temp_int;					
+										} else {
+											string message("Wrong escalator start day mode  ");
+											message+=&temp_str[0];
+											sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
+										};
 								};
 						};				
 				};
+
+	}else if (entry_name.compare(entries_names[START_HOUR])==0) { 	
+			int temp_int = atoi(&temp_str[0]);
+			if (	temp_int>=system_settings::START_HOUR_MIN &&
+				temp_int<=system_settings::START_HOUR_MAX)
+			{
+						start_hour=temp_int;
+			} else {
+						string message("Wrong escalator start hour  ");
+						message+=&temp_str[0];
+						sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
+						return(false);
+			};
+
+	}else if (entry_name.compare(entries_names[START_MINUTE])==0) { 	
+			int temp_int = atoi(&temp_str[0]); 
+			if (	temp_int>=0 &&  //ATTENTION !!! CAVEATS !!! atoi return 0 if string contain 0 or if string not correct.... escalator may be started in not correct time.
+				temp_int<60)
+			{
+						start_minute=temp_int;
+			} else {
+						string message("Wrong escalator start minute  ");
+						message+=&temp_str[0];
+						sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
+						return(false);
+			};
 
 	}else if (entry_name.compare(entries_names[PREDEFINED_DIRECTION])==0) { 	
 			int temp_int;
 
 			temp_int=system_settings::DIRECTION_UP;
-			if (directions_strings[temp_int].compare(&temp_str[0])==0) 
+			if (directions_strings_engl[temp_int].compare(&temp_str[0])==0) 
 				{
 					predef_direction = temp_int;					
 				} else {
 					temp_int=system_settings::DIRECTION_DOWN;
-					if (directions_strings[temp_int].compare(&temp_str[0])==0) 
+					if (directions_strings_engl[temp_int].compare(&temp_str[0])==0) 
 						{
 							predef_direction = temp_int;					
 						} else {
 							temp_int=system_settings::DIRECTION_REVERSE;
-							if (directions_strings[temp_int].compare(&temp_str[0])==0) 
+							if (directions_strings_engl[temp_int].compare(&temp_str[0])==0) 
 								{
 									predef_direction = temp_int;					
 								} else {
@@ -307,7 +369,7 @@ if (entry_name.compare(entries_names[ID])==0)
 									message+=&temp_str[0];
 									sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
 
-									predef_direction = system_settings::DIRECTION_REVERSE;
+									return(false);
 								};
 						};				
 				};
@@ -328,6 +390,11 @@ entry_name_c_str=PxConfigNextString(&temp_str[0],
 if (id_escalator>0 && 
 	esc_type>0 &&
 	number>0 && 
+	start_day_mode>=0 &&
+	start_hour>0 &&
+	start_minute>=0 &&
+	predef_direction>0 &&
+	direction>0 &&
 	ip!=INADDR_NONE)
 	{
 	if (id_station<0) 
@@ -343,8 +410,7 @@ if (id_escalator>0 &&
 					sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
 				};
 			};
-	if (predef_direction<0) predef_direction=system_settings::DIRECTION_REVERSE;
-	if (direction<0) direction=system_settings::DIRECTION_STOP;
+
 	if (enabled<0) 	enabled=system_settings::DISABLED;
 
 	metro_stations_container::iterator_metro_stations iter_stat;
@@ -362,6 +428,9 @@ if (id_escalator>0 &&
 																		number,
 																		predef_direction,
 																		direction,
+																		start_day_mode,
+																		start_hour,
+																		start_minute,
 																		enabled,
 																		ip
 																	)
@@ -401,6 +470,8 @@ bool load (metro_stations_container *metro_stations_cont, string file_name)
 	vector<string> sections_names(ENTRIES_COUNT);
 
 	sections_names[ESCALATOR]="escalator";
+
+	erase(begin(), end());
  	
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE )
 	{
@@ -410,6 +481,7 @@ bool load (metro_stations_container *metro_stations_cont, string file_name)
 
 		return 0;
 	};
+
 	section_name_c_str=PxConfigNextSection();
 	while (section_name_c_str!=NULL) 
 	{
@@ -444,6 +516,49 @@ bool load (metro_stations_container *metro_stations_cont, string file_name)
 
 	}; 
 
+/*
+preparing escalators by line with id   line_id
+	prepare escalators across 
+	g_lines->stations_ids from current line->g_stations from current line->escalators ids from all stations of current lines
+*/
+
+metro_escalators_container get_escalators_by_line_id (metro_line::station_id_container stations_in_current_line,
+																					  metro_stations_container *cont_metro_stat)
+	{
+		metro_escalators_container escalators_from_line (sys_sett_obj);
+		if (!stations_in_current_line.empty())
+			{
+				metro_stations_container::iterator_metro_stations iter_metro_stations;
+				metro_station::iterator_escalators_id iter_metro_esc_id;
+				iterator_metro_escalators iter_metro_esc;
+								
+				metro_line::station_id_container::iterator iter_metro_stations_ids=stations_in_current_line.begin();
+				while(iter_metro_stations_ids!=
+							stations_in_current_line.end())
+					{
+						iter_metro_stations=cont_metro_stat->find(*iter_metro_stations_ids);
+
+						if (iter_metro_stations!=cont_metro_stat->end())
+							{
+								iter_metro_esc_id=iter_metro_stations->second.begin_escalators_id();
+								while(iter_metro_esc_id!=
+											iter_metro_stations->second.end_escalators_id())
+									{
+									iter_metro_esc=find(*iter_metro_esc_id);
+									if (iter_metro_esc!=end()) // if iter_metro_esc!=end() that id in station hold non-escalator device
+											escalators_from_line.insert(upper_bound(*iter_metro_esc_id),
+																						*iter_metro_esc);
+									iter_metro_esc_id++;
+									}
+							};
+
+						iter_metro_stations_ids++;
+					}; //while(iter_metro_stations_ids!
+
+			}; //if (!stations_in_current_line...
+
+		return escalators_from_line;
+	}
 
 }; // class metro_escalators_container
 #endif

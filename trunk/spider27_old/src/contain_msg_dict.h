@@ -179,6 +179,8 @@ bool load(system_settings *sys_sett_obj, msg_types_container *msg_types_cont, st
 	vector<string> sections_names(ENTRIES_COUNT);
 
 	sections_names[MESSAGE]="message";
+
+	erase(begin(), end());
  	
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE )
 	{
@@ -188,7 +190,9 @@ bool load(system_settings *sys_sett_obj, msg_types_container *msg_types_cont, st
 
 		return 0;
 	};
+
 	section_name_c_str=PxConfigNextSection();
+
 	while (section_name_c_str!=NULL) 
 	{
 

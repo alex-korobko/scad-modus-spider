@@ -16,7 +16,7 @@ extern ApDialogLink_t SignalDlg;
 extern ApDialogLink_t ArchiveDlg;
 extern ApWindowLink_t ArchiveLog;
 extern ApDialogLink_t PrevCmdPoolDlg;
-extern ApWidget_t AbWidgets[ 122 ];
+extern ApWidget_t AbWidgets[ 129 ];
 
 extern ApMenuLink_t EscalatorMenu;
 
@@ -33,14 +33,10 @@ int CloseMainWnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo )
 int NextAlert( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int link_setup_LogFilterDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int SetUpDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int SetDownDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 void draw_log_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where
         );
-int OnSaveDirections( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int PopupControlMenu( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int ResizeScheme( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int MoveUp( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
@@ -50,9 +46,6 @@ int OpenArchive( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int RealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetupPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int SetReverseDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int OnChancelDirections( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int FillEscConfList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 void draw_command_pool_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where
@@ -75,4 +68,22 @@ int activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *data, PtCallb
 int realized_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int unrealized_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_on_off_filter_archive_log( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int link_setup_EscConfig( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_esc_config_btn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int item_selection_cb_lines( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int item_selection_cb_esc_config_list_mode( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int item_selection_cb_start_day_mode( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int item_selection_cb_escalator_direction( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int item_selection_cb_escalator_pref_direction( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int unrealized_EscConfig( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+void draw_escalator_start_item(
+        PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
+        unsigned nitems, PhRect_t *where
+        );
+void selection_escalator_start_item(
+        PtWidget_t *widget, PtGenListItem_t *item, int pos, int column,
+        int nitems, int subtype, PhEvent_t *ev
+        );
+int activate_tglbtn_start_now( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int changed_num_int_start_time( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif

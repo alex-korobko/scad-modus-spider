@@ -197,3 +197,125 @@ void draw_command_pool_item(
 	
 	}
 
+
+void draw_escalator_start_item(
+        PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
+        unsigned nitems, PhRect_t *where
+        ) {
+    	unsigned count, escalator_number;
+	PhPoint_t draw_point;
+    vector<PtArg_t> args(2);
+    vector<char> tmp_chars(10);
+    PtListColumn_t *internal_column_pos=NULL;
+    PtWidget_t *wnd_widget;
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+    	contain_morning_start::iterator_morining_start iter_morn_start;	
+    	metro_stations_container::iterator_metro_stations iter_stations;
+    	metro_escalators_container::iterator_metro_escalators iter_escalators;
+	string tmp_string;
+	system_settings::strings_container directions_strings_ru=g_system_settings.get_directions_russ_strings();    	
+	system_settings::strings_container start_modes_strings_ru=g_system_settings.get_start_days_modes_russ_strings();    	
+
+	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
+	if (g_system_settings.small_font_prepared())
+	{
+		PgSetFont( (char*) g_system_settings.get_small_font() );
+	} else {
+		g_system_settings.sys_message(system_settings::ERROR_MSG,
+													"Not found system_settings::small_font for re-drawing log_items");
+	};
+
+	PtGetResource(widget, Pt_ARG_LIST_COLUMN_POS, &internal_column_pos, 0);
+	wnd_widget=ApGetInstance(widget);	
+	if (wnd_widget==NULL){
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+														"Not found window widget for re-drawing escalator_start items");
+			return;
+		};
+	
+	PtGetResource(wnd_widget, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);	
+	if (ptr_morn_start_cont==NULL){
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+														"Not found ptr_morn_start_cont for re-drawing escalator_start items");
+			return;
+		};
+
+	iter_morn_start=ptr_morn_start_cont->begin();
+	advance(iter_morn_start, index-1);
+	
+	count=0;
+	draw_point.y=where->ul.y+system_settings::ROW_HEIGHT;
+
+	while (	count < nitems &&
+				iter_morn_start!=ptr_morn_start_cont->end())
+	{
+		iter_escalators=g_escalators.find(iter_morn_start->get_escalator_id());
+		if (iter_escalators!=g_escalators.end())
+			{
+				escalator_number=iter_escalators->second.get_number();
+				iter_stations=g_stations.find(iter_escalators->second.get_station_id());
+				if (iter_stations!=g_stations.end())
+					{
+						tmp_string=iter_stations->second.get_stl_name_string();
+					} else {
+						tmp_string="СТАНЦИЯ НЕ НАЙДЕНА";
+						iter_morn_start->set_start_enabled(false);
+						string mess="Not found station for escalator id ";
+						itoa(iter_escalators->second.get_id(), 
+							   &tmp_chars[0], 
+							   10);
+						mess+=&tmp_chars[0];	   
+						mess+=" for re-drawing escalator_start items";
+						g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+					};
+			} else { // if (iter_escalators!=g_
+				escalator_number=0;
+				tmp_string="СТАНЦИЯ НЕ НАЙДЕНА";
+				iter_morn_start->set_start_enabled(false);
+				string mess="Not found escalator with id ";
+				itoa(iter_morn_start->get_escalator_id(), 
+					   &tmp_chars[0], 
+					   10);
+				mess+=&tmp_chars[0];	   
+				mess+=" for re-drawing escalator_start items";
+				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+
+			};
+			
+		iter_morn_start->get_start_enabled()?
+						PgSetTextColor(system_settings::COLOR_RED):
+						PgSetTextColor(system_settings::COLOR_BLACK);	
+
+		//drawing
+		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		itoa(escalator_number, &tmp_chars[0], 10);
+		draw_point.x=where->ul.x+internal_column_pos[1].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(&tmp_chars[0], tmp_chars.size(), &draw_point, Pg_TEXT_BOTTOM);
+		
+		tmp_string=directions_strings_ru[iter_morn_start->get_escalator_direction()];
+		draw_point.x=where->ul.x+internal_column_pos[2].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		itoa(iter_morn_start->get_start_hour(), &tmp_chars[0], 10);
+		tmp_string=&tmp_chars[0];
+		tmp_string+="ч  ";
+		itoa(iter_morn_start->get_start_minute(), &tmp_chars[0], 10);
+		tmp_string+=&tmp_chars[0];
+		tmp_string+="мин";
+		draw_point.x=where->ul.x+internal_column_pos[3].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		tmp_string=start_modes_strings_ru[iter_morn_start->get_start_mode()];
+		draw_point.x=where->ul.x+internal_column_pos[4].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		count++;
+		iter_morn_start++;
+		draw_point.y+=system_settings::ROW_HEIGHT;
+	};// 	while (	count < nitems &&
+
+	}
+
+

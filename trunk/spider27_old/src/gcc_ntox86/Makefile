@@ -28,6 +28,8 @@ include ../indHfiles
 include	../abWfiles
 include	../abLfiles
 
+include ../indLfiles
+
 PLATFORM=gcc_ntox86
 PHABOPTS= 
 
@@ -37,8 +39,8 @@ LD  = qcc
 
 CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I. -I /usr/local/include/ -L /usr/local/lib/
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) -lphexlib -lsocket  -lcppunit -lasound $(ABLIB) $(PHABOPTS)
-SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket -lcppunit -lasound $(ABLIB) $(PHABOPTS) 
+LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) $(MYLIBS) $(ABLIB) $(PHABOPTS)
+SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) $(MYLIBS) $(ABLIB) $(PHABOPTS) 
 
 VPATH = ..
 

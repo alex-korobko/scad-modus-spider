@@ -403,8 +403,12 @@ void insert (log_record rec)
 		
 	}
 
-void erase(iterator_log_rec iter) {container_log_rec.erase(iter);};
-void erase(iterator_log_rec iter_beg, iterator_log_rec iter_end) {container_log_rec.erase(iter_beg, iter_end);};
+void erase(iterator_log_rec iter) 
+		{
+		if (iter_end==iter) iter_end=container_log_rec.end(); //ATTENTION : what can I do ???
+		container_log_rec.erase(iter);
+		};
+		
 void erase_all() 
 	{
 		container_log_rec.erase(container_log_rec.begin(), container_log_rec.end());
@@ -413,21 +417,19 @@ void erase_all()
 	};
 
 bool empty() const {return (container_log_rec.empty());}
-int size() const{return (container_log_rec.size());};
+size_type_log_rec size()  {return distance(container_log_rec.begin(), iter_end);};
 
 /*
 other metods
 */
-
 void prepare_to_display()
 	{
-	
 	if(wnd==NULL) return;
 
 	PtGenListRemoveItems(wnd, NULL,NULL);
 
 	unsigned short size=distance(begin(), 
-								end());
+													end());
 
    if (size==0) return ;
 
@@ -621,7 +623,7 @@ bool load (string file_name)
 
 		if (fread(&save_time, sizeof(save_time), 1, logFile)<=0)
 				{
-					g_system_settings.message_window(system_settings::ERROR_MSG, string("Файл журнала поврежден - ошибка чтения"));
+					g_system_settings.message_window(system_settings::ERROR_MSG, string("Файл журнала поврежден - ошибка чте"));
 	
 					string mess="Can`t read from file ";
 					mess += file_name;

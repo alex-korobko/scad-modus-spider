@@ -17,8 +17,11 @@ unsigned_chars_container font_for_messages_large;
 images_container images;
 strings_container mode_text;
 strings_container ready_text;
-strings_container directions_text;
+strings_container directions_text_engl;
+strings_container directions_text_russ;
 strings_container outer_states_text;
+strings_container start_days_modes_text_engl;
+strings_container start_days_modes_text_russ;
 
 dword paneled_escalator_id;
 
@@ -65,14 +68,24 @@ typedef  vector<byte>  bytes;
    				IMAGES_COUNT
    				};
 
-	//states
+	//escalator states
 	enum {OFFLINE=0,
 				ONLINE=1,
 				BLOCK_NORMA=1,
 				BREAKING_PATH_NORMA=1
 				};
+
+	//escalator start days modes
+	enum {START_DAY_MODE_EVERYDAY=0,
+				START_DAY_MODE_NEVER,
+				START_DAY_MODE_EVEN,
+				START_DAY_MODE_ODD,
+				START_DAYS_MODES_COUNT,
+				START_HOUR_MIN=2,
+				START_HOUR_MAX=8
+				};
 				
-	//outer states
+	//escalator outer states
 	enum {	DISABLED=0,
 				ENABLED,
 				OUTER_STATES_COUNT
@@ -161,6 +174,14 @@ typedef  vector<byte>  bytes;
 				};
 
 system_settings() : 
+	images(IMAGES_COUNT),
+	mode_text(MODES_COUNT),
+	ready_text(STATES_COUNT),
+	directions_text_engl(DIRECTIONS_COUNT),
+	directions_text_russ(DIRECTIONS_COUNT),
+	outer_states_text(OUTER_STATES_COUNT),
+	start_days_modes_text_engl(START_DAYS_MODES_COUNT),
+	start_days_modes_text_russ(START_DAYS_MODES_COUNT),	
 	paneled_escalator_id(0),
 	devices_config_name("config.ini"),
 	global_messages_name("messages.ini"),
@@ -172,7 +193,6 @@ system_settings() :
 		widget_dbase=NULL;
 		main_window=escalator_panel=NULL;
 
-		mode_text.resize(MODES_COUNT);
 		mode_text[MODE_UNUSED]="Ошибка режима!!";
 		mode_text[MODE_MAIN_DRIVE_AT_PANEL]="ГП со щита";
 		mode_text[MODE_MAIN_DRIVE_AT_BEANCH_BOARD]="ГП с пульта";
@@ -183,7 +203,6 @@ system_settings() :
 		mode_text[MODE_BRAKING_OFF]="Растормаж.";
 		mode_text[MODE_RUNNING_OUT]="Выбег";
 
-		ready_text.resize(STATES_COUNT);
 		ready_text[STATE_MAIN_DRIVE_READY]="ГП готов";
 		ready_text[STATE_SMALL_DRIVE_READY]="МП Готов";
 		ready_text[STATE_TEST_READY]="Тест готов";
@@ -191,16 +210,28 @@ system_settings() :
 		ready_text[STATE_RUNNING_OUT_READY]="Выбег готов";
 		ready_text[STATE_NOT_READY]="Не готов";
 
-		directions_text.resize(DIRECTIONS_COUNT);
-		directions_text[DIRECTION_STOP]="stop";
-		directions_text[DIRECTION_UP]="up";
-		directions_text[DIRECTION_DOWN]="down";
-		directions_text[DIRECTION_REVERSE]="reverse";
-
-		outer_states_text.resize(OUTER_STATES_COUNT);
 		outer_states_text[ENABLED]="enabled";
 		outer_states_text[DISABLED]="disabled";
 
+		directions_text_engl[DIRECTION_STOP]="stop";
+		directions_text_engl[DIRECTION_UP]="up";
+		directions_text_engl[DIRECTION_DOWN]="down";
+		directions_text_engl[DIRECTION_REVERSE]="reverse";
+
+		directions_text_russ[DIRECTION_STOP]="СТОП";
+		directions_text_russ[DIRECTION_UP]="ВВЕРХ";
+		directions_text_russ[DIRECTION_DOWN]="ВНИЗ";
+		directions_text_russ[DIRECTION_REVERSE]="РЕВЕРС";
+
+		start_days_modes_text_russ[START_DAY_MODE_EVERYDAY]="ежедневно";
+		start_days_modes_text_russ[START_DAY_MODE_NEVER]="никогда";
+		start_days_modes_text_russ[START_DAY_MODE_ODD]="нечетные";
+		start_days_modes_text_russ[START_DAY_MODE_EVEN]="четные";
+
+		start_days_modes_text_engl[START_DAY_MODE_EVERYDAY]="everyday";
+		start_days_modes_text_engl[START_DAY_MODE_NEVER]="never";
+		start_days_modes_text_engl[START_DAY_MODE_ODD]="odd";
+		start_days_modes_text_engl[START_DAY_MODE_EVEN]="even";
 
 	};
 
@@ -209,7 +240,6 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 {
 		widget_dbase=new_widget_dbase;
 		
-		images.resize(IMAGES_COUNT);		
 		images[GREEN_UP]=*ApGetImageRes(widget_dbase, "green_up");
 		images[GREEN_DOWN]=*ApGetImageRes(widget_dbase, "green_down");	
 		images[RED_UP]=*ApGetImageRes(widget_dbase, "red_up");
@@ -271,7 +301,10 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 //get_ and set_ metods for private data members
 	ApDBase_t* get_widgets_dbase() {return(widget_dbase);};
 
-	strings_container get_directions_strings() {return directions_text;};
+	strings_container get_directions_engl_strings() {return directions_text_engl;};
+	strings_container get_directions_russ_strings() {return directions_text_russ;};
+	strings_container get_start_days_modes_engl_strings() {return start_days_modes_text_engl;};
+	strings_container get_start_days_modes_russ_strings() {return start_days_modes_text_russ;};
 	strings_container get_outer_states_strings() {return outer_states_text;};
 
 	PtWidget_t* get_main_window() {return(main_window);};

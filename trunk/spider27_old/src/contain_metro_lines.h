@@ -21,6 +21,7 @@ metro_lines_map 	container_metro_lines;
 public :
 typedef 	metro_lines_map::iterator iterator_metro_lines;	
 typedef 	metro_lines_map::value_type pair_metro_lines;	
+typedef 	metro_lines_map::size_type size_type_metro_lines;	
 
 private :
 int lines_count;
@@ -49,13 +50,16 @@ iterator_metro_lines find(const int key) { return container_metro_lines.find(key
 iterator_metro_lines upper_bound(const int key) { return container_metro_lines.upper_bound(key); };
 
 void erase (iterator_metro_lines iter) { container_metro_lines.erase(iter); };
+void erase (iterator_metro_lines iter_beg, 
+					iterator_metro_lines iter_end ) { container_metro_lines.erase(iter_beg, iter_end); };
+
 iterator_metro_lines insert (iterator_metro_lines iter, const pair_metro_lines& obj) 
 {
   return (container_metro_lines.insert(iter, obj)); 
 }
 
 bool empty() const { return container_metro_lines.empty();}
-int size() const {return container_metro_lines.size();};
+size_type_metro_lines size() const {return container_metro_lines.size();};
 
 /*
 bool 
@@ -179,6 +183,8 @@ bool load (system_settings *sys_sett_obj, string file_name)
 	vector<string> sections_names(ENTRIES_COUNT);
 
 	sections_names[LINE]="line";
+
+	erase(begin(), end());
  	
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE )
 	{
@@ -188,7 +194,9 @@ bool load (system_settings *sys_sett_obj, string file_name)
 
 		return 0;
 	};
+
 	section_name_c_str=PxConfigNextSection();
+
 	while (section_name_c_str!=NULL) 
 	{
 
@@ -221,7 +229,6 @@ bool load (system_settings *sys_sett_obj, string file_name)
 	return (true);
 
 	}; 
-
 
 };
 

@@ -167,9 +167,9 @@ bool load (system_settings *sys_sett_obj, string file_name)
 	const char *section_name_c_str;
 	vector<string> sections_names(ENTRIES_COUNT);
 
-	erase(begin(), end());
-
 	sections_names[TYPE]="type";
+
+	erase(begin(), end());
  	
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE )
 	{
@@ -179,7 +179,9 @@ bool load (system_settings *sys_sett_obj, string file_name)
 
 		return 0;
 	};
+
 	section_name_c_str=PxConfigNextSection();
+
 	while (section_name_c_str!=NULL) 
 	{
 

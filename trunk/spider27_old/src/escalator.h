@@ -192,6 +192,11 @@ private:
    	int 			enabled;
    	int				online;
    	int				direction;
+
+   	int				start_day_mode; //see system.h for enum START_DAY_MODE_ 
+   	int				start_hour;
+   	int				start_minute;
+
    	int				prefDirection;
 	int last_message_remote_id;
 	//for storing id of message in remote container (attention! not a self message id!) last recived
@@ -249,6 +254,9 @@ metro_escalator(
 		int new_number,
 		int new_pref_direction,
 		int new_direction,
+	   	int	 new_start_day_mode,
+	   	int	 new_start_hour,
+	   	int	 new_start_minute,
 		int new_enabled,
 		in_addr_t	new_ip
 		):
@@ -260,6 +268,9 @@ metro_escalator(
 	enabled(new_enabled),
 	online(system_settings::OFFLINE),
 	direction (new_direction),
+ 	start_day_mode(new_start_day_mode),
+	start_hour(new_start_hour),
+	start_minute(new_start_minute),
 	prefDirection(new_pref_direction),
 	last_message_remote_id(0),
 	
@@ -314,13 +325,16 @@ get_ and set_  metods for private data members
 
    	int get_type() { return type; };
 	void set_type(int new_escalator_type) { type=new_escalator_type;};
+
+   	int get_pref_direction() { return prefDirection; };   	
+   	void set_pref_direction(int new_dir) { prefDirection=new_dir; };   	
 	
    	int get_direction() { return direction; };   	
    	void set_direction(int new_dir) { direction=new_dir; };   	
 
-   	int get_pref_direction() { return prefDirection; };   	
-   	void set_pref_direction(int new_dir) { prefDirection=new_dir; };   	
-
+	int get_start_day_mode() {return start_day_mode;};
+	int get_start_hour() {return start_hour;};
+	int get_start_minute(){ return start_minute;}
 
    	int get_last_message_remote_id() { return last_message_remote_id; };   	
    	void set_last_message_remote_id(int new_last_message_remote_id) { last_message_remote_id=new_last_message_remote_id; };   	

@@ -5,6 +5,7 @@ MYHDR =../alert.h\
  ../contain_metro_devices_types.h\
  ../escalator.h\
  ../contain_metro_escalators.h\
+  ../contain_morning_start.h\
  ../command.h\
  ../contain_cmd_pool.h\
  ../station.h\
@@ -29,4 +30,5 @@ MYHDR =../alert.h\
  ../unit_tests/contain_metro_devices_types_test.h\
  ../unit_tests/escalator_test.h\
  ../unit_tests/contain_metro_escalators_test.h\
+  ../unit_tests/contain_morning_start_test.h\
  ../unit_tests/unit_tests.h

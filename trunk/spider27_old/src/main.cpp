@@ -161,6 +161,17 @@ bool load_map(string file_name)
 
 		return 0;
 	};
+	
+	g_escalators.erase(g_escalators.begin(),
+									g_escalators.end());
+	
+	g_stations.erase(g_stations.begin(),
+								g_stations.end());
+	
+	g_lines.erase(g_lines.begin(),
+						g_lines.end());
+
+
 	section_name_c_str=PxConfigNextSection();
 	while (section_name_c_str!=NULL) 
 	{
@@ -438,6 +449,9 @@ bool load_escalators_types(string fileName)
 int Initialize( int argc, char *argv[] )
 {
 
+	unit_test u_test;
+	u_test.run_tests();
+
 	time_t time_now=time(NULL);
 	g_main_log.filter.set_start_time(time_now);
 	g_main_log.filter.set_stop_time(time_now);
@@ -445,8 +459,19 @@ int Initialize( int argc, char *argv[] )
 	g_archive_log.filter.set_start_time(time_now);
 	g_archive_log.filter.set_stop_time(time_now);
 
-	unit_test u_test;
-	u_test.run_tests();
+	g_msg_types.load(&g_system_settings, 
+								g_system_settings.get_messages_types_name() );
+
+	g_msg_dictionary.load(&g_system_settings, 
+										&g_msg_types,
+										g_system_settings.get_global_messages_name() );
+
+	g_metro_devices_types.load( &g_system_settings,
+			  										&g_msg_types,	
+													g_system_settings.get_devices_types_name() );
+
+	load_map(g_system_settings.get_devices_config_name());
+
 
 	return( Pt_CONTINUE );
 }
@@ -463,14 +488,6 @@ int Initialize( int argc, char *argv[] )
 	sa_sig_pipe.sa_handler=&SigpipeHandler;
 	
 	sigaction(SIGPIPE,&sa_sig_pipe,NULL);
-
-	time_t time_now=time(NULL);
-	g_main_log.filter.set_start_time(time_now);
-	g_main_log.filter.set_stop_time(time_now);
-
-	g_archive_log.filter.set_start_time(time_now);
-	g_archive_log.filter.set_stop_time(time_now);
-
    
 	// загружаем библиотеку виджето
 
@@ -483,7 +500,7 @@ int Initialize( int argc, char *argv[] )
 	// описание роутинга
 	if (!g_router.load_routing(g_system_settings.get_routing_name()))
     	{
-		string mess("Файл конгурац роутинга\n");
+		string mess("Файл конгурац оутинга\n");
 		mess+=g_system_settings.get_routing_name();
 		mess+="\nне нйден ил поврежден";
 
@@ -520,7 +537,27 @@ int Initialize( int argc, char *argv[] )
           PtExit(EXIT_FAILURE);
     	}
  
- 
+
+	time_t time_now=time(NULL);
+	g_main_log.filter.set_start_time(time_now);
+	g_main_log.filter.set_stop_time(time_now);
+
+	g_archive_log.filter.set_start_time(time_now);
+	g_archive_log.filter.set_stop_time(time_now);
+
+	g_msg_types.load(&g_system_settings, 
+								g_system_settings.get_messages_types_name() );
+
+	g_msg_dictionary.load(&g_system_settings, 
+										&g_msg_types,
+										g_system_settings.get_global_messages_name() );
+
+	g_metro_devices_types.load( &g_system_settings,
+			  										&g_msg_types,	
+													g_system_settings.get_devices_types_name() );
+
+	load_map(g_system_settings.get_devices_config_name());
+ 	
  	metro_escalators_container::iterator_metro_escalators iter_esc = g_escalators.begin();
 	while (iter_esc != g_escalators.end())
 	{
