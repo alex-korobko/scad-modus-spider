@@ -117,10 +117,10 @@ PtOSContainer
 PtOSContainer
 1005
 dim
-536,310
+536,311
 1007
 pos
--1,2
+0,0
 10001
 flag
 1440,8191
@@ -133,7 +133,7 @@ PtRawList
 CommandPoolRwLst
 1005
 dim
-538,312
+536,312
 1007
 pos
 0,0
@@ -158,7 +158,7 @@ PtDivider
 PtDivider
 1005
 dim
-537,29
+535,29
 1006
 flag
 1280,1280
@@ -170,10 +170,13 @@ flag
 0x1200000,0x3f00000
 1007
 pos
--2,-6
+-1,-1
 10001
 flag
 3360,8191
+44001
+flag
+1,15
 10004000
 lock
 0
@@ -221,7 +224,7 @@ pos
 311,0
 1005
 dim
-224,27
+222,27
 10004000
 lock
 0
