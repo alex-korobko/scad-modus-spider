@@ -1,0 +1,59 @@
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+
+
+<h1>Тестирование скорости вставки данных в таблицу.</h1>
+
+<br><center>Тестирование скорости вставки данных в таблицу.<br><small>блок данных от 1024K до 2048K<br>тестрируются 3 разных размера диапазона<br> вставка производится из буффера размером 1/5 от размера блока данных <br> выполняется 2 повторений</small></center><br><table width="95%" border="1" align="center">
+	<tr>
+		<td align = "center" width = "60%">Описание теста</td>
+		<td align = "center">Общее время вставки<br>(миллисек)</td>
+		<td align = "center">Среднее время вставки<br>(миллисек)</td>
+		<td align = "center">Дисперсия времении вставки<br>(миллисек)</td>
+		<td align = "center">Среднее время очистки<br>(миллисек)</td>
+		<td align = "center">Дисперсия времении очистки<br>(миллисек)</td>
+	</tr>
+
+	<tr>
+		<td align = "center" width = "60%">Объект-заглушка<br> размер данных 1048576 байт<br> размер буффера 209715 байт</td>
+		<td align = "center">0.000680</td>
+		<td align = "center">0.000136</td>
+		<td align = "center">0.000000</td>
+		<td align = "center">0.000109</td>
+		<td align = "center">0.000000</td>
+	</tr>
+
+	<tr>
+		<td align = "center" width = "60%">Объект-заглушка<br> размер данных 1398101 байт<br> размер буффера 279620 байт</td>
+		<td align = "center">0.001360</td>
+		<td align = "center">0.000136</td>
+		<td align = "center">0.000000</td>
+		<td align = "center">0.000109</td>
+		<td align = "center">0.000000</td>
+	</tr>
+
+	<tr>
+		<td align = "center" width = "60%">Объект-заглушка<br> размер данных 1747626 байт<br> размер буффера 349525 байт</td>
+		<td align = "center">0.002041</td>
+		<td align = "center">0.000136</td>
+		<td align = "center">0.000000</td>
+		<td align = "center">0.000109</td>
+		<td align = "center">0.000000</td>
+	</tr>
+
+	<tr>
+		<td align = "center" width = "60%">Объект-заглушка<br> размер данных 2097151 байт<br> размер буффера 419430 байт</td>
+		<td align = "center">0.002721</td>
+		<td align = "center">0.000136</td>
+		<td align = "center">0.000000</td>
+		<td align = "center">0.000109</td>
+		<td align = "center">0.000000</td>
+	</tr>
+</table>
+
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+#define __MOCK_OBJECT__
