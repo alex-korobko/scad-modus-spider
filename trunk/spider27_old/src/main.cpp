@@ -8,11 +8,11 @@ system_settings g_system_settings;
 alerts_container g_alerts;
 metro_stations_container g_stations;
 metro_escalators_container g_escalators(&g_system_settings);
-cmd_pool_container g_CommandPool;
-esc_types_container g_metro_escalator_types;
+cmd_pool_container g_command_pool;
+devices_types_container g_metro_devices_types;
 metro_lines_container g_lines;
 msg_types_container g_msg_types;
-msg_dict_container g_msgDictionary;
+msg_dict_container g_msg_dictionary;
 router g_router;
 log_records_container  g_main_log, g_archive_log;
 sound g_sound;
@@ -437,9 +437,17 @@ bool load_escalators_types(string fileName)
 
 int Initialize( int argc, char *argv[] )
 {
+
+	time_t time_now=time(NULL);
+	g_main_log.filter.set_start_time(time_now);
+	g_main_log.filter.set_stop_time(time_now);
+
+	g_archive_log.filter.set_start_time(time_now);
+	g_archive_log.filter.set_stop_time(time_now);
+
 	unit_test u_test;
 	u_test.run_tests();
-	
+
 	return( Pt_CONTINUE );
 }
 
@@ -455,6 +463,14 @@ int Initialize( int argc, char *argv[] )
 	sa_sig_pipe.sa_handler=&SigpipeHandler;
 	
 	sigaction(SIGPIPE,&sa_sig_pipe,NULL);
+
+	time_t time_now=time(NULL);
+	g_main_log.filter.set_start_time(time_now);
+	g_main_log.filter.set_stop_time(time_now);
+
+	g_archive_log.filter.set_start_time(time_now);
+	g_archive_log.filter.set_stop_time(time_now);
+
    
 	// загружаем библиотеку виджето
 
@@ -463,56 +479,11 @@ int Initialize( int argc, char *argv[] )
 	
 	g_system_settings.sys_message(system_settings::INFO_MSG, 
 														string("Spider: startup"));
-
-    
-	// файл сбщений для журнала
-    	if (! load_dictionary(g_system_settings.get_global_messages_name()))
-	{
-		string mess("Файл сообщений журнала\n");
-		mess+=g_system_settings.get_global_messages_name();
-		mess+="\nне найден или поврежден";
-		g_system_settings.message_window(system_settings::ERROR_MSG,
-																   mess);
-
-		PtExit(EXIT_FAILURE);
-	}
-
-	// инициализируем звук
-/*    	if (!g_sound.Init())
-	{
-		WARN_BOX("Не инициализирован аудио драйвер");
-	}*/
-            
-	if (! load_escalators_types(g_system_settings.get_escalator_types_name()))
-	{
-		string mess("Файл библиотеки эскалаторов\n");
-		mess+=g_system_settings.get_escalator_types_name();
-		mess+="\nне найден или поврежден";
-
-		g_system_settings.message_window(system_settings::ERROR_MSG,
-																   mess);
-
-		PtExit(EXIT_FAILURE);
-	}
-
-	// загузка файла хемы
-	if (! load_map(g_system_settings.get_devices_config_name()))
-    	{
-		string mess("Файл схем метрополина\n");
-		mess+=g_system_settings.get_devices_config_name();
-		mess+="\nне найден или поврежден";
-
-		g_system_settings.message_window(system_settings::ERROR_MSG,
-																   mess);
-
-		PtExit(EXIT_FAILURE);
-    	}
-    
-	
+ 	
 	// описание роутинга
 	if (!g_router.load_routing(g_system_settings.get_routing_name()))
     	{
-		string mess("Файл конфигурации роутинга\n");
+		string mess("Файл конгурац роутинга\n");
 		mess+=g_system_settings.get_routing_name();
 		mess+="\nне нйден ил поврежден";
 

@@ -9,44 +9,44 @@ extern ApContext_t AbContext;
 ApWindowLink_t main_wnd = {
 	"main_wnd.wgtw",
 	&AbContext,
-	AbLinks_main_wnd, 0, 13
+	AbLinks_main_wnd, 0, 11
 	};
 
 ApPictureLink_t interface = {
 	"interface.wgtp",
 	&AbContext,
 	AbLinks_interface,
-	15, 3
+	14, 3
 	};
 
 ApDialogLink_t LogFilterDlg = {
 	"LogFilterDlg.wgtd",
 	&AbContext,
-	AbLinks_LogFilterDlg, 71, 7
+	AbLinks_LogFilterDlg, 70, 9
 	};
 
 ApDialogLink_t EscConfig = {
 	"EscConfig.wgtd",
 	&AbContext,
-	AbLinks_EscConfig, 91, 7
+	AbLinks_EscConfig, 90, 7
 	};
 
 ApDialogLink_t SignalDlg = {
 	"SignalDlg.wgtd",
 	&AbContext,
-	AbLinks_SignalDlg, 98, 2
+	AbLinks_SignalDlg, 97, 2
 	};
 
 ApDialogLink_t ArchiveDlg = {
 	"ArchiveDlg.wgtd",
 	&AbContext,
-	AbLinks_ArchiveDlg, 109, 2
+	AbLinks_ArchiveDlg, 108, 2
 	};
 
 ApWindowLink_t ArchiveLog = {
 	"ArchiveLog.wgtw",
 	&AbContext,
-	AbLinks_ArchiveLog, 113, 5
+	AbLinks_ArchiveLog, 112, 6
 	};
 
 ApDialogLink_t PrevCmdPoolDlg = {

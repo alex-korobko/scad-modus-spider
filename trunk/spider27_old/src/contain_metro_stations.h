@@ -17,8 +17,6 @@ struct ltint
 	};
 typedef  map <int,  metro_station, ltint> metro_stations_map;	
 metro_stations_map	container_metro_stations;
-
-public :
 typedef 	metro_stations_map::iterator iterator_metro_stations;	
 typedef 	metro_stations_map::value_type pair_metro_stations;	
 

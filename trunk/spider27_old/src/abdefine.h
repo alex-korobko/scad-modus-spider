@@ -25,8 +25,8 @@ extern const int ABN_ArchiveBtn;
 #define ABW_ArchiveBtn                       AbGetABW( ABN_ArchiveBtn )
 extern const int ABN_CmdPoolBtn;
 #define ABW_CmdPoolBtn                       AbGetABW( ABN_CmdPoolBtn )
-extern const int ABN_btn_on_off_filter;
-#define ABW_btn_on_off_filter                AbGetABW( ABN_btn_on_off_filter )
+extern const int ABN_on_off_filter_main_log;
+#define ABW_on_off_filter_main_log           AbGetABW( ABN_on_off_filter_main_log )
 extern const int ABN_AlertWnd;
 #define ABW_AlertWnd                         AbGetABW( ABN_AlertWnd )
 extern const int ABN_AlertMsg;
@@ -41,8 +41,6 @@ extern const int ABN_Scheme;
 #define ABW_Scheme                           AbGetABW( ABN_Scheme )
 extern const int ABN_LogJournalPanel;
 #define ABW_LogJournalPanel                  AbGetABW( ABN_LogJournalPanel )
-extern const int ABN_log_status;
-#define ABW_log_status                       AbGetABW( ABN_log_status )
 extern const int ABN_main_log_wnd;
 #define ABW_main_log_wnd                     AbGetABW( ABN_main_log_wnd )
 
@@ -261,6 +259,8 @@ extern const int ABN_ArchiveLogCancelBtn;
 #define ABW_ArchiveLogCancelBtn              AbGetABW( ABN_ArchiveLogCancelBtn )
 extern const int ABN_ArchiveLogOpenBtn;
 #define ABW_ArchiveLogOpenBtn                AbGetABW( ABN_ArchiveLogOpenBtn )
+extern const int ABN_on_off_filter_archive_log;
+#define ABW_on_off_filter_archive_log        AbGetABW( ABN_on_off_filter_archive_log )
 
 /* 'PrevCmdPoolDlg' Dialog link */
 extern const int ABN_PrevCmdPullDlg;

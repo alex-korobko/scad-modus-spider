@@ -33,7 +33,6 @@ int CloseMainWnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo )
 int NextAlert( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int link_setup_LogFilterDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetUpDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetDownDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
@@ -48,8 +47,6 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int MoveStop( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int MoveDown( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int OpenArchive( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int realize_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int unrealize_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int RealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetupPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
@@ -67,11 +64,15 @@ int unrealized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *data, PtCallbackI
 int activate_CmdPoolBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllTimeRangeBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int realized_main_log_wnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int unrealized_main_log_wnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int unrealized_LogFilterDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllMessagesTypesBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int itemselection_StationList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int itemselection_DevicesList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int realized_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int unrealized_ArchiveLog( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_on_off_filter_archive_log( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif

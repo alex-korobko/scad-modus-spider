@@ -28,23 +28,27 @@ g_msg_types.insert(g_msg_types.upper_bound(2), msg_types_container::msg_types_pa
 
 void test_erase()
 {
+
 msg_types_container::msg_types_iterator tmp_iter;
-CPPUNIT_ASSERT(g_msg_types.size()==3);
+msg_types_container::msg_types_size_type old_size=
+																	g_msg_types.size();
+
+CPPUNIT_ASSERT(old_size==3);
+CPPUNIT_ASSERT(!g_msg_types.empty());
 
 tmp_iter=g_msg_types.find(1);
+
 CPPUNIT_ASSERT( tmp_iter!=g_msg_types.end());
 g_msg_types.erase(tmp_iter);
 
-tmp_iter=g_msg_types.find(2);
-CPPUNIT_ASSERT( tmp_iter!=g_msg_types.end());
-g_msg_types.erase(tmp_iter);
+CPPUNIT_ASSERT(old_size==g_msg_types.size()+1);
 
-tmp_iter=g_msg_types.find(3);
-CPPUNIT_ASSERT( tmp_iter!=g_msg_types.end());
-g_msg_types.erase(tmp_iter);
+g_msg_types.erase(g_msg_types.begin(), 
+								g_msg_types.end());
 
 CPPUNIT_ASSERT(g_msg_types.empty());
 CPPUNIT_ASSERT(g_msg_types.size()==0);
+
 };
 
 void test_load()
@@ -116,7 +120,7 @@ while (tmp_iter1!=g_msg_types.end())
 public:
 void setUp()
 {
-	file_name="../unit_tests/msg_types_test.mtp";
+	file_name="../unit_tests/msg_types_test.ini";
 }
 	
 void tearDown()

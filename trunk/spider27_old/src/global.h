@@ -57,23 +57,23 @@ extern system_settings g_system_settings;
 extern router g_router;
 /*****************************************************************************
 *	Container class for messages dictionary - wrapper of STL container map 			*
-*	Container class for metro escalator types - wrapper of STL container map*
+*	Container class for metro devices types - wrapper of STL container map*
 *	Container class for metro escalators - wrapper of STL container map 						*
 *	Container class for metro stations - wrapper of STL container map 								*
 *	Container class for metro liness - wrapper of STL container map 										*
 *	Container class for command pool - wrapper of STL container list 									*
-*	Container class for log records - wrapper of STL container vector 			*
+*	Container class for log records - wrapper of STL container vector 			  *
 *	Container class for alerts - wrapper of STL container vector with stack functions*
 *****************************************************************************/
 #include "contain_msg_types.h"
 extern msg_types_container g_msg_types;
 
 #include "contain_msg_dict.h"
-extern msg_dict_container g_msgDictionary;
+extern msg_dict_container g_msg_dictionary;
 
-#include "esc_types.h"
-#include "contain_metro_escalator_types.h"
-extern esc_types_container g_metro_escalator_types;
+#include "devices_types.h"
+#include "contain_metro_devices_types.h"
+extern devices_types_container g_metro_devices_types;
 
 #include "line.h"
 #include "contain_metro_lines.h"
@@ -89,7 +89,7 @@ extern  metro_escalators_container g_escalators;
 
 #include "command.h"
 #include "contain_cmd_pool.h"
-extern cmd_pool_container g_CommandPool;
+extern cmd_pool_container g_command_pool;
 
 #include "contain_log_rec.h"
 extern log_records_container  g_main_log, g_archive_log;
@@ -122,7 +122,7 @@ extern pthread_t	g_pingTID, g_timerTID;
 #include "unit_tests/contain_metro_lines_test.h"
 #include "unit_tests/station_test.h"
 #include "unit_tests/contain_metro_stations_test.h"
-#include "unit_tests/contain_metro_escalators_types_test.h"
+#include "unit_tests/contain_metro_devices_types_test.h"
 #include "unit_tests/escalator_test.h"
 #include "unit_tests/contain_metro_escalators_test.h"
 

@@ -24,13 +24,11 @@ static const ApEventLink_t AbLinks_main_wnd[] = {
 	{ 4, 0, 0L, 0L, 0L, &EscConfig, NULL, "EscConfigBtn", 2009, NULL, 0, 0, 0, 0, },
 	{ 3, 0, 0L, 0L, 0L, &ArchiveLog, NULL, "ArchiveBtn", 2009, OpenArchive, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "CmdPoolBtn", 2009, activate_CmdPoolBtn, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "btn_on_off_filter", 2009, activate_on_off_filter_main_log, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "on_off_filter_main_log", 2009, activate_on_off_filter_main_log, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AlertOK", 2007, NextAlert, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AlertOK", 2009, ActivateAlertBtn, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "Scheme", 10003, ResizeScheme, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "main_log_wnd", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_log_item, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "main_log_wnd", 1012, realized_main_log_wnd, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "main_log_wnd", 1013, unrealized_main_log_wnd, 0, 0, 0, 0, },
 	{ 0 }
 	};
 
@@ -46,9 +44,11 @@ static const ApEventLink_t AbLinks_LogFilterDlg[] = {
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AllTimeRangeBtn", 2009, activate_AllTimeRangeBtn, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AllMessagesTypesBtn", 2009, activate_AllMessagesTypesBtn, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AllStationsBtn", 2009, activate_AllStationsBtn, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "StationsList", 23010, itemselection_StationList, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AllDevicesBtn", 2009, activate_AllDevicesBtn, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "DevicesList", 23010, itemselection_DevicesList, 0, 0, 0, 0, },
 	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "LogFIlterCancel", 2007, NULL, 0, 0, 0, 0, },
-	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "LogFilterOK", 2007, activate_LogFilterOK, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "LogFilterOK", 2007, activate_LogFilterOK, 0, 0, 0, 0, },
 	{ 0 }
 	};
 
@@ -76,11 +76,12 @@ static const ApEventLink_t AbLinks_ArchiveDlg[] = {
 	};
 
 static const ApEventLink_t AbLinks_ArchiveLog[] = {
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "ArchiveLogWnd", 1012, realize_ArchiveLog, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "ArchiveLogWnd", 1013, unrealize_ArchiveLog, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "ArchiveLog", 1012, realized_ArchiveLog, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "ArchiveLog", 1013, unrealized_ArchiveLog, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "ArchiveLogWnd", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_log_item, 0, 0, 0, 0, },
 	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "ArchiveLogCancelBtn", 2009, NULL, 0, 0, 0, 0, },
 	{ 4, 0, 0L, 0L, 0L, &ArchiveDlg, NULL, "ArchiveLogOpenBtn", 2009, NULL, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "on_off_filter_archive_log", 2009, activate_on_off_filter_archive_log, 0, 0, 0, 0, },
 	{ 0 }
 	};
 

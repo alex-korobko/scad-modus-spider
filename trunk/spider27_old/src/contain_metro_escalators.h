@@ -18,12 +18,9 @@ struct ltint
 
 typedef  map <int, metro_escalator, ltint> metro_escalators_map;	
 metro_escalators_map	container_metro_escalators;
-
-public :
 typedef metro_escalators_map::iterator  iterator_metro_escalators;	
 typedef metro_escalators_map::value_type pair_metro_escalators;	
 
-private :
 iterator_metro_escalators current_escalator;
 iterator_metro_escalators current_escalator_in_directions;
 
@@ -201,7 +198,7 @@ if (entry_name.compare(entries_names[ID])==0)
 			int temp_int = atoi(&temp_str[0]);
 			if (temp_int>0)
 			{
-				if (g_metro_escalator_types.find(temp_int)!=g_metro_escalator_types.end())
+				if (g_metro_devices_types.find(temp_int)!=g_metro_devices_types.end())
 					{
 						esc_type=temp_int;
 					} else 	{

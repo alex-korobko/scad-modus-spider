@@ -12,8 +12,8 @@ int mess_id;
 tmp_log_rec_cont.set_records_autoincrement(tmp_log_rec_cont.get_records_autoincrement()+1);
 
 mess_id=msg_dict_container::MSG_PROGRAM_STARTED; //	message_id Program started
-msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(mess_id);
-if(tmp_msg_iter==g_msgDictionary.end())
+msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(mess_id);
+if(tmp_msg_iter==g_msg_dictionary.end())
 {
 	vector<char> tmp_chars(10);
 	string mess = "Not found message id ";
@@ -41,8 +41,8 @@ mess_id=msg_dict_container::MSG_PROGRAM_CLOSED; //	message_id Program stopped
 
 mess_id=msg_dict_container::MSG_PROGRAM_STARTED; //	message_id Program started
 
-tmp_msg_iter=g_msgDictionary.find(mess_id);
-if(tmp_msg_iter==g_msgDictionary.end())
+tmp_msg_iter=g_msg_dictionary.find(mess_id);
+if(tmp_msg_iter==g_msg_dictionary.end())
 {
 	vector<char> tmp_chars(10);
 	string mess = " Not found message id ";
@@ -102,6 +102,8 @@ CPPUNIT_ASSERT(g_main_log.size()==0);
 
 void test_insert()
 {
+log_filter::ids_container_size_type old_ids_container_size;
+
 CPPUNIT_ASSERT(g_main_log.empty());
 CPPUNIT_ASSERT(g_main_log.size()==0);
 
@@ -146,8 +148,22 @@ CPPUNIT_ASSERT(g_main_log.size()==1);
 //Testing filtering by stations  - set filter condition station id 1
 	g_main_log.filter.reset_to_default();
 	g_main_log.filter.set_all_stations(false);
+	
+	//test filter.stations metods
+	old_ids_container_size=g_main_log.filter.stations_size();
 	g_main_log.filter.insert_station (1);
-	g_main_log.set_filtering(true);
+	g_main_log.filter.insert_station (2);
+	CPPUNIT_ASSERT(!g_main_log.filter.stations_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.stations_size()==old_ids_container_size+2);
+	g_main_log.filter.erase_stations_range(g_main_log.filter.stations_begin(),
+																g_main_log.filter.stations_end());
+	CPPUNIT_ASSERT(g_main_log.filter.stations_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.stations_size()==0);
+
+	
+	g_main_log.filter.insert_station (1);
+	g_main_log.filter.set_filter_state(true);
+	g_main_log.set_filtering();
 
 	//message 4 - filtered
 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
@@ -175,12 +191,14 @@ CPPUNIT_ASSERT(g_main_log.size()==1);
 
 //Testing filtering by times  - set filter condition time at now up to now+10mS (??)
 	time_t time_now=time(NULL);
-	g_main_log.set_filtering(false);
+	g_main_log.filter.set_filter_state(false);
+	g_main_log.set_filtering();
 	g_main_log.filter.reset_to_default();
 	g_main_log.filter.set_all_times(false);
 	g_main_log.filter.set_start_time(time_now);
 	g_main_log.filter.set_stop_time(time_now+10);
-	g_main_log.set_filtering(true);
+	g_main_log.filter.set_filter_state(true);
+	g_main_log.set_filtering();
 
 	//message 6 - filtered
 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
@@ -207,12 +225,28 @@ CPPUNIT_ASSERT(g_main_log.size()==1);
 							);
 
 //Testing filtering by devices  -  ATTENTION!!! g_escalators must have escalator with id 1 & 2!!!
-	g_main_log.set_filtering(false);
+	g_main_log.filter.set_filter_state(false);
+	g_main_log.set_filtering();
 	g_main_log.filter.reset_to_default();
 	g_main_log.filter.set_all_devices(false);
+
+
+	//test filter.devices metods
+	old_ids_container_size=g_main_log.filter.devices_size();
 	g_main_log.filter.insert_device (1);
 	g_main_log.filter.insert_device (2);
-	g_main_log.set_filtering(true);
+	CPPUNIT_ASSERT(!g_main_log.filter.devices_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.devices_size()==old_ids_container_size+2);
+	g_main_log.filter.erase_devices_range(g_main_log.filter.devices_begin(),
+																g_main_log.filter.devices_end());
+	CPPUNIT_ASSERT(g_main_log.filter.devices_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.devices_size()==0);
+
+
+	g_main_log.filter.insert_device (1);
+	g_main_log.filter.insert_device (2);
+	g_main_log.filter.set_filter_state(true);	
+	g_main_log.set_filtering();
 
 	//message 8 - filtered but not in filter condition
 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
@@ -238,12 +272,26 @@ CPPUNIT_ASSERT(g_main_log.size()==1);
 							);
 
 //Testing filtering by escalators  -  ATTENTION!!! g_escalators must have escalator with id 1 & 2!!!
-	g_main_log.set_filtering(false);
+	g_main_log.filter.set_filter_state(false);	
+	g_main_log.set_filtering();
 	g_main_log.filter.reset_to_default();
 	g_main_log.filter.set_all_msg_types(false);
+	
+	//test filter.msg_types metods
+	old_ids_container_size=g_main_log.filter.msg_types_size();
+	g_main_log.filter.insert_msg_type (1);
+	g_main_log.filter.insert_msg_type (2);
+	CPPUNIT_ASSERT(!g_main_log.filter.msg_types_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.msg_types_size()==old_ids_container_size+2);
+	g_main_log.filter.erase_msg_types_range (g_main_log.filter.msg_types_begin(),
+																	 g_main_log.filter.msg_types_end());
+	CPPUNIT_ASSERT(g_main_log.filter.msg_types_empty());
+	CPPUNIT_ASSERT(g_main_log.filter.msg_types_size()==0);
+	
 	g_main_log.filter.insert_msg_type (3);
 	g_main_log.filter.insert_msg_type (2);
-	g_main_log.set_filtering(true);
+	g_main_log.filter.set_filter_state(true);	
+	g_main_log.set_filtering();
 
 	//message 10 - filtered 
 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
@@ -268,9 +316,94 @@ CPPUNIT_ASSERT(g_main_log.size()==1);
 												)
 							);
 							
-
-	g_main_log.set_filtering(false);
+	g_main_log.filter.set_filter_state(false);	
+	g_main_log.set_filtering();
 	g_main_log.filter.reset_to_default();
+}
+
+void log_filter_test()
+{
+log_filter filter1;
+
+filter1.set_all_times(false);
+filter1.set_all_msg_types(false);
+filter1.set_all_stations(false);
+filter1.set_all_devices(false);
+filter1.set_start_time(time(NULL));
+filter1.set_stop_time(time(NULL)+3600);
+filter1.insert_msg_type (1);
+filter1.insert_msg_type (2);
+filter1.insert_station (3);
+filter1.insert_station (4);
+filter1.insert_device (5);
+filter1.insert_device (6);
+
+log_filter filter2(filter1);
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.set_all_times(!filter1.get_all_times());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_all_times(filter1.get_all_times());
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.set_all_msg_types(!filter1.get_all_msg_types());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_all_msg_types(filter1.get_all_msg_types());
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.set_all_stations(!filter1.get_all_stations());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_all_stations(filter1.get_all_stations());
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.set_all_devices(!filter1.get_all_devices());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_all_devices(filter1.get_all_devices());
+CPPUNIT_ASSERT(filter2==filter1);
+
+
+filter2.set_start_time(time(NULL)+210);
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_start_time(filter1.get_start_time());
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.set_stop_time(time(NULL)+333);
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.set_stop_time(filter1.get_stop_time());
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.erase_stations_range(filter2.stations_begin(),
+											filter2.stations_end());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.insert_stations_range(filter1.stations_begin(),
+											filter1.stations_end());
+CPPUNIT_ASSERT(filter2==filter1);
+filter2.insert_station (10);
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.erase_station (10);
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.erase_devices_range(filter2.devices_begin(),
+											filter2.devices_end());
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.insert_devices_range(filter1.devices_begin(),
+											filter1.devices_end());
+CPPUNIT_ASSERT(filter2==filter1);
+filter2.insert_device (10);
+CPPUNIT_ASSERT(!(filter2==filter1));
+filter2.erase_device (10);
+CPPUNIT_ASSERT(filter2==filter1);
+
+
+filter2.insert_msg_type (10);
+CPPUNIT_ASSERT(!(filter2==filter1));
+
+filter2=filter1;
+CPPUNIT_ASSERT(filter2==filter1);
+
+filter2.erase_msg_types_range(filter2.msg_types_begin(),
+											filter2.msg_types_end());
+CPPUNIT_ASSERT(!(filter2==filter1));
 
 }
  
@@ -287,6 +420,11 @@ void tearDown()
 static CppUnit::TestSuite *suite()
 {
 CppUnit::TestSuite *suite_of_tests=new CppUnit::TestSuite( "Log Records Container Object Tests");
+
+suite_of_tests->addTest(new CppUnit::TestCaller<contain_log_rec_test> 
+												( "log_filter metods test",
+													&contain_log_rec_test::log_filter_test)
+										);
 
 suite_of_tests->addTest(new CppUnit::TestCaller<contain_log_rec_test> 
 												( "insert metods test",
