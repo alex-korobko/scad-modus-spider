@@ -46,20 +46,18 @@ g_lines.insert(g_lines.upper_bound(2), metro_lines_container::pair_metro_lines(2
 void test_erase()
 {
 metro_lines_container::iterator_metro_lines tmp_iter;
+metro_lines_container::size_type_metro_lines old_size=g_lines.size();
 
-CPPUNIT_ASSERT(g_lines.size()==3);
+CPPUNIT_ASSERT(old_size==3);
+CPPUNIT_ASSERT(!g_lines.empty());
 
 tmp_iter=g_lines.find(1);
 CPPUNIT_ASSERT( tmp_iter!=g_lines.end());
 g_lines.erase(tmp_iter);
+CPPUNIT_ASSERT(old_size==g_lines.size()+1);
+CPPUNIT_ASSERT(!g_lines.empty());
 
-tmp_iter=g_lines.find(2);
-CPPUNIT_ASSERT( tmp_iter!=g_lines.end());
-g_lines.erase(tmp_iter);
-
-tmp_iter=g_lines.find(3);
-CPPUNIT_ASSERT( tmp_iter!=g_lines.end());
-g_lines.erase(tmp_iter);
+g_lines.erase(g_lines.begin(), g_lines.end());
 
 CPPUNIT_ASSERT(g_lines.empty());
 CPPUNIT_ASSERT(g_lines.size()==0);

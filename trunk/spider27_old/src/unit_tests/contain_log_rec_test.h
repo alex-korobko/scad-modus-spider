@@ -91,10 +91,10 @@ while (tmp1_iter!=g_main_log.end() ||
 
 void test_erase()
 {
+log_records_container::size_type_log_rec old_size=g_main_log.size();
 g_main_log.erase(g_main_log.begin());
-g_main_log.erase(g_main_log.begin(), --g_main_log.end());
 CPPUNIT_ASSERT(!g_main_log.empty());
-CPPUNIT_ASSERT(g_main_log.size()==1);
+CPPUNIT_ASSERT(g_main_log.size()==old_size-1);
 g_main_log.erase_all();
 CPPUNIT_ASSERT(g_main_log.empty());
 CPPUNIT_ASSERT(g_main_log.size()==0);

@@ -13,7 +13,11 @@ int station_id=3, type_id=10, escalator_number=11,
 	 escalator_pref_direction=system_settings::DIRECTION_UP, 	
 	 escalator_direction=system_settings::DIRECTION_UP,
 	 escalator_enabled=system_settings::ENABLED,
+	 escalator_start_day_mode=system_settings::START_DAY_MODE_EVEN,
+	 escalator_start_hour=system_settings::START_HOUR_MAX,
+	 escalator_start_minute=59,
 	 tmp=0;
+	 
 dword escalator_id=1;
 in_addr_t escalator_ip=inet_addr("192.168.0.1");
 	
@@ -25,6 +29,9 @@ metro_escalator testing_escalator(
 		escalator_number,
 		escalator_pref_direction,
 		escalator_direction,
+		escalator_start_day_mode,
+		escalator_start_hour,
+		escalator_start_minute,
 		escalator_enabled,
 		escalator_ip
 		);
@@ -54,6 +61,10 @@ CPPUNIT_ASSERT(testing_escalator.get_direction()==escalator_direction);
 escalator_direction=system_settings::DIRECTION_DOWN;
 testing_escalator.set_direction(escalator_direction);
 CPPUNIT_ASSERT(testing_escalator.get_direction()==escalator_direction);
+
+CPPUNIT_ASSERT(testing_escalator.get_start_day_mode()==escalator_start_day_mode);
+CPPUNIT_ASSERT(testing_escalator.get_start_hour()==escalator_start_hour);
+CPPUNIT_ASSERT(testing_escalator.get_start_minute()==escalator_start_minute);
 
 CPPUNIT_ASSERT(testing_escalator.get_pref_direction()==escalator_pref_direction);
 escalator_pref_direction=system_settings::DIRECTION_REVERSE;
@@ -108,7 +119,10 @@ string escalator_name("test");
 int station_id=3, type_id=10, escalator_number=11,
 	escalator_pref_direction=system_settings::DIRECTION_UP, 	
 	escalator_direction=system_settings::DIRECTION_UP,
-	escalator_enabled=system_settings::ENABLED;
+	escalator_enabled=system_settings::ENABLED,
+	 escalator_start_day_mode=system_settings::START_DAY_MODE_EVEN,
+	 escalator_start_hour=system_settings::START_HOUR_MAX,
+	 escalator_start_minute=59;
 	
 in_addr_t escalator_ip=inet_addr("192.168.0.1");
 dword escalator_id=1;
@@ -121,6 +135,9 @@ metro_escalator testing_escalator(
 		escalator_number,
 		escalator_pref_direction,
 		escalator_direction,
+		escalator_start_day_mode,
+		escalator_start_hour,
+		escalator_start_minute,
 		escalator_enabled,
 		escalator_ip
 		);

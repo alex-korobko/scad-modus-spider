@@ -26,6 +26,8 @@ public:
     	
     runner.addTest(escalator_test::suite());
     	runner.addTest(metro_escalators_container_test::suite());
+    	
+    runner.addTest(contain_morning_start_test::suite());
  }
     
 void run_tests() 
