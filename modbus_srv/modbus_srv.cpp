@@ -13,18 +13,38 @@ Copyright (C) 2000 - 2002 SCAD Ltd. (software development group)
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/neutrino.h>
+#include <sys/mman.h>
 
 
 #include "global.h"
 #include "modbus.h"
 #include "system.h"
 #include "lbuffer.h"
- #include "routeinfo.h"
+#include "routeinfo.h"
+#include "watchdog.h"
 
 RouteInfo	g_routeInfo;
 ModBus_c	modbus;
 
 extern int	 g_debugMode;
+
+void* WatchDogThread (void* arg)
+{
+ThreadCtl(_NTO_TCTL_IO, 0);
+uintptr_t pport_map;
+
+pport_map=mmap_device_io(1, (uint64_t) WATCH_DOG_PORT);
+
+if (pport_map<=0) {
+	Log(ERROR, "Error creating watch dog timer thread");
+	} else {
+	WatchdogTimer WD_Timer(pport_map, WATCH_DOG_INTERVAL);	
+	WD_Timer.Loop();
+	};
+
+return 0;
+}
 
 
 void* TestCommand(void* arg)
@@ -99,7 +119,7 @@ void* Process(void* arg)
 			close(sock);
 			return 0;
 		}
-		// проверм заголовок
+		// провер заголовок
 		if (inBuffer[0] || inBuffer[1] || inBuffer[2] || inBuffer[3] || inBuffer[4])
 		{
 			close(sock);
@@ -220,6 +240,11 @@ int main(int argc, const char *argv[])
 		Log(ERROR, "fail to load routing info");
 		return 0;
 	}
+//Initialization Watch Dog Timer
+	if (pthread_create(NULL, NULL, &WatchDogThread, NULL) != EOK)
+		Log(ERROR, "fail to create watch dog thread [%s]", strerror(errno));
+
+
 
 	if (pthread_create(NULL, NULL, &Router, &g_routeInfo) != EOK)
 		Log(ERROR, "fail to create router thread [%s]", strerror(errno));
