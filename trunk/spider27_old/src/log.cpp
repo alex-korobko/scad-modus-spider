@@ -41,6 +41,7 @@ int Log::AddMessage(int msgID, int stationID, int escalatorID, time_t* saveTime,
 	LogRecord *newRecord;
 
 	newRecord = new LogRecord;
+	
 	if (!newRecord)
 	{
 		SysMessage(ERROR_MSG, "Memory allocation");
@@ -80,6 +81,8 @@ int Log::Save(const char* fileName)
 	dword	size;
 	char	signature[] = "LOGDAT";
 	LogRecord* curRecord;
+	
+	printf ("\nSaving journal\n");
 	
 	if ((logFile = open(fileName, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) < 0)
 	{

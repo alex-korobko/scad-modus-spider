@@ -74,7 +74,7 @@ int Router::LoadLeft(const char* filename)
 	char	addr[16];
 	Net* 	net = NULL;
 	struct in_addr tmp_IP1,tmp_IP2;
-
+	printf("Load left leaf net\n");
 	fd = fopen(filename, "r");
 	if (fd)
 	{
@@ -84,6 +84,7 @@ int Router::LoadLeft(const char* filename)
 			for(int i=0; i<tableSize; i++)
 			{	
 				fscanf(fd, "%s\n", addr);
+				printf("Load net %s\n", addr);
 				net = new Net;
 				net->ip = inet_addr(addr);
 				net->curr_gateway_ip=leftGate.s_addr;
@@ -123,6 +124,9 @@ int Router::LoadRight(const char* filename)
 	FILE*	fd;
 	char	addr[16];
 	Net* 	net = NULL;
+	
+	printf("Load right leaf net\n");
+	
 	fd = fopen(filename, "r");
 	if (fd)
 	{
@@ -201,9 +205,13 @@ int ConnectToServer(in_addr_t addr, int port)
 	int		flags;
 	int		result;
 
+	printf("\nIn connect to server\n");
+
 	address.sin_addr.s_addr = addr;
 	address.sin_port = htons(port);
 	address.sin_family = AF_INET;
+
+
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (!sock)
@@ -322,18 +330,26 @@ void Router::Loop()
  //  startup all hosts
 	curNet = leftLine->next;
 	printf("\nScan left\n");
-	while(curNet)
+	while(curNet!=NULL)
 	{
 		host_addr = (3 << 24) | curNet->ip;		
+
+	 tmp_IP2.s_addr=host_addr;
+// Begin: Printing 	current routing state
+			printf("\n Change routing to host %s\n", inet_ntoa(tmp_IP2));
+// End: Printing 	current routing state
+
+		sleep(10);
+
+		printf("\nScan left\n");
 		
-		sleep(15);
 		if (!(sock = ConnectToServer(host_addr, 7)))
 		{
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 // Begin: Printing 	current routing state
-//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-//			printf(" trougth gateway %s (old left)\n",inet_ntoa(tmp_IP2));
+			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+			printf(" trougth gateway %s (old left)\n",inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
 	
@@ -348,8 +364,8 @@ void Router::Loop()
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
 // Begin: Printing 	current routing state
-//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-//			printf(" trougth gateway %s (new left)\n",inet_ntoa(tmp_IP2));
+			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+			printf(" trougth gateway %s (new left)\n",inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 
 			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
@@ -367,23 +383,23 @@ void Router::Loop()
 	};
 
 
-
-
 	curNet = rightLine->next;
 
 	printf("\nScan right\n");
 	while(curNet)
 	{
 		host_addr = (3 << 24) | curNet->ip;		
-		sleep(15);
+		
+		sleep(10);
+
 		if (!(sock = ConnectToServer(host_addr, 7)))
 		{
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
 // Begin: Printing 	current routing state
-//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-//			printf(" trougth gateway %s (old right)\n",inet_ntoa(tmp_IP2));
+			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+			printf(" trougth gateway %s (old right)\n",inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 
 			 
@@ -400,8 +416,8 @@ void Router::Loop()
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
 // Begin: Printing 	current routing state
-//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-//			printf(" trougth gateway %s (new right)\n",inet_ntoa(tmp_IP2));
+			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+			printf(" trougth gateway %s (new right)\n",inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 
 
@@ -419,197 +435,6 @@ void Router::Loop()
 		curNet = curNet->next;
 	};
 
-
-/*
-	struct snmp_pdu 		*req;
-	struct snmp_session 	sess;
-	in_addr					addr;
-//	char					name[16];
-	u_char					community[] = "public";
-	struct snmp_session 	*curSess;
-	int	i;
-	Net*					curNet;
-	in_addr netAddr;
-	int						reroute = 0;
-
- //  startup all hosts
-
-	curNet = leftLine->next;
-
-//	printf("\nScan left\n");
-	while(curNet)
-	{
-		breakLine = 0;
-   		memset(&sess, 0, sizeof(sess));
-	    	sess.version = SNMP_VERSION_1;
-		addr.s_addr = (1 << 24) | curNet->ip;
-		sess.peername = 	inet_ntoa(addr);
-//		printf("IP: %s\n", sess.peername);
-		sess.community = community;
-		sess.community_len = 6;
-		sess.callback = (int(*)())AsynchResponse;
-		sess.callback_magic = curNet;
-  		if (!(curSess = snmp_open(&sess)))
-		{
-  //   		printf("Error: snmp_open\n");
-      		continue;
-    		}
-    		req = snmp_pdu_create(GET_REQ_MSG);
-		snmp_add_null_var(req, reqOid, reqOidLen);
-	  	if (snmp_send(curSess, req))
-		{
-      		activeHost = 1;
-    		}
-    		else
-		{
-  //   		printf("Error: snmp_send\n");
-      		snmp_free_pdu(req);
-    		}
-
-		while (activeHost)
-		{
-  			int fds = 0, block = 0;
-			fd_set fdset;
-    			struct timeval timeout;
-
-			FD_ZERO(&fdset);
-    			timeout.tv_sec = 2;
-    			timeout.tv_usec = 0;
-    			snmp_select_info(&fds, &fdset, &timeout, &block);
-    			fds = select(fds, &fdset, NULL, NULL, block ? NULL : &timeout);
-    			if (fds)
-				snmp_read(&fdset);
-    			else
-				snmp_timeout();
-		}
-		snmp_close(curSess);
-//		printf("Current broken %d\n", curNet->broken);
-		if (breakLine)
-		{
-			if (curNet->broken == 1)
-				curNet = NULL;
-			else
-			{
-				curNet->broken = 1;
-				curNet = curNet->next;
-			}
-			break;
-		}
-		else if (curNet->broken == 1)
-		{
-			curNet->broken = 0;
-			Net* temp = curNet->next;
-			while(temp)
-			{
-				netAddr.s_addr = temp->ip;
-				ChangeRoute(&netAddr, &rightGate, 0, delRoute);
-				ChangeRoute(&netAddr, &leftGate, 0, addRoute);
-	//			printf("Restore net %s on gate ", inet_ntoa(netAddr));
-		//		printf("%s\n", inet_ntoa(leftGate));
-				temp = temp->next;
-			}
-		}
-		curNet = curNet->next;
-	}
-
-	while(curNet)
-	{
-		curNet->broken = 0;
-		netAddr.s_addr = curNet->ip;
-		ChangeRoute(&netAddr, &leftGate, 0, delRoute);
-		ChangeRoute(&netAddr, &rightGate, 0, addRoute);
-	//	printf("Reroute net %s on gate ", inet_ntoa(netAddr));
-	//	printf("%s\n", inet_ntoa(rightGate));	
-		curNet = curNet->next;
-	}
-
-	curNet = rightLine->next;
-//	printf("Scan right\n");
-	while(curNet)
-	{
-		breakLine = 0;
-   		memset(&sess, 0, sizeof(sess));
-	    	sess.version = SNMP_VERSION_1;
-		addr.s_addr = (2 << 24) | curNet->ip;
-		sess.peername = 	inet_ntoa(addr);
-	//	printf("IP: %s\n", sess.peername);
-		sess.community = community;
-		sess.community_len = 6;
-		sess.callback = (int(*)())AsynchResponse;
-		sess.callback_magic = curNet;
-  		if (!(curSess = snmp_open(&sess)))
-		{
- //     		printf("Error: snmp_open\n");
-      		continue;
-    		}
-    		req = snmp_pdu_create(GET_REQ_MSG);
-		snmp_add_null_var(req, reqOid, reqOidLen);
-	  	if (snmp_send(curSess, req))
-		{
-//  		    	printf("Send\n");
-      		activeHost = 1;
-    		}
-    		else
-		{
-    //  		printf("Error: snmp_send\n");
-      		snmp_free_pdu(req);
-    		}
-
-		while (activeHost)
-		{
-  			int fds = 0, block = 0;
-			fd_set fdset;
-    			struct timeval timeout;
-
-			FD_ZERO(&fdset);
-    			timeout.tv_sec = 2;
-    			timeout.tv_usec = 0;
-    			snmp_select_info(&fds, &fdset, &timeout, &block);
-    			fds = select(fds, &fdset, NULL, NULL, block ? NULL : &timeout);
-    			if (fds)
-				snmp_read(&fdset);
-    			else
-				snmp_timeout();
-		}
-		snmp_close(curSess);
-		if (breakLine)
-		{
-			if (curNet->broken == 1)
-				curNet = NULL;
-			else
-			{
-				curNet->broken = 1;
-				curNet = curNet->next;
-			}
-			break;
-		}
-		else if (curNet->broken == 1)
-		{
-			curNet->broken = 0;
-			Net* temp = curNet->next;
-			while(temp)
-			{
-				netAddr.s_addr = temp->ip;
-				ChangeRoute(&netAddr, &leftGate, 0, delRoute);
-				ChangeRoute(&netAddr, &rightGate, 0, addRoute);
-	//			printf("Restore net %s on %s gate\n", inet_ntoa(netAddr), inet_ntoa(rightGate));	
-				temp = temp->next;
-			}
-		}
-		curNet = curNet->next;
-	}
-
-	while(curNet)
-	{
-		curNet->broken = 0;
-		netAddr.s_addr = curNet->ip;
-		ChangeRoute(&netAddr, &rightGate, 0, delRoute);
-		ChangeRoute(&netAddr, &leftGate, 0, addRoute);
-//		printf("Reroute net %s on %s gate\n", inet_ntoa(netAddr), inet_ntoa(leftGate));
-		curNet = curNet->next;
-	}
-//	printf("End scan\n");
-*/
 }
 
 int ChangeRoute(struct in_addr* dest, struct in_addr *gateway, int flags, int cmd)
