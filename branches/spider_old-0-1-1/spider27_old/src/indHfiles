@@ -1,0 +1,2 @@
+MYHDR = global.h cbuffer.h system.h line.h station.h  sound.h router.h\
+	log.h esc_types.h goodies.h map.h alert.h filter.h string.h dictionary.h
