@@ -132,6 +132,7 @@ signals :
 
 typedef struct data_block
 {
+	typedef  vector<word> data_container;
 	enum {
 	COUNT_OF_CONTACTORS_REGISTERS=1,
 	COUNT_OF_AUTOMATS_REGISTERS=1,
@@ -140,8 +141,8 @@ typedef struct data_block
 	COUNT_OF_BLOCK_CIRCUT_REGISTERS=9
 	};
 
-	vector<word> signals;
-	vector<word>  messages;
+	data_container signals;
+	data_container  messages;
 	
 	word 	status;
 	word	 mode;
@@ -177,6 +178,8 @@ public:
 
 private: 				
    	PtWidget_t *wnd, *arrow, *num_label, *block_label;
+
+	system_settings *sys_sett_obj;
 
    	int			id_station;   	
    	int 			number;
@@ -239,6 +242,7 @@ constructors and destructors
 */	
 
 metro_escalator(
+		system_settings *new_sys_sett_obj,
 		int new_id_escalator, 
 		int new_id_station,
 		int new_type,
@@ -252,7 +256,7 @@ metro_escalator(
 	number(new_number),
 	type(new_type),
 	id_escalator(new_id_escalator),
-	
+	tid(0),	
 	enabled(new_enabled),
 	online(system_settings::OFFLINE),
 	direction (new_direction),
@@ -266,6 +270,8 @@ metro_escalator(
 
 	wnd = arrow = num_label = block_label = NULL;
 
+	sys_sett_obj=new_sys_sett_obj;
+
 	connection_id = 0;	
 	pulse = 0;
 	sleepticks = 0;
@@ -278,11 +284,12 @@ metro_escalator(
 
 ~metro_escalator()
 {
-	if (pthread_cancel(tid) != EOK)
+	if (tid!=0 &&
+		pthread_cancel(tid) != EOK)
 	{
 		string mess="Fail to close escalator's thread ";
 		mess+=strerror(errno);
-		g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+		sys_sett_obj->sys_message(system_settings::ERROR_MSG, mess);
 	}
 
 	pthread_mutex_destroy(&inMutex);

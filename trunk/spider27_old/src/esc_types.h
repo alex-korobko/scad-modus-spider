@@ -1,6 +1,7 @@
 #ifndef __ESCALATOR_TYPES_H__
 #define  __ESCALATOR_TYPES_H__
 
+
 class escalator_signal
 {
 private:
@@ -35,11 +36,18 @@ public:
                     						&arg);
 			};
 		};
+
 /*
 get_ and set_ metods for private data members
 */
+
 int  get_index() {return(signal_index);};
+
+string  get_name() {return(name);};
+string  get_hint() {return(hint);};
+
 PtWidget_t* get_led() { return (led);};
+
 void set_led(PtWidget_t *new_led) 
 	{
 	PtArg_t arg;
@@ -54,6 +62,7 @@ void set_led(PtWidget_t *new_led)
 					                    1,
                     						&arg);
  		};
+
 	if (new_led!=NULL) 
 		{
 				PtSetArg(&arg, 
@@ -71,7 +80,7 @@ void set_led(PtWidget_t *new_led)
 Other metods
 */
 
-	int create_led(PtWidget_t* parent, int column, int row);
+	int create_led(system_settings *sys_sett_obj, PtWidget_t* parent, int column, int row);
 };
 
 class escalator_block
@@ -85,56 +94,31 @@ private:
   			}
 		};
 
-	typedef map<int, escalator_signal, ltint> signals_container;
 
-	signals_container signals;
+	typedef vector<int>  signals_id_container;
+	typedef signals_id_container::iterator iterator_signals_id;
+	typedef signals_id_container::size_type size_type_signals_id;
 
+
+	signals_id_container signals_id;
+	
+	int id;
 	string name;
-	int signals_counter; //autoincrement counter
 
 	PtWidget_t  *panel;
 
 	escalator_block();
 public:
-	typedef signals_container::iterator iterator_signals;
-	typedef signals_container::value_type pair_signals;
-	typedef signals_container::size_type size_type_signals;
-
-private:	
-
-	class  led_create : public unary_function<pair_signals, void>  
-	{
-	private:
-		int row, column;
-		PtWidget_t* parent;
-		led_create();
-			
-	public:
-	explicit led_create (PtWidget_t* new_parent): row(0), column(0){parent=new_parent;};
-			
-	void operator() (pair_signals sign_pair) 
-		{
-			sign_pair.second.create_led(parent, row,column);
-			if (++row>=10) 
-				{
-					column++;	
-					row = 0;
-				};
-		};
-				
-	};
-
-
-	
-public:
-
 	/*
 		constructors & destructors
 	*/
-	escalator_block(string new_name,
+	escalator_block(  int new_id,
+								string new_name,
 								PtWidget_t  *new_panel=NULL) :
-								name(new_name),
-								signals_counter(0) {panel=new_panel;};
+								id(new_id),
+								name(new_name)
+								 {panel=new_panel;};
+
 	~escalator_block()
 		{
 			PtArg_t arg;
@@ -156,11 +140,10 @@ public:
 /*
 get_ & set_ metods for private data members
 */
+
+int get_id() {return id;};
 string get_name() {return (name); }
 
-int get_signals_counter() { return(signals_counter);}
-void set_signals_counter(int new_signals_counter)
-	{ signals_counter=new_signals_counter;} 
 
 void set_panel(PtWidget_t *new_panel) 
 	{
@@ -196,69 +179,150 @@ void set_panel(PtWidget_t *new_panel)
 /*
 wrapper metods for STL container signals
 */
-iterator_signals signals_begin() { return(signals.begin());}
-iterator_signals signals_end() {return(signals.end());}
+iterator_signals_id signals_id_begin() { return signals_id.begin();};
+iterator_signals_id signals_id_end() {return signals_id.end();};
 
-bool signals_insert(pair_signals new_signal_pair) { return(signals.insert(new_signal_pair).second);}
-void signals_erase ( iterator_signals signal_to_removing) { signals.erase(signal_to_removing);}
+void signals_id_push_back(int new_signal_id) { signals_id.push_back(new_signal_id);};
+void signals_id_erase ( iterator_signals_id signal_id_to_removing) { signals_id.erase(signal_id_to_removing);};
 
-iterator_signals signals_find(int id_signal) { return(signals.find(id_signal));}
-
-bool signals_empty() {return(signals.empty());}
-size_type_signals signals_size() { return(signals.size());}
-
-/*
-Other metods
-*/
-	int create_panel(PtWidget_t* parent);
+bool signals_id_empty() {return signals_id.empty();};
+size_type_signals_id signals_id_size () { return signals_id.size();};
 };
+
 
 class metro_escalator_type
 {
 private:
-	struct ltint
-		{
+	struct ltint {
 		  bool operator() (const int i1, const int i2) const
  			 {
    			 return (i1<i2) ;
   			}
 		};
-	int blocks_counter; //autoincrement counter
+
+	int id;
 	string		name;
 
-	typedef map<int, escalator_block, ltint> blocks_container;
-	blocks_container	type_blocks;
+	typedef map<int, escalator_signal, ltint> signals_container;
+	typedef signals_container::iterator iterator_signals;
+	typedef signals_container::value_type pair_signals;
+	typedef signals_container::size_type  size_signals;
 
-	metro_escalator_type() ;
-public:
+	typedef map<int, escalator_block, ltint> blocks_container;
 	typedef blocks_container::iterator iterator_blocks;
 	typedef blocks_container::value_type pair_blocks;
 	typedef blocks_container::size_type  size_blocks;
+	
 
-	msg_dict_container  block_messages_container;
+
+	signals_container  type_signals;
+	blocks_container	type_blocks;
+	
+	metro_escalator_type() ;
+	
+	class  led_create : public unary_function<int, void>  
+	{
+	private:
+		int row, column;
+		PtWidget_t* parent;
+		system_settings *sys_set_obj;
+		signals_container *signals_of_type;
+
+		led_create();
+			
+	public:
+	led_create (PtWidget_t* new_parent,
+						system_settings *new_sys_set_obj,
+						signals_container *new_signals_of_type
+						): 
+									row(0), column(0)
+									{
+										parent=new_parent; 
+										sys_set_obj=new_sys_set_obj;
+										signals_of_type=new_signals_of_type;
+									};
+			
+	void operator() (int  signal_id);
+				
+	};
+
+
+	class  panel_create : public unary_function<pair_blocks, void>  
+	{
+	private:
+		PtWidget_t* parent;
+		system_settings *sys_set_obj;
+		signals_container *signals_of_type;		
+		panel_create();
+			
+	public:
+		panel_create (PtWidget_t* new_parent,
+								system_settings *new_sys_set_obj,
+								signals_container *new_signals_of_type
+							)
+									{
+										parent=new_parent; 
+										sys_set_obj=new_sys_set_obj;
+										signals_of_type=new_signals_of_type;										
+									};
+			
+	void operator() (pair_blocks  block_pair);
+				
+	};
+	
+	
+public:
+	msg_dict_container  type_messages;
 
 /*
 constructors & destructors
 */
-	explicit metro_escalator_type(string new_name): blocks_counter(0), name(new_name) {};
+	metro_escalator_type (int new_id, string new_name): id(new_id),  name(new_name) {};
 
 /*
 get_ & set_ metods for private data members
 */
+	int get_id () { return (id);}
 	string get_name() { return(name);}
+	msg_dict_container* get_messages() { return(&type_messages);}
+
 /*
 wrapper metods for STL container for blocks
 */
-	iterator_blocks blocks_begin() { return (type_blocks.begin());}
-	iterator_blocks blocks_end() { return (type_blocks.end());}
+	iterator_blocks blocks_begin() { return type_blocks.begin();}
+	iterator_blocks blocks_end() { return type_blocks.end();}
 	
 	void blocks_erase (iterator_blocks block_to_removing) { type_blocks.erase(block_to_removing);}
-	bool blocks_insert (pair_blocks new_block_pair )  { return( type_blocks.insert(new_block_pair).second); }
+	iterator_blocks blocks_insert (iterator_blocks iter_blocks, const pair_blocks& new_block_pair )  { return  type_blocks.insert(iter_blocks, new_block_pair) ; }
 
-	iterator_blocks blocks_find(int	id_block ) { return(type_blocks.find(id_block)); }
+	iterator_blocks blocks_find(int	id_block ) { return type_blocks.find(id_block); }
+	iterator_blocks blocks_upper_bound(int	id_block ) { return type_blocks.upper_bound(id_block); }
 	
 	bool blocks_empty() const { return (type_blocks.empty()); }
 	size_blocks blocks_size() const { return (type_blocks.size()); } 
+
+/*
+wrapper metods for STL container for signals
+*/
+	iterator_signals signals_begin() { return (type_signals.begin());}
+	iterator_signals signals_end() { return (type_signals.end());}
+	
+	void signals_erase (iterator_signals signal_to_removing) { type_signals.erase(signal_to_removing);}
+	iterator_signals signals_insert (iterator_signals iter_signals, const pair_signals& new_signal_pair )  { return  type_signals.insert(iter_signals, new_signal_pair) ; }
+
+	iterator_signals signals_find(int	id_signal ) { return type_signals.find(id_signal); }
+	iterator_signals signals_upper_bound(int	id_signal ) { return type_signals.upper_bound(id_signal); }
+	
+	bool signals_empty() const { return (type_signals.empty()); }
+	size_signals signals_size() const { return (type_signals.size()); } 
+
+/*
+Other metods
+*/
+	bool create_panels(PtWidget_t* parent,
+									system_settings *sys_set_obj);
+
 };
+
 
 #endif

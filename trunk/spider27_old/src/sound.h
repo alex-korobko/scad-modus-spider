@@ -5,14 +5,14 @@ typedef struct
 {
     char    tag[4];
     long    length;
-} RiffTag;
+} riff_tag;
 
 typedef struct
 {
     char    riff[4];
     long    size;
     char    wave[4];
-} RiffHdr;
+} riff_hdr;
 
 typedef struct
 {
@@ -22,28 +22,13 @@ typedef struct
     long    avgBytesPerSec;
     short   blockAlign;
     short   bitsPerSample;
-} WaveHdr;
+} wave_hdr;
 
-class sound
+struct sound
 {
-protected:
-/*
-	snd_pcm_t 	*pcmHandle;
-    	int     			card;
-	int     			dev;
-	snd_pcm_channel_info_t 	pcmInfo;
-	snd_mixer_t 					*mixHandle;
-    	snd_mixer_group_t 			mixGroup;
-    	snd_pcm_channel_params_t 	pcmParams;
-    	snd_pcm_channel_setup_t 	pcmSetup;
-	char*			filename;
-*/
-public:
-	sound();
-	~sound();
-	bool init();
 	bool play(string filename);
-	friend void* Player(void* arg);
 };
+
+void* Player(void* arg);
 
 #endif
