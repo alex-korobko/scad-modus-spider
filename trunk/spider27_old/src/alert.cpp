@@ -1,32 +1,4 @@
-/* Y o u r   D e s c r i p t i o n                       */
-/*                            AppBuilder Photon Code Lib */
-/*                                         Version 2.01  */
-
 #include "global.h"
-
-/*
-int
-ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-
-	return( Pt_CONTINUE );
-
-	}
-
-*/
 
 void  alerts_container::push_back(alert_record new_alert_record) 
 {
@@ -63,8 +35,6 @@ void  alerts_container::push_back(alert_record new_alert_record)
 	strftime(&tmp_str[0], tmp_str.size(), "%H:%M:%S", localtime (&tmp_time) );
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, &tmp_str[0], 0);
 	PtSetResources(ABW_AlertTime, 1, &arg);
-	
-//	g_sound.play("test.wav");
 };		
 
 
@@ -121,33 +91,3 @@ void  alerts_container::pop_back()
 
 };
 
-
-int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-{
-	PtArg_t		arg;
-
-	if (!g_alerts.empty())
-	{
-		g_alerts.pop_back();
-	} else { //it`s impossible - pop_back of last alert mast turn off button
-		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
-		PtSetResources(ABW_AlertOK, 1, &arg); 	
-	};
-
-	return( Pt_CONTINUE );
-}
-
-
-int
-ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-	PtArg_t		arg;
-	if (g_alerts.empty())
-	{
-		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
-		PtSetResources(ABW_AlertOK, 1, &arg); 
-	}
-		
-	return( Pt_CONTINUE );
-
-	}

@@ -1,1 +1,1 @@
-MYOBJ = system.o command.o esc_types.o station.o router.o
+MYOBJ = alert.o escalator.o system.o command.o esc_types.o station.o router.o sound.o

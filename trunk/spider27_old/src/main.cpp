@@ -14,9 +14,12 @@ metro_lines_container g_lines;
 msg_dict_container g_msgDictionary;
 router g_router;
 log_records_container  g_main_log, g_archive_log;
+sound g_sound;
 
 int g_chanID;
-pthread_t		pingTID, timerTID;
+pthread_t		g_pingTID, g_timerTID;
+
+
 sig_atomic_t SigpipeCount;
 
 /* Application Options string */
@@ -787,132 +790,6 @@ bool load_map(string file_name)
 	return (true);
 }
 
-int CreateScheme()
-{
-	PhDim_t		*size;
-	vector<PtArg_t>		args(3);
-
-    PtGetResource(ABW_Scheme, Pt_ARG_DIM, &size, 0);
- 
-	metro_lines_container::iterator_metro_lines   temp_lines_iterator;   
-	
-	temp_lines_iterator=g_lines.begin();
-	
-	while (temp_lines_iterator!=g_lines.end())
-	{
-		vector<PhPoint_t>  points;
-		
-		temp_lines_iterator->second.sort_stations_id();
-		metro_line::iterator_stations_id temp_stations_id_iterator=temp_lines_iterator->second.begin_stations_id();
-		while(temp_stations_id_iterator!=temp_lines_iterator->second.end_stations_id())
-		{
-			metro_stations_container::iterator_metro_stations temp_metro_stations_iterator=g_stations.find(*temp_stations_id_iterator);
-			if(temp_metro_stations_iterator!=g_stations.end())
-				{
-					PhPoint_t temp_point;
-					temp_point.x=temp_metro_stations_iterator->second.get_x_coord()*size->w/100;
-					temp_point.y= temp_metro_stations_iterator->second.get_y_coord()*size->h/100;
-					points.push_back(temp_point);
-				}; 
-		
-			temp_stations_id_iterator++;
-		};
-
-	 	PtSetArg(&args[0], Pt_ARG_COLOR, temp_lines_iterator->second.get_color(), 0);
-	 	PtSetArg(&args[1], Pt_ARG_POINTS, &points[0], points.size());	 	
-	 	PtSetArg(&args[2], Pt_ARG_LINE_WIDTH, 6, 0);
-	    temp_lines_iterator->second.set_line_widget( PtCreateWidget(PtPolygon,
-	    																									ABW_Scheme,
-	    																									args.size(),
-	    																									&args[0])
-	    																		);
-        	if (temp_lines_iterator->second.get_line_widget()!=NULL
-        		&& PtRealizeWidget(temp_lines_iterator->second.get_line_widget())!=0 ) 
-        		{
-			vector<char> tmp_chars(10);
-			string message("Can`t create widget for line ");
-			itoa (temp_lines_iterator->second.get_id(), &tmp_chars[0], 10);
-			g_system_settings.sys_message(system_settings::ERROR_MSG,  message);
-
-        			return 0;
-        		};
-
-		temp_stations_id_iterator=temp_lines_iterator->second.begin_stations_id();
-		while(temp_stations_id_iterator!=temp_lines_iterator->second.end_stations_id())
-		{
-			metro_stations_container::iterator_metro_stations temp_metro_stations_iterator=g_stations.find(*temp_stations_id_iterator);
-			if(temp_metro_stations_iterator!=g_stations.end())
-				{
-					temp_metro_stations_iterator->second.create_wnd(ABW_Scheme, size ->w, size ->h);
-				}; 
-		
-			temp_stations_id_iterator++;
-		};
-
-    	
-		temp_lines_iterator++;
-	};
-	return 1;
-}
-
-int ResizeScheme( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-{
-	PtArg_t		arg;
-	PhDim_t		*wnd_size;
-	PtContainerCallback_t	*data = (PtContainerCallback_t*)cbinfo->cbdata;
-	vector<PhPoint_t>  points;
-
-	metro_lines_container::iterator_metro_lines   temp_lines_iterator;   
-	
-	temp_lines_iterator=g_lines.begin();
-	while (temp_lines_iterator!=g_lines.end())
-	{
-		vector<PhPoint_t>  points;
-
-		metro_line::iterator_stations_id temp_stations_id_iterator=temp_lines_iterator->second.begin_stations_id();
-		while(temp_stations_id_iterator!=temp_lines_iterator->second.end_stations_id())
-		{
-			metro_stations_container::iterator_metro_stations temp_metro_stations_iterator=g_stations.find(*temp_stations_id_iterator);
-			if(temp_metro_stations_iterator!=g_stations.end())
-				{
-					PhPoint_t temp_point;
-					
-					temp_point.x=temp_metro_stations_iterator->second.get_x_coord()*data->new_dim.w/100;
-					temp_point.y= temp_metro_stations_iterator->second.get_y_coord()*data->new_dim.h/100;
-					
-					temp_metro_stations_iterator->second.set_x_coord(temp_point.x);
-					temp_metro_stations_iterator->second.set_y_coord(temp_point.y);
-					
-					points.push_back(temp_point);
-			
-					if (temp_metro_stations_iterator->second.get_wnd()!=NULL)
-						{		
-							PtSetArg(&arg, Pt_ARG_DIM, &wnd_size, 0);
-							PtGetResources(temp_metro_stations_iterator->second.get_wnd(), 1, &arg);
-
-							temp_point.x = temp_metro_stations_iterator->second.get_x_coord() - wnd_size->w/2;
-							temp_point.y = temp_metro_stations_iterator->second.get_y_coord() - wnd_size->h/2;
-	
-					 		PtSetArg(&arg, Pt_ARG_POS, &temp_point, 0);
-					 		PtSetResources(temp_metro_stations_iterator->second.get_wnd(), 1, &arg);		
-					 	};
-
-					
-				}; 
-			temp_stations_id_iterator++;
-		};
-		if (temp_lines_iterator->second.get_line_widget()!=NULL) 
-			{
-		 	PtSetArg(&arg, Pt_ARG_POINTS, &points[0], points.size());	 	
-		 	PtSetResources(temp_lines_iterator->second.get_line_widget(), 1, &arg);
-		 	};
-    	
-		temp_lines_iterator++;
-	};
-
-	return( Pt_CONTINUE );
-}
-
 // PtInputCallbackProcF_t PulseReceiver;
 
 int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
@@ -1144,7 +1021,18 @@ bool load_escalators_types(string fileName)
 	return true;
 }
 
+#ifdef __UNIT_TESTING__
 
+int Initialize( int argc, char *argv[] )
+{
+
+	unit_test u_test;
+	u_test.run_tests();
+	
+	return( Pt_CONTINUE );
+}
+
+#else // #ifdef __UNIT_TESTING__
 
 int Initialize( int argc, char *argv[] )
 {
@@ -1166,7 +1054,7 @@ int Initialize( int argc, char *argv[] )
 														string("Spider: startup"));
 
     
-	// файл сообщений для журнала
+	// файл сбщений для журнала
     	if (! load_dictionary(g_system_settings.get_global_messages_name()))
 	{
 		string mess("Файл сообщений журнала\n");
@@ -1229,7 +1117,7 @@ int Initialize( int argc, char *argv[] )
 	if (g_chanID < 0)
 		{
  		g_system_settings.message_window(system_settings::ERROR_MSG,
-																   string("Ошибка содания канала IPC"));
+																   string("Ошибка соданя канала IPC"));
 	
 		PtExit(EXIT_FAILURE);
 		} 	else {
@@ -1260,7 +1148,7 @@ int Initialize( int argc, char *argv[] )
 	}
 
 	// запуск задачи опроса устройств
-	if (pthread_create(&pingTID, NULL, &PingThread, NULL) != EOK)
+	if (pthread_create(&g_pingTID, NULL, &PingThread, NULL) != EOK)
 	{
 		g_system_settings.message_window(system_settings::ERROR_MSG,
 																   string("Ошибка  запуска менеджера устройств!"));
@@ -1272,7 +1160,7 @@ int Initialize( int argc, char *argv[] )
 
 	};
 
-	if (pthread_create(&timerTID, NULL, &TimerThread, NULL) != EOK)
+	if (pthread_create(&g_timerTID, NULL, &TimerThread, NULL) != EOK)
 	{
 		g_system_settings.message_window(system_settings::ERROR_MSG,
 																   string("Ошибка запуска системного таймера"));
@@ -1289,150 +1177,4 @@ int Initialize( int argc, char *argv[] )
 	return( Pt_CONTINUE );
 }
 
-int Uninitialize(PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo)
-{
-	if (pthread_cancel(pingTID) != EOK)
-		{
-		string  message ("In closing ping thread error - ");
-		message+=strerror(errno);
-		g_system_settings.sys_message(system_settings::ERROR_MSG, 
-															message);
-
-		};
-
-	if (pthread_cancel(timerTID) != EOK)
-		{
-		string  message ("In closing system timer thread error - ");
-		message+=strerror(errno);
-		g_system_settings.sys_message(system_settings::ERROR_MSG, 
-															message);
-
-		};
-	
- 	metro_escalators_container::iterator_metro_escalators iter_esc = g_escalators.begin();
-	while (iter_esc != g_escalators.end())
-	{
-		iter_esc->second.disconnect_from_channel();
-		iter_esc++;
-	}
-
-	// зыкрваем канал
-	ChannelDestroy(g_chanID);
-	// сохраняем лог
- 	g_main_log.save(g_system_settings.get_main_log_name());
-
-	// закрываем блоиотеку виджетов
-	if (g_system_settings.get_widgets_dbase()!=NULL)
-		{
-			ApCloseDBase(g_system_settings.get_widgets_dbase());
-		};
-		
-	return( Pt_CONTINUE );
-}
-
-int RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-{
-	g_system_settings.set_main_window(widget);
-	// создаем схему
-	CreateScheme();
-	// загружаем журнал
- 	g_main_log.load(g_system_settings.get_main_log_name());
-	
-	// добавляем сообщение
- 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1); 
-	g_main_log.insert(log_record (
-												 g_main_log.get_records_autoincrement(),
-												 143, //	message_id  Program started
-												 0, // station_id -  broadcast
-												 0, // device_id -  broadcast
-												 time(NULL)
-												)
-							);
-
-    	return( Pt_CONTINUE );	
-}
-
-int CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-{
-
-	g_system_settings.set_main_window(NULL);
-
-	// добавляем сообщение
-	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
-	g_main_log.insert(log_record (
-												 g_main_log.get_records_autoincrement(),
-												 143, //	message_id Program closed
-												 0, // station_id -  broadcast
-												 0, // device_id -  broadcast
-												 time(NULL)
-												)
-							);
-
-
-	return( Pt_CONTINUE );
-}
-
-int FillEscConfList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-{
-		vector<const char*> list_strings;
-		enum{UNDEFINED=0, UP, DOWN, REVERSE, ITEMS_COUNT};
-		vector<string> directions_strings(ITEMS_COUNT);
-				
-		directions_strings[UNDEFINED]="не определено";
-		directions_strings[UP]="вверх";
-		directions_strings[DOWN]="вниз";
-		directions_strings[REVERSE]="реверсивный";
-	
-		string item_string;
-		vector<char> tmp_chars(8);
-		int tmp_int;
-		
-		metro_stations_container::iterator_metro_stations iter_stat;
-		metro_escalators_container::iterator_metro_escalators iter_esc=g_escalators.begin();
-		
-		while(iter_esc!=g_escalators.end())		
-		{
-			iter_stat=g_stations.find(iter_esc->second.get_station_id());		
-			if (iter_stat==g_stations.end()) 
-				{
-					item_string="нет станции !\t";
-				} else {
-					item_string=iter_stat->second.get_stl_name_string();
-					item_string="\t";
-				};
-			itoa(iter_esc->second.get_number(), &tmp_chars[0],10);
-			item_string+=&tmp_chars[0];
-			item_string+="\t";
-			tmp_int=iter_esc->second.get_pref_direction();
-			if (tmp_int<=UNDEFINED ||
-				tmp_int>=ITEMS_COUNT) tmp_int=UNDEFINED;
-				
-			item_string+=directions_strings[tmp_int];
-			list_strings.push_back(item_string.c_str());
-				
-			iter_esc++;
-		};
-	
-		PtListAddItems(ABW_EscDirectionList, &list_strings[0], list_strings.size(), 0);	
-		
-		return( Pt_CONTINUE );
-}
-
-
-int
-OpenArchive( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
- 	PtWidget_t*	wnd= g_archive_log.get_widget();
-
-	if (wnd!=NULL)
-	{
-		PtWindowToFront(wnd);
-		return (Pt_IGNORE);
-	}
-
-	return( Pt_CONTINUE );
-
-	}
-
+#endif // #ifdef __UNIT_TESTING__

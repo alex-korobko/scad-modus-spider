@@ -1,1 +1,1 @@
-ABSRC = ../abmain.cc ../alert.cpp ../callbacks.cpp ../draw.cpp ../escalator.cpp ../main.cpp 
+ABSRC = ../abmain.cc ../callbacks.cpp ../draw.cpp ../main.cpp 

@@ -1,11 +1,5 @@
 #include "global.h"
 
-#include "system.h"
-
-#include "contain_metro_escalators.h"
-
-#include "command.h"
-
 int command::get_command_code(void)
 {
 return command_code;

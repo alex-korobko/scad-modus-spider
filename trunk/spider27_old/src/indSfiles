@@ -1,1 +1,1 @@
-MYSRC = ../system.cpp ../command.cpp ../esc_types.cpp ../station.cpp ../router.cpp
+MYSRC = ../alert.cpp ../escalator.cpp ../system.cpp ../command.cpp ../esc_types.cpp ../station.cpp ../router.cpp ../sound.cpp

@@ -6,53 +6,53 @@ extern "C" {
 
 extern ApContext_t AbContext;
 
-ApDialogLink_t ArchiveDlg = {
-	"ArchiveDlg.wgtd",
+ApWindowLink_t main_wnd = {
+	"main_wnd.wgtw",
 	&AbContext,
-	AbLinks_ArchiveDlg, 0, 2
-	};
-
-ApWindowLink_t ArchiveLog = {
-	"ArchiveLog.wgtw",
-	&AbContext,
-	AbLinks_ArchiveLog, 4, 5
-	};
-
-ApDialogLink_t EscConfig = {
-	"EscConfig.wgtd",
-	&AbContext,
-	AbLinks_EscConfig, 8, 7
-	};
-
-ApDialogLink_t LogFilterDlg = {
-	"LogFilterDlg.wgtd",
-	&AbContext,
-	AbLinks_LogFilterDlg, 15, 7
-	};
-
-ApDialogLink_t PrevCmdPoolDlg = {
-	"PrevCmdPoolDlg.wgtd",
-	&AbContext,
-	AbLinks_PrevCmdPoolDlg, 47, 6
-	};
-
-ApDialogLink_t SignalDlg = {
-	"SignalDlg.wgtd",
-	&AbContext,
-	AbLinks_SignalDlg, 52, 2
+	AbLinks_main_wnd, 0, 14
 	};
 
 ApPictureLink_t interface = {
 	"interface.wgtp",
 	&AbContext,
-	NULL,
-	63, 0
+	AbLinks_interface,
+	16, 3
 	};
 
-ApWindowLink_t main_wnd = {
-	"main_wnd.wgtw",
+ApDialogLink_t LogFilterDlg = {
+	"LogFilterDlg.wgtd",
 	&AbContext,
-	AbLinks_main_wnd, 119, 14
+	AbLinks_LogFilterDlg, 72, 7
+	};
+
+ApDialogLink_t EscConfig = {
+	"EscConfig.wgtd",
+	&AbContext,
+	AbLinks_EscConfig, 104, 7
+	};
+
+ApDialogLink_t SignalDlg = {
+	"SignalDlg.wgtd",
+	&AbContext,
+	AbLinks_SignalDlg, 111, 2
+	};
+
+ApDialogLink_t ArchiveDlg = {
+	"ArchiveDlg.wgtd",
+	&AbContext,
+	AbLinks_ArchiveDlg, 122, 2
+	};
+
+ApWindowLink_t ArchiveLog = {
+	"ArchiveLog.wgtw",
+	&AbContext,
+	AbLinks_ArchiveLog, 126, 5
+	};
+
+ApDialogLink_t PrevCmdPoolDlg = {
+	"PrevCmdPoolDlg.wgtd",
+	&AbContext,
+	AbLinks_PrevCmdPoolDlg, 130, 6
 	};
 
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {
