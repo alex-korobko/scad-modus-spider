@@ -4,12 +4,12 @@
 
 ifdef DBG
 DBG_RELEASE = -O3 -fomit-frame-pointer
-DBG_DEBUG = -O -gdwarf-2
+DBG_DEBUG = -O0 -g
 DEBUG=$(DBG_$(DBG))
 endif
 
 ifndef DEBUG
-DEBUG = -g
+DEBUG = -g -O0
 endif
 
 ifndef OPTIM
