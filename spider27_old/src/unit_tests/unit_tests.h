@@ -22,7 +22,7 @@ public:
     	runner.addTest(station_test::suite());
     	runner.addTest(metro_stations_container_test::suite());
     	
-    	runner.addTest(esc_types_container_test::suite());
+    	runner.addTest(devices_types_container_test::suite());
     	
     runner.addTest(escalator_test::suite());
     	runner.addTest(metro_escalators_container_test::suite());

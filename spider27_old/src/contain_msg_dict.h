@@ -39,6 +39,9 @@ struct ltint
 	};
 
 typedef  map <int, dictionary_message, ltint> msg_dictionary;	
+typedef  msg_dictionary::iterator msg_dict_iterator;	
+typedef  msg_dictionary::value_type msg_dict_pair;	
+typedef  msg_dictionary::size_type msg_dict_size_type;	
 
 msg_dictionary	container_msg_dict;
 
@@ -143,9 +146,6 @@ if (entry_name.compare(entries_names[ID])==0)
 }
 
 public :
-typedef  msg_dictionary::iterator msg_dict_iterator;	
-typedef  msg_dictionary::value_type msg_dict_pair;	
-
 enum {MSG_PROGRAM_STARTED=143, 
 			MSG_PROGRAM_CLOSED=144,
 			MESSAGES_COUNT
@@ -158,17 +158,21 @@ msg_dict_iterator find(const int key) { return container_msg_dict.find(key); };
 msg_dict_iterator upper_bound(const int key) { return container_msg_dict.upper_bound(key); };
 
 void erase (msg_dict_iterator iter) { container_msg_dict.erase(iter); };
+void erase (msg_dict_iterator iter_beg,
+					msg_dict_iterator iter_end) { container_msg_dict.erase(iter_beg, iter_end); };
 msg_dict_iterator insert (msg_dict_iterator iter, const msg_dict_pair& obj) 
 {
   return (container_msg_dict.insert(iter, obj)); 
 }
 
 bool empty() const { return container_msg_dict.empty();}
-int size() const {return container_msg_dict.size();};
+msg_dict_size_type size() const {return container_msg_dict.size();};
 
 bool load(system_settings *sys_sett_obj, msg_types_container *msg_types_cont, string file_name)
 	{
  	enum {MESSAGE=0, ENTRIES_COUNT};
+
+	erase (begin(), end());
 
 	string	section_name;
 	const char *section_name_c_str;

@@ -4,11 +4,98 @@
 
 #include "global.h"
 
+log_filter temp_log_filter;
+
 /*
 Local functions
 */
 
-static void re_calculate_command_items_count(PtWidget_t *cmd_pool_list)
+static void redraw_devices_list_in_filter_dlg(
+													PtWidget_t *link_instance,
+													log_filter filter,
+													metro_escalators_container *ptr_to_esc_contain,
+													metro_stations_container *ptr_to_stations_contain,
+													system_settings *ptr_to_system_sett
+															)
+{
+	PtWidget_t *tmp_widget=ApGetWidgetPtr(link_instance, ABN_DevicesList);
+	if (tmp_widget!=NULL)
+		{
+		 PtListDeleteAllItems(tmp_widget);
+		if (	 ! ptr_to_esc_contain->empty() &&
+		     ! ptr_to_stations_contain->empty())
+			{
+				vector<unsigned short> indexes_of_selected_items;
+				const char* list_items[1];
+				vector<char> tmp_chars(8);
+
+				string tmp_string;
+				tmp_string.reserve(30);
+
+				indexes_of_selected_items.reserve(filter.devices_size());
+				unsigned short current_index=1;
+		
+				metro_stations_container::iterator_metro_stations tmp_iter_stat;
+				
+				log_filter::ids_container_iterator ids_of_selected_stations_iter=filter.stations_begin();				
+				while (ids_of_selected_stations_iter!=filter.stations_end())
+				{
+						tmp_iter_stat=ptr_to_stations_contain->find(*ids_of_selected_stations_iter);
+				
+						if (tmp_iter_stat==ptr_to_stations_contain->end())
+							{
+								ids_of_selected_stations_iter++;
+								continue;
+							};
+
+						metro_station::iterator_escalators_id tmp_iter_esc_id=tmp_iter_stat->second.begin_escalators_id();
+						while (tmp_iter_esc_id!=tmp_iter_stat->second.end_escalators_id())
+							{
+		 						metro_escalators_container::iterator_metro_escalators tmp_iter_esc=ptr_to_esc_contain->find(*tmp_iter_esc_id);	
+							 
+							 	if (tmp_iter_esc==ptr_to_esc_contain->end())
+							 		{
+ 										tmp_iter_esc_id++;
+ 										continue;
+							 		};
+							 
+								itoa(tmp_iter_esc->second.get_number() , &tmp_chars[0], 10);
+								tmp_string=tmp_iter_stat->second.get_stl_name_string();
+								tmp_string+=" эскалатор ";
+								tmp_string+=&tmp_chars[0];
+								list_items[0]=tmp_string.c_str();
+
+								PtListAddItems( tmp_widget,
+											             list_items,
+											             1,
+												         0);
+					
+								if (filter.devices_end()!=
+									filter.find_device (tmp_iter_esc->second.get_id()))
+									{
+										indexes_of_selected_items.push_back(current_index);
+									};
+			
+								current_index++;
+								tmp_iter_esc_id++;
+								}; // while (tmp_iter_esc_id!=tmp_iter_stat->
+						  ids_of_selected_stations_iter++;
+					}; // while (ids_of_selected_stations_iter!=
+
+				if (! indexes_of_selected_items.empty())
+					{									       
+						PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, &indexes_of_selected_items[0], indexes_of_selected_items.size()); 
+					} else {
+						PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, NULL, 0); 
+					};
+				}; //	if (	 ! selected_stations_ids.empty() &&
+		} else {
+			ptr_to_system_sett->sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_DevicesList"));
+		}
+
+};
+
+void re_calculate_command_items_count(PtWidget_t *cmd_pool_list)
 	{
 	PtGenListItem_t *first=NULL, *list_item=new(PtGenListItem_t), *last;
 
@@ -44,9 +131,11 @@ static void re_calculate_command_items_count(PtWidget_t *cmd_pool_list)
 			};
 
 		 PtGenListAddItems(cmd_pool_list, first, NULL);
+		 
 	}
 
 }
+
 
 static int CreateScheme()
 {
@@ -124,7 +213,7 @@ activate_SendCommandButton( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 	{
 	PtWidget_t *cmd_pool_list=NULL, *cmd_pool_wnd=NULL;
 	PtGenListItem_t *curr_item;
-	
+
 	int count ;
 	cmd_pool_container::cmd_pool_iterator p_cmd_pool;	
 
@@ -134,21 +223,22 @@ activate_SendCommandButton( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 	if (cmd_pool_list!=NULL)
 	{
 	curr_item = PtGenListFirstItem(cmd_pool_list);
-	count=g_CommandPool.size();
-	p_cmd_pool=g_CommandPool.begin();
+	count=g_command_pool.size();
+	p_cmd_pool=g_command_pool.begin();
 	
-	while(p_cmd_pool!=g_CommandPool.end() && curr_item)
+	while(p_cmd_pool!=g_command_pool.end() && curr_item)
 		{
 			if(curr_item->flags&Pt_LIST_ITEM_SELECTED>0)
 						{
 						(*p_cmd_pool).send();
-						g_CommandPool.erase(p_cmd_pool);
+						g_command_pool.erase(p_cmd_pool);
 						re_calculate_command_items_count(cmd_pool_list);			
 						}
 		p_cmd_pool++;
 		curr_item=curr_item->next;
 		};
 	};
+
 	return( Pt_CONTINUE );
 	}
 
@@ -157,12 +247,12 @@ int
 activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
 	PtGenListItem_t *curr_item;
-	
+
 	int count ;
 	cmd_pool_container::cmd_pool_iterator p_cmd_pool;	
 
    PtWidget_t *cmd_pool_wnd = ApGetInstance(widget );
-   
+
 	if (cmd_pool_wnd!=NULL) 
 	{
 	    PtWidget_t *cmd_pool_list = ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
@@ -171,14 +261,14 @@ activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_
 		{
 		    cmd_pool_list = ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
 			curr_item = PtGenListFirstItem(cmd_pool_list);
-			count=g_CommandPool.size();
-			p_cmd_pool=g_CommandPool.begin();
+			count=g_command_pool.size();
+			p_cmd_pool=g_command_pool.begin();
 	
-			while(p_cmd_pool!=g_CommandPool.end() && curr_item)
+			while(p_cmd_pool!=g_command_pool.end() && curr_item)
 				{
 					if(curr_item->flags&Pt_LIST_ITEM_SELECTED>0)
 						{
-							g_CommandPool.erase(p_cmd_pool);
+							g_command_pool.erase(p_cmd_pool);
 							re_calculate_command_items_count(cmd_pool_list);					
 						}
 					p_cmd_pool++;
@@ -186,6 +276,7 @@ activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_
 				};
 		};
 	};
+
 	return( Pt_CONTINUE );
 	}
 
@@ -226,9 +317,9 @@ activate_CmdPoolBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbi
 				{
 						cmd_pool_container* cmd_pool_cont;
 						PtGetResource(cmd_pool_list, Pt_ARG_POINTER, &cmd_pool_cont, 0);				
-							if(cmd_pool_cont!=&g_CommandPool)
+							if(cmd_pool_cont!=&g_command_pool)
 							{
-								g_CommandPool.set_widget(cmd_pool_list);
+								g_command_pool.set_widget(cmd_pool_list);
 							}; 
 						PtRealizeWidget(cmd_pool_wnd);
 				}else {
@@ -258,11 +349,10 @@ activate_FilterBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 int
 activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	string	message = "Внимание! В журнале включен фильт ообщений";
-
 	log_records_container* ptr_log_rec_cont=NULL;
 	PtWidget_t  *dialog_widget=NULL, *tmp_widget=NULL;
-	
+
+// getting instanse of LogFilterDlg
 	dialog_widget=ApGetInstance(widget);
 	if (dialog_widget==NULL)
 		{
@@ -270,9 +360,14 @@ activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		return( Pt_END );		
 		}
 
+//getting pointer of log_records_container
 	PtGetResource(dialog_widget, Pt_ARG_POINTER, &ptr_log_rec_cont, 0);
 
+	if (ptr_log_rec_cont==NULL) return Pt_END;
+	
+	log_filter old_log_filter(ptr_log_rec_cont->filter);
 
+//getting instanse of FilteringBtn and set it`s state by set_filtering 
 	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_FilteringBtn);
 	if (tmp_widget!=NULL)
 		{
@@ -280,11 +375,12 @@ activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 				long const *internal_flags;
 				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
 				flags=*internal_flags;
-				ptr_log_rec_cont->set_filtering((flags & Pt_SET)!=0);
+				ptr_log_rec_cont->filter.set_filter_state((flags & Pt_SET)!=0);
 		} else {
 			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_FilteringBtn"));
 		}
 
+//getting instanse of AllTimeRangeBtn and set it`s state by set_all_times 
 	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_AllTimeRangeBtn);
 	if (tmp_widget!=NULL)
 		{
@@ -297,164 +393,266 @@ activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllTimeRangeBtn"));
 		}
 
-		
-/*
-
-		log_records_container* log_rec_cont;
-		PtWidget_t *window_wgt = ApGetInstance( widget );
-		PtGetResource(window_wgt, Pt_ARG_POINTER, &log_rec_cont, 0);				
-	
-		if(log_rec_cont==NULL) 	
-			{
-				g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t get log_rec_container for ABN_LogFilterDlg1"));
-				return(Pt_END );
-			}
-
-		PtWidget_t *tmp_widget=ApGetWidgetPtr(window_wgt, ABN_FilteringBtn);
-		if( tmp_widget!=NULL) 
-			{
+//getting instanse of AllMessagesTypesBtn and set it`s state by set_all_msg_types 
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_AllMessagesTypesBtn);
+	if (tmp_widget!=NULL)
+		{
 				long flags;
-				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &flags, 0);				
-				log_rec_cont->set_filtering((flags & Pt_SET)!=0);
+				long const *internal_flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+				flags=*internal_flags;
+				ptr_log_rec_cont->filter.set_all_msg_types((flags & Pt_SET)!=0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllMessagesTypesBtn"));
+		}
 
-			}else {
-				g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t get instansed widget for ABN_FilteringBtn"));
-				return(Pt_END );
+//getting instanse of AllStationsBtn and set it`s state by set_all_stations 
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_AllStationsBtn);
+	if (tmp_widget!=NULL)
+		{
+				long flags;
+				long const *internal_flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+				flags=*internal_flags;
+				ptr_log_rec_cont->filter.set_all_stations((flags & Pt_SET)!=0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllStationsBtn"));
+		}
+
+//getting instanse of AllDevicesBtn and set it`s state by set_all_devices 
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_AllDevicesBtn);
+	if (tmp_widget!=NULL)
+		{
+				long flags;
+				long const *internal_flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+				flags=*internal_flags;
+				ptr_log_rec_cont->filter.set_all_devices((flags & Pt_SET)!=0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllDevicesBtn"));
+		}
+
+// preparing data of START filtering time
+	tm  time_to_filtered;
+	time_to_filtered.tm_isdst =daylight;
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_CalendarStart);
+	if (tmp_widget!=NULL)
+		{
+			const PtCalendarDate_t *internal_pt_time;
+			PtCalendarDate_t pt_time;
+
+			PtGetResource(tmp_widget, Pt_ARG_CALENDAR_DATE, &internal_pt_time, sizeof(PtCalendarDate_t));		
+			pt_time=*internal_pt_time;
+
+			time_to_filtered.	tm_sec=0;
+			time_to_filtered.	tm_mday=pt_time.day+1;
+			time_to_filtered.	tm_mon=pt_time.month;
+			time_to_filtered.	tm_year=pt_time.year-1900;
+	
+			tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_StartHourNumeric);
+			if (tmp_widget!=NULL)
+			{
+				const int *hour_value;
+				PtGetResource(tmp_widget, Pt_ARG_NUMERIC_VALUE, &hour_value, 0);		
+				time_to_filtered.	tm_hour=*hour_value;
+
+				tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_StartMinNumeric);
+				if (tmp_widget!=NULL)
+				{
+					const int *min_value;
+					PtGetResource(tmp_widget, Pt_ARG_NUMERIC_VALUE, &min_value, 0);		
+					time_to_filtered.	tm_min=*min_value;
+					
+					ptr_log_rec_cont->filter.set_start_time(mktime(&time_to_filtered));
+					
+				} else {
+					g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StartMinNumeric"));			
+				};
+
+			} else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StartHourNumeric"));			
+			};
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_CalendarStart"));
+		};
+
+
+	
+// preparing data of END filtering time
+	memset (&time_to_filtered, 0, sizeof(time_to_filtered));
+	time_to_filtered.tm_isdst =daylight ;
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_CalendarEnd);
+	if (tmp_widget!=NULL)
+		{
+			const PtCalendarDate_t *internal_pt_time;
+			PtCalendarDate_t pt_time;
+
+			PtGetResource(tmp_widget, Pt_ARG_CALENDAR_DATE, &internal_pt_time, sizeof(PtCalendarDate_t));		
+			pt_time=*internal_pt_time;
+
+			time_to_filtered.	tm_sec=0;
+			time_to_filtered.	tm_mday=pt_time.day+1;
+			time_to_filtered.	tm_mon=pt_time.month;
+			time_to_filtered.	tm_year=pt_time.year-1900;
+	
+			tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_EndHourNumeric);
+			if (tmp_widget!=NULL)
+			{
+				const int *hour_value;
+				PtGetResource(tmp_widget, Pt_ARG_NUMERIC_VALUE, &hour_value, 0);		
+				time_to_filtered.	tm_hour=*hour_value;
+
+				tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_EndMinNumeric);
+				if (tmp_widget!=NULL)
+				{
+					const int *min_value;
+					PtGetResource(tmp_widget, Pt_ARG_NUMERIC_VALUE, &min_value, 0);		
+					time_to_filtered.	tm_min=*min_value;
+					
+					ptr_log_rec_cont->filter.set_stop_time(mktime(&time_to_filtered));
+					
+				} else {
+					g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_EndMinNumeric"));			
+				};
+
+			} else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_EndHourNumeric"));			
+			};
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_CalendarEnd"));
+		};
+
+//list of devices for filtering
+	ptr_log_rec_cont->filter.erase_devices_range(ptr_log_rec_cont->filter.devices_begin(),
+																	ptr_log_rec_cont->filter.devices_end());
+
+	ptr_log_rec_cont->filter.insert_devices_range(temp_log_filter.devices_begin(),
+																	temp_log_filter.devices_end());
+
+//list of stations for filtering
+	ptr_log_rec_cont->filter.erase_stations_range(ptr_log_rec_cont->filter.stations_begin(),
+																	ptr_log_rec_cont->filter.stations_end());
+
+	ptr_log_rec_cont->filter.insert_stations_range(temp_log_filter.stations_begin(),
+																	temp_log_filter.stations_end());
+
+//message types list
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_MessagesTypesList);
+	if (tmp_widget!=NULL)
+		{
+		vector<PtArg_t> args(2);
+		const unsigned short *internal_sel_indexes, *internal_sel_count;
+		unsigned short sel_item_count;
+
+		ptr_log_rec_cont->filter.erase_msg_types_range(	ptr_log_rec_cont->filter.msg_types_begin(),
+													ptr_log_rec_cont->filter.msg_types_end());
+
+
+		PtSetArg( &args[0], Pt_ARG_SELECTION_INDEXES, &internal_sel_indexes, 0 );
+		PtSetArg( &args[1], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+		PtGetResources (tmp_widget, args.size(), &args[0]);	
+		sel_item_count=*internal_sel_count;
+
+
+			if (sel_item_count>0) 
+			{
+			vector<unsigned short> selected_indexes(&internal_sel_indexes[0],
+																			 	&internal_sel_indexes[sel_item_count]);
+
+			vector<unsigned short>::iterator iter_sel_indexes=selected_indexes.begin();		
+			while (iter_sel_indexes!=selected_indexes.end())
+				{
+					msg_types_container::msg_types_iterator 
+								tmp_msg_types_iter=g_msg_types.begin();
+
+					advance(tmp_msg_types_iter, static_cast<int>(*iter_sel_indexes)-1);
+
+					if (tmp_msg_types_iter!=g_msg_types.end())
+							ptr_log_rec_cont->filter.insert_msg_type (tmp_msg_types_iter->second.get_type_id());
+		
+					iter_sel_indexes++;
+				}; // while (iter_sel_indexes!=selected_
+			}; //if (sel_item_count>0) 
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_MessagesTypesList"));
+		}
+
+	if (	ptr_log_rec_cont->filter.get_all_times() &&
+		ptr_log_rec_cont->filter.get_stop_time()<=
+		ptr_log_rec_cont->filter.get_start_time()) 	
+				g_system_settings.message_window(system_settings::WARN_MSG, 
+																		"Коая дата фильтрации должна быть позже, чем начальная");
+
+	if (! ptr_log_rec_cont->filter.get_all_times() &&
+		ptr_log_rec_cont->filter.get_stop_time()<=
+		ptr_log_rec_cont->filter.get_start_time()) 
+			{ 
+				g_system_settings.message_window(system_settings::ERROR_MSG, 
+																		"Конечная дата фильтрации должна быть позже, чем начальная");
+				return( Pt_CONTINUE );
+			};
+
+
+	if (	! ptr_log_rec_cont->filter.get_all_msg_types() &&
+		ptr_log_rec_cont->filter.msg_types_empty()) 
+			{
+				g_system_settings.message_window(system_settings::ERROR_MSG,
+																		"Не выбран ни один тип сообщения");
+				return( Pt_CONTINUE );
 			}
 
+	if (	! ptr_log_rec_cont->filter.get_all_stations() &&
+		ptr_log_rec_cont->filter.stations_empty()) 
+			{
+				g_system_settings.message_window(system_settings::ERROR_MSG, 
+																		"Не выбрана ни одна станция");
+				return( Pt_CONTINUE );
+			};
 
+	if (	! ptr_log_rec_cont->filter.get_all_devices() &&
+		ptr_log_rec_cont->filter.devices_empty()) 
+			{
+				g_system_settings.message_window(system_settings::ERROR_MSG, 
+																		"Не выбрано ни одно из устройств на станциях");
+				return( Pt_CONTINUE );
+			};
 
-		g_logFilter.set_station_index(get_widget_scalar(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM) - 1);
-		
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_SysMsgBtn, 1, &args[0]);		
-		if (args[0].value & Pt_SET)
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | log_filter::MSG_SYSTEM);
-		}
-		else
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | ! log_filter::MSG_SYSTEM);
-		}
-		
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_AlertMsgBtn, 1, &args[0]);		
-		if (args[0].value & Pt_SET)
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | log_filter::MSG_ALERT);
-		}
-		else
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | ! log_filter::MSG_ALERT);
-		}
+	if (old_log_filter==ptr_log_rec_cont->filter) 	
+			{
+				PtUnrealizeWidget( dialog_widget);
+				return  Pt_CONTINUE;
+			};
 
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_BlockMsgBtn, 1, &args[0]);		
-		if (args[0].value & Pt_SET)
+	tmp_widget=ptr_log_rec_cont->get_filtration_state_indicator();
+	if (tmp_widget!=NULL)
 		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | log_filter::MSG_BLOCK);
-		}
-		else
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | ! log_filter::MSG_BLOCK);
-		}
+		vector<PtArg_t> args(3);
+		string indicator_text;
+		if (ptr_log_rec_cont->filter.get_filter_state())
+			{ 
+				PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
+				PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_RED, 0);				
+				indicator_text="Фильтр ВКЛ";
+			} else {
+				PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
+				PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_BLACK, 0);				
+				indicator_text="Фильтр ВЫКЛ";
+			};
 
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_LocalMsgBtn, 1, &args[0]);		
-		if (args[0].value & Pt_SET)
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | log_filter::MSG_LOCAL);
-		}
-		else
-		{
-			g_logFilter.set_messages (g_logFilter.get_messages() | ! log_filter::MSG_LOCAL);
-		}
-
-		
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_AllTimeRangeBtn1, 1, &args[0]);		
-
-		if (args[0].value & Pt_SET)
-		{
-			g_logFilter.set_all_times(1);
-			g_logFilter.set_start_time(0);
-			g_logFilter.set_stop_time (0);
-		}
-		else
-		{
-			g_logFilter.set_all_times(1);
-
-			PtSetArg(&args[0], Pt_ARG_CALENDAR_TIME_T, &date, 0);
-			PtGetResources(ABW_CalendarStart, 1, &args[0]);		
+		PtSetArg( &args[2], Pt_ARG_TEXT_STRING, indicator_text.c_str(),  indicator_text.size());
+		PtSetResources (tmp_widget, args.size(), &args[0]);	
 			
-			g_logFilter.set_start_time((time_t) date);
-			g_logFilter.set_stop_time((time_t) date);
-
-			elapsed += 3600*args[0].value;
-
-			PtGetResources(ABW_CalendarEnd, 1, &args[0]);		
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_StartHourNumeric, 1, &args[0]);
-
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_StartMinNumeric, 1, &args[0]);
-			elapsed += 60*args[0].value;
-		
-			g_logFilter.set_start_time(g_logFilter.get_start_time()+elapsed);
-		
-		
-			elapsed = 0;
-			
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_EndHourNumeric, 1, &args[0]);
-			elapsed += 3600*args[0].value;
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_EndMinNumeric, 1, &args[0]);
-			elapsed += 60*args[0].value;		
-		
-			g_logFilter.set_stop_time( g_logFilter.get_stop_time()+elapsed);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to filtration state indicator"));
 		}
-		station_index=g_logFilter.get_station_index();
-		if (station_index>=0)
-		{
-		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
-		PtGetResources(ABW_OneEscalatorBtn, 1, &args[0]);
+
 		
-		if (args[0].value & Pt_SET)
-		{
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_OneEscalatorNumeric, 1, &args[0]);
+	ptr_log_rec_cont->set_filtering();
+	ptr_log_rec_cont->prepare_to_display();
 
-			g_logFilter.set_first_escalator_num(args[0].value); 
-			g_logFilter.set_last_escalator_num(args[0].value);
-		}
-		else
-		{
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_RangeStartNumeric, 1, &args[0]);
-			g_logFilter.set_first_escalator_num(args[0].value);
-			
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, 0, 0);
-			PtGetResources(ABW_RangeEndNumeric, 1, &args[0]);
-			g_logFilter.set_last_escalator_num(args[0].value);
-		}
-		}
-		
-//	mainLog.FilterLogWnd();	
+	PtUnrealizeWidget( dialog_widget);
 
-	if (is_filter_changed(g_logFilter))
-	{
-		PtSetArg(&args[0], Pt_ARG_TEXT_STRING,  &message[0], message.size());
-		PtSetArg(&args[1], Pt_ARG_COLOR,  Pg_RED, 0);	
-		PtSetResources(ABW_log_status, 2, &args[0]);
-	} else {
-	ResetFilter( NULL, NULL, NULL);
-	};
-
-		printf("Live\n");
-*/			
 	return( Pt_CONTINUE );
-
 	}
 
 int
@@ -524,67 +722,6 @@ activate_AllTimeRangeBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 
 		};
 
-
-	return( Pt_CONTINUE );
-
-	}
-
-/*
-Callbacks for ArchiveLog  and ArchiveDlg window
-*/
-
-int
-realize_ArchiveLog( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	g_archive_log.set_widget (widget);
-	return( Pt_CONTINUE );
-	}
-
-
-int
-unrealize_ArchiveLog( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	g_archive_log.set_widget(NULL);
-	g_archive_log.erase_all();
-	
-	return( Pt_CONTINUE );
-
-	}
-
-int
-realized_main_log_wnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-	g_main_log.set_widget (widget);
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-unrealized_main_log_wnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-	g_main_log.set_widget(NULL);
-	g_main_log.erase_all();
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-
-int
-activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	
-	g_archive_log.erase_all();
-	g_archive_log.load (string("remove_it.ini"));
 
 	return( Pt_CONTINUE );
 
@@ -675,19 +812,28 @@ Uninitialize( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 int
 RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
 
 	g_system_settings.set_main_window(widget);
-	// создаем схему
-	CreateScheme();
-	// загружаем журнал
- 	g_main_log.load(g_system_settings.get_main_log_name());
 	
+	g_msg_types.load(&g_system_settings, 
+								g_system_settings.get_messages_types_name() );
+
+	g_msg_dictionary.load(&g_system_settings, 
+										&g_msg_types,
+										g_system_settings.get_global_messages_name() );
+
+	g_metro_devices_types.load( &g_system_settings,
+			  										&g_msg_types,	
+													g_system_settings.get_devices_types_name() );
+
+	g_main_log.set_widget(ABW_main_log_wnd);
+	g_main_log.load(g_system_settings.get_main_log_name());
+
 	// добавляем сообщение
 	int msg_id=msg_dict_container::MSG_PROGRAM_STARTED;	
-	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg_id);
-	if(tmp_msg_iter==g_msgDictionary.end())
+	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(msg_id);
+	if(tmp_msg_iter==g_msg_dictionary.end())
 			{
 				vector<char> tmp_chars(10);
 				string mess("Not found message id ");
@@ -709,7 +855,35 @@ RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 												 time(NULL)
 												)
 							);
+	
+	g_main_log.filter.set_filter_state(false);
+	g_main_log.set_filtering();
+	g_main_log.prepare_to_display();
 
+	{
+	vector<PtArg_t> args(3);
+	string indicator_text;
+	g_main_log.set_filtration_state_indicator(ABW_on_off_filter_main_log);
+	if (g_main_log.filter.get_filter_state())
+		{ 
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_RED, 0);				
+			indicator_text="Фильтр ВКЛ";
+		} else {
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_BLACK, 0);				
+			indicator_text="Фильтр ВЫКЛ";
+		};
+
+	PtSetArg( &args[2], Pt_ARG_TEXT_STRING, indicator_text.c_str(),  indicator_text.size());
+	
+	PtSetResources (ABW_on_off_filter_main_log, args.size(), &args[0]);	
+	}
+
+	
+	// создаем схему
+	CreateScheme();
+	
 	return( Pt_CONTINUE );
 
 	}
@@ -720,10 +894,10 @@ CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
 	g_system_settings.set_main_window(NULL);
 
-	// добавляем сообщение
+	// дбвляем сообщение
 	int msg_id=msg_dict_container::MSG_PROGRAM_CLOSED;	
-	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg_id);
-	if(tmp_msg_iter==g_msgDictionary.end())
+	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(msg_id);
+	if(tmp_msg_iter==g_msg_dictionary.end())
 			{
 				vector<char> tmp_chars(10);
 				string mess("Not found message id ");
@@ -745,6 +919,8 @@ CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 												 time(NULL)
 												)
 							);
+
+	g_main_log.save(g_system_settings.get_main_log_name());
 
 	return( Pt_CONTINUE );
 
@@ -985,7 +1161,7 @@ OnSaveDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 	{
 	if (!g_escalators.save_directions("directions.dat") )
 		{
-		g_system_settings.message_window (system_settings::ERROR_MSG, string("Не удсь сохранить направления движеня эскалаторов в файле !"));
+		g_system_settings.message_window (system_settings::ERROR_MSG, string("Не удсь сохранить направления движеня эскалаторов в айле !"));
 		};
 
 	return( Pt_CONTINUE );
@@ -1005,7 +1181,7 @@ command cmd(esc_iter->second.get_id(), system_settings::COMMAND_UP, esc_iter->se
 
 //begin: Remove it!!!
 cmd.set_item_color(Pg_PURPLE);
-g_CommandPool.push_back(cmd);
+g_command_pool.push_back(cmd);
 //end: Remove it!!!
 
 	if ( esc_iter->second.get_enabled()==system_settings::ENABLED
@@ -1017,7 +1193,7 @@ g_CommandPool.push_back(cmd);
 			if (esc_iter->second.confirm_direction(system_settings::DIRECTION_UP) == 1) 
 				{
 				cmd.set_item_color(Pg_RED);
-				g_CommandPool.push_back(cmd);
+				g_command_pool.push_back(cmd);
 				};
 		}
 		else if ((esc_iter->second.get_pref_direction() == system_settings::DIRECTION_DOWN)
@@ -1026,13 +1202,13 @@ g_CommandPool.push_back(cmd);
 			if (esc_iter->second.confirm_direction(system_settings::DIRECTION_UP) == 1)
 				{
 				cmd.set_item_color(Pg_RED);
-				g_CommandPool.push_back(cmd);	
+				g_command_pool.push_back(cmd);	
 				};
 		}
 		else	
 			{
 				cmd.set_item_color(Pg_PURPLE);
-				g_CommandPool.push_back(cmd);
+				g_command_pool.push_back(cmd);
 			};
  	}
 
@@ -1073,7 +1249,7 @@ command cmd(esc_iter->second.get_id(), system_settings::COMMAND_DOWN, esc_iter->
 
 //begin: Remove it!!!
 cmd.set_item_color(Pg_DGREEN);
-g_CommandPool.push_back(cmd);
+g_command_pool.push_back(cmd);
 //end: Remove it!!!
 
 
@@ -1086,7 +1262,7 @@ g_CommandPool.push_back(cmd);
 			if (esc_iter->second.confirm_direction(system_settings::DIRECTION_DOWN) == 1)
 				{
 				cmd.set_item_color(Pg_RED);
-				g_CommandPool.push_back(cmd);
+				g_command_pool.push_back(cmd);
 				};
 		}	else if ((esc_iter->second.get_pref_direction() == system_settings::DIRECTION_UP)
 					||(esc_iter->second.get_direction() == system_settings::DIRECTION_UP))
@@ -1094,11 +1270,11 @@ g_CommandPool.push_back(cmd);
 			if (esc_iter->second.confirm_direction(system_settings::DIRECTION_DOWN)==1)
 				{
 				cmd.set_item_color(Pg_RED);
-				g_CommandPool.push_back(cmd);
+				g_command_pool.push_back(cmd);
 				};
 		}else	{
 			cmd.set_item_color(Pg_DGREEN);
-			g_CommandPool.push_back(cmd);
+			g_command_pool.push_back(cmd);
 		};
 	};
 	return( Pt_CONTINUE );
@@ -1225,7 +1401,7 @@ FillEscConfList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo 
 		directions_strings[UNDEFINED]="не определено";
 		directions_strings[UP]="вверх";
 		directions_strings[DOWN]="вниз";
-		directions_strings[REVERSE]="реверсивный";
+		directions_strings[REVERSE]="реерсивный";
 	
 		string item_string;
 		vector<char> tmp_chars(8);
@@ -1301,10 +1477,10 @@ RealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *c
 
 			PtSetResource(ApGetWidgetPtr(widget, ABN_PanelTitle), Pt_ARG_TEXT_STRING, escalator_description.c_str(), 0);
 			
-			esc_types_container::iterator_esc_types iter_types;
+			devices_types_container::iterator_devices_types iter_types;
 			
-			iter_types=g_metro_escalator_types.find(paneled_escalator->second.get_type());
-			if (iter_types!=g_metro_escalator_types.end()) 
+			iter_types=g_metro_devices_types.find(paneled_escalator->second.get_type());
+			if (iter_types!=g_metro_devices_types.end()) 
 				{
 				PtWidget_t* panelTabs = ApGetWidgetPtr(widget, ABN_SignalPanel);
 				iter_types->second.create_panels(panelTabs,
@@ -1361,18 +1537,11 @@ activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbac
 	{
 	PtCallbackInfo_t clbc_info;
 	clbc_info.cbdata=&g_main_log;
-	PtWidget_t *wnd= ApCreateModule( ABM_LogFilterDlg, NULL, &clbc_info);
-	if (wnd!=NULL)
-		{
-			g_main_log.set_widget(wnd);
-//			PtRealizeWidget(wnd);			
+	g_main_log.set_filtration_state_indicator(widget);
 
-		} else {
-			g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t ApCreateModule ABM_LogFilterDlg"));	
-		};
+	ApCreateModule( ABM_LogFilterDlg, NULL, &clbc_info);
 
 	return( Pt_CONTINUE );
-
 	}
 
 int
@@ -1381,6 +1550,9 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 	log_records_container* ptr_log_rec_cont=NULL;
 	ptr_log_rec_cont=static_cast<log_records_container*>(cbinfo->cbdata);
 	PtWidget_t *tmp_widget=NULL;
+	vector<char>tmp_chars(8);
+	string tmp_string;
+	tmp_string.reserve(20);
 
 	if (ptr_log_rec_cont==NULL)
 	 {
@@ -1393,7 +1565,7 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 	if (tmp_widget!=NULL)
 		{
 
-			if (ptr_log_rec_cont->filter.is_filter_on())
+			if (ptr_log_rec_cont->filter.get_filter_state())
 				{
 					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
 				} else {
@@ -1460,8 +1632,10 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 
 			if (ptr_log_rec_cont->filter.get_all_stations())
 				{
+					toggle_state=1;
 					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
 				} else {
+					toggle_state=0;
 					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
 				};
 
@@ -1482,14 +1656,16 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 		
 			if (ptr_log_rec_cont->filter.get_all_devices())
 				{
+					toggle_state=1;
 					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
 				} else {
+					toggle_state=0;
 					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
 				};
 	
 			cbdata_actvate.value=toggle_state;
 			cbinfo_actvate.cbdata=&cbdata_actvate;
-			activate_AllStationsBtn( tmp_widget, NULL, &cbinfo_actvate);
+			activate_AllDevicesBtn( tmp_widget, NULL, &cbinfo_actvate);
 
 
 		} else {
@@ -1540,7 +1716,6 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_MessagesTypesList"));
 		}
 
-
 	tmp_widget=ApGetWidgetPtr(link_instance, ABN_StationsList);
 	if (tmp_widget!=NULL)
 		{
@@ -1561,8 +1736,8 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 								             1,
 									         0);
 					
-					if (ptr_log_rec_cont->filter.msg_types_end()!=
-						ptr_log_rec_cont->filter.find_msg_type(tmp_iter->second.get_id()))
+					if (ptr_log_rec_cont->filter.stations_end()!=
+						ptr_log_rec_cont->filter.find_station(tmp_iter->second.get_id()))
 						{
 							indexes_of_selected_items.push_back(current_index);
 						};
@@ -1570,7 +1745,6 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 					current_index++;
 					tmp_iter++;
 					}
-
 					if (! indexes_of_selected_items.empty())
 						{									       
 							PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, &indexes_of_selected_items[0], indexes_of_selected_items.size()); 
@@ -1583,8 +1757,90 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 
 		} else {
 			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StationsList"));
-		}
+		};
 
+    temp_log_filter=ptr_log_rec_cont->filter;
+ 
+	redraw_devices_list_in_filter_dlg(
+													link_instance,
+													temp_log_filter,
+													&g_escalators,
+													&g_stations,
+													&g_system_settings
+															);
+
+		struct tm curTimeTM;
+		time_t tmp_time=ptr_log_rec_cont->filter.get_start_time();
+		localtime_r(&tmp_time, &curTimeTM);
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_StartHourNumeric);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									curTimeTM.tm_hour,
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StartHourNumeric"));
+		};
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_StartMinNumeric);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									curTimeTM.tm_min,
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StartMinNumeric"));
+		};
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_CalendarStart);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_CALENDAR_TIME_T,
+									ptr_log_rec_cont->filter.get_start_time(),
+									sizeof (ptr_log_rec_cont->filter.get_start_time()));
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_CalendarStart"));
+		};
+
+		tmp_time=ptr_log_rec_cont->filter.get_stop_time();
+		localtime_r(&tmp_time, &curTimeTM);
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_EndHourNumeric);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									curTimeTM.tm_hour,
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_EndHourNumeric"));
+		};
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_EndMinNumeric);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									curTimeTM.tm_min,
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_EndMinNumeric"));
+		};
+
+		tmp_widget=ApGetWidgetPtr(link_instance, ABN_CalendarEnd);
+		if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_CALENDAR_TIME_T,
+									ptr_log_rec_cont->filter.get_stop_time(),
+									sizeof (ptr_log_rec_cont->filter.get_stop_time()));
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_CalendarEnd"));
+		};
 
 
 	return( Pt_CONTINUE );
@@ -1594,17 +1850,6 @@ link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallback
 int
 unrealized_LogFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	log_records_container* ptr_log_rec_cont=NULL;
-    
-	PtGetResource(widget, Pt_ARG_POINTER, &ptr_log_rec_cont, 0);
-
-	if (ptr_log_rec_cont!=NULL)
-		{
-			ptr_log_rec_cont->set_widget(NULL);
-		} else {
-			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to log_records_container"));
-		}
-
 
 	return( Pt_CONTINUE );
 	}
@@ -1615,8 +1860,7 @@ activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 
 	{
 
-	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer, *widget_tree_cursor;
-	int tree_return_value;	
+	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer;
 	vector<PtArg_t> args(2);
 	
 	filter_dlg_wnd=ApGetInstance(	widget);
@@ -1645,27 +1889,43 @@ activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 				PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
 		};
 
-	
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_DevicesPane);
-	// now tmp_widget_pointer point to  ABN_DevicesPane instance in window
+	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_AllDevicesBtn);
 	if (tmp_widget_pointer==NULL) 
 		{
-			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get DevicesPane for LogFilterDlg window"));
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get AllDevicesBtn for LogFilterDlg window"));
 			return( Pt_END );
 		} else {
-			widget_tree_cursor=tmp_widget_pointer;
-			tree_return_value=Pt_TRAVERSE_START;
-			PtSetResources(widget_tree_cursor, args.size(), &args[0]);
-			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
-																			&widget_tree_cursor,
-																			tree_return_value ) 
-						) !=Pt_TRAVERSE_DONE)
+			// now tmp_widget_pointer point to  ABN_AllDevicesBtn instance in window	
+			const unsigned long  *internal_flags_all_devices_state;	
+			unsigned long  flags_all_devices_state;	
+			PtGetResource( tmp_widget_pointer,  Pt_ARG_FLAGS, &internal_flags_all_devices_state, 0);
+			PtSetResources(tmp_widget_pointer, args.size(), &args[0]);			
+			flags_all_devices_state=*internal_flags_all_devices_state;
+				
+			tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_DevicesList);
+			if (tmp_widget_pointer==NULL) 
 			{
-				PtSetResources(widget_tree_cursor, args.size(), &args[0]);
-     		};
+				g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get DevicesList for LogFilterDlg window"));
+				return( Pt_END );
+			} else {
+
+				if ( static_cast<long>(tmp_cbdata->value) ==0 &&
+				(flags_all_devices_state & Pt_SET) ==0)	
+				 {
+					PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+					PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+
+				 }  else {
+					PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+					PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+
+				};
+			
+				PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
+			};
 
 		};
-
+	
 	return( Pt_CONTINUE );
 
 	}
@@ -1673,7 +1933,6 @@ activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 
 int
 activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
 	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer;
 	vector<PtArg_t> args(2);
@@ -1685,7 +1944,7 @@ activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 	};
 	
 	PtBasicCallback_t *tmp_cbdata=static_cast<PtBasicCallback_t*>(cbinfo->cbdata);
-		
+
 	if (static_cast<long>(tmp_cbdata->value) !=0)	 //previos state
 	 {
 		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
@@ -1705,7 +1964,6 @@ activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 		};
 
 	return( Pt_CONTINUE );
-
 	}
 
 
@@ -1741,6 +1999,265 @@ activate_AllMessagesTypesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackIn
 		} else {
 			PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
 		};
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+itemselection_StationList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	PtListCallback_t *list_callback_data=static_cast<PtListCallback_t*>(cbinfo->cbdata);
+	ushort_t *sel_array=list_callback_data->sel_array;
+	int sel_item_count=list_callback_data->sel_item_count;
+	log_filter::ids_container new_stations_selection;
+	metro_stations_container::iterator_metro_stations tmp_stat_iter;
+
+	for(int i=0;i<sel_item_count; i++ )
+		{
+		tmp_stat_iter=g_stations.begin();
+		advance(tmp_stat_iter, static_cast<int>(sel_array[i])-1);
+
+		if (tmp_stat_iter!=g_stations.end())
+			new_stations_selection.insert(tmp_stat_iter->second.get_id());
+		};
+
+//removing selected escalators of unselected stations
+	log_filter::ids_container_iterator tmp_stat_id_iter=temp_log_filter.stations_begin();
+	while(tmp_stat_id_iter!=temp_log_filter.stations_end())
+	{
+		if (new_stations_selection.find(*tmp_stat_id_iter)==
+			new_stations_selection.end())
+		{
+		// all of escalators id from that station was deleted
+			tmp_stat_iter=g_stations.find(*tmp_stat_id_iter);
+			if (tmp_stat_iter!=g_stations.end())
+				{
+
+					metro_station::iterator_escalators_id tmp_esc_id=tmp_stat_iter->second.begin_escalators_id();
+					while(tmp_esc_id!=tmp_stat_iter->second.end_escalators_id())
+						{
+						temp_log_filter.erase_device (*tmp_esc_id);
+						tmp_esc_id++;
+						}
+				};			
+		};
+   	tmp_stat_id_iter++;
+	}
+	
+	temp_log_filter.erase_stations_range (temp_log_filter.stations_begin(),
+ 												   temp_log_filter.stations_end());
+
+	temp_log_filter.insert_stations_range (new_stations_selection.begin(),
+ 												   new_stations_selection.end());
+
+	redraw_devices_list_in_filter_dlg(
+													ApGetInstance( widget ),
+													temp_log_filter,
+													&g_escalators,
+													&g_stations,
+													&g_system_settings
+															);
+
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+itemselection_DevicesList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtListCallback_t *list_callback_data=static_cast<PtListCallback_t*>(cbinfo->cbdata);
+	ushort_t *sel_array=list_callback_data->sel_array;
+	int sel_item_count=list_callback_data->sel_item_count;
+	log_filter::ids_container all_viewed_escalators;
+	metro_stations_container::iterator_metro_stations tmp_stat_iter;
+
+	log_filter::ids_container_iterator tmp_ids_iterator=temp_log_filter.stations_begin();
+	while (tmp_ids_iterator!=temp_log_filter.stations_end())
+	{
+		tmp_stat_iter=g_stations.find(*tmp_ids_iterator);	
+		if(tmp_stat_iter!=g_stations.end())
+			{
+				all_viewed_escalators.insert(tmp_stat_iter->second.begin_escalators_id(),
+															tmp_stat_iter->second.end_escalators_id());
+			};
+		
+		tmp_ids_iterator++;
+	}
+
+	temp_log_filter.erase_devices_range( temp_log_filter.devices_begin(),
+																temp_log_filter.devices_end());
+
+	for(int i=0;i<sel_item_count; i++ )
+		{
+		tmp_ids_iterator=all_viewed_escalators.begin();
+		advance(tmp_ids_iterator, static_cast<int>(sel_array[i])-1);
+
+		if (tmp_ids_iterator!=all_viewed_escalators.end())
+			{
+			temp_log_filter.insert_device(*tmp_ids_iterator);
+			};
+		};
+
+
+	return( Pt_CONTINUE );
+
+	}
+
+/*
+Callbacks for ArchiveLog  and ArchiveDlg window
+*/
+
+
+int
+realized_ArchiveLog( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtWidget_t  *filtration_state_indicator, *archive_log_window;
+
+	archive_log_window = ApGetWidgetPtr(widget, 
+																ABN_ArchiveLogWnd);
+
+	if (archive_log_window!=NULL)
+		g_archive_log.set_widget(archive_log_window);
+
+	g_archive_log.filter.set_filter_state(false);
+
+	filtration_state_indicator = ApGetWidgetPtr(widget, 
+																	ABN_on_off_filter_archive_log);
+
+	if (filtration_state_indicator!=NULL) 
+	{
+		vector<PtArg_t> args(3);
+		string indicator_text;
+		g_archive_log.set_filtration_state_indicator(filtration_state_indicator);
+		if (g_archive_log.filter.get_filter_state())
+		{ 
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_RED, 0);				
+			indicator_text="Фильтр ВКЛ";
+		} else {
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_BLACK, 0);				
+			indicator_text="Фильтр ВЫКЛ";
+		};
+
+		PtSetArg( &args[2], Pt_ARG_TEXT_STRING, indicator_text.c_str(),  indicator_text.size());
+
+		PtSetResources (filtration_state_indicator, args.size(), &args[0]);	
+	} else { //if (filtration_state_indicator..
+		g_system_settings.sys_message(	system_settings::ERROR_MSG,
+															"Not found filtration_state_indicator in realized_ArchiveLog");
+	}; //if (filtration_state_indicator..
+
+	return( Pt_CONTINUE );
+	}
+
+
+int
+unrealized_ArchiveLog( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	
+	g_archive_log.set_widget(NULL);
+	g_archive_log.set_filtration_state_indicator(NULL);
+	g_archive_log.erase_all();
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtWidget_t  *window_wgt, *file_selection_wgt;
+	PtFileSelItem_t *item;	
+	
+	window_wgt=ApGetInstance(widget);
+
+	if (window_wgt==NULL) 
+		{
+			g_system_settings.sys_message(	system_settings::ERROR_MSG,
+															"Not found window_wgt in activate_LoadArchiveBtn");
+			
+			return Pt_HALT;
+		};
+
+	file_selection_wgt = ApGetWidgetPtr( window_wgt,
+															  ABN_ArchiveFiles);
+
+	if (file_selection_wgt==NULL) 
+		{
+			g_system_settings.sys_message(	system_settings::ERROR_MSG,
+															"Not found file_selection_wgt in activate_LoadArchiveBtn");
+			
+			return Pt_HALT;
+		};
+
+	item = PtFSGetCurrent(file_selection_wgt);
+	 
+    if (item == NULL)
+    		{
+			g_system_settings.sys_message(	system_settings::ERROR_MSG,
+															"Not found item in activate_LoadArchiveBtn");
+    			
+	        return(Pt_CONTINUE);
+        };
+
+	g_archive_log.load (item->fullpath);
+	g_archive_log.filter.set_filter_state(false);
+	g_archive_log.set_filtering();
+	
+	if (g_archive_log.get_filtration_state_indicator()!=NULL) 
+	{
+		vector<PtArg_t> args(3);
+		string indicator_text;
+		if (g_archive_log.filter.get_filter_state())
+		{ 
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_RED, 0);				
+			indicator_text="Фильтр ВКЛ";
+		} else {
+			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
+			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_BLACK, 0);				
+			indicator_text="Фильтр ВЫКЛ";
+		};
+
+		PtSetArg( &args[2], Pt_ARG_TEXT_STRING, indicator_text.c_str(),  indicator_text.size());
+
+		PtSetResources (g_archive_log.get_filtration_state_indicator(),
+									args.size(),
+									&args[0]);	
+
+	} else { // if (g_archive_log.get_filtration_state_indicator...
+		g_system_settings.sys_message(	system_settings::ERROR_MSG,
+															"Not found filtration_state_indicator in activate_LoadArchiveBtn");
+	}; // if (g_archive_log.get_filtration_state_indicator..
+
+	
+	g_archive_log.prepare_to_display();
+
+	return( Pt_CONTINUE );
+	}
+
+
+int
+activate_on_off_filter_archive_log( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtCallbackInfo_t clbc_info;
+	clbc_info.cbdata=&g_archive_log;
+
+	g_archive_log.set_filtration_state_indicator(widget);
+
+	ApCreateModule( ABM_LogFilterDlg, NULL, &clbc_info);
+
 
 	return( Pt_CONTINUE );
 

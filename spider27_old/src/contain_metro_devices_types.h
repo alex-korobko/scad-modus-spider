@@ -1,13 +1,13 @@
-#ifndef __CONT_ESCALATOR_TYPES_H_
-#define __CONT_ESCALATOR_TYPES_H_
+#ifndef __CONT_DEVICES_TYPES_H_
+#define __CONT_DEVICES_TYPES_H_
 
 
 /*****************************************************************************
-Container class for metro escalators types - 
+Container class for metro devices types - 
 wrapper of STL container  map
 *****************************************************************************/
 
-class esc_types_container {
+class devices_types_container {
 private :
 struct ltint
 	{
@@ -17,32 +17,35 @@ struct ltint
   			}
 	};
 
-typedef  map<int, metro_escalator_type, ltint> metro_escalator_type_container;	
-typedef  metro_escalator_type_container::iterator iterator_esc_types;	
-typedef  metro_escalator_type_container::value_type pair_esc_types;	
-typedef  metro_escalator_type_container::size_type size_esc_types;	
+typedef  map<int, metro_device_type, ltint> metro_devices_type_container;	
+typedef  metro_devices_type_container::iterator iterator_devices_types;	
+typedef  metro_devices_type_container::value_type pair_devices_types;	
+typedef  metro_devices_type_container::size_type size_devices_types;	
 
-metro_escalator_type_container	container_esc_types;
+metro_devices_type_container	container_devices_types;
 
-iterator_esc_types current_esc_type;
-metro_escalator_type::iterator_blocks current_esc_type_block;
+iterator_devices_types current_devices_type;
+metro_device_type::iterator_blocks current_device_type_block;
 
 public :
 
-iterator_esc_types begin() {return container_esc_types.begin();};
-iterator_esc_types end() {return container_esc_types.end();};
+iterator_devices_types begin() {return container_devices_types.begin();};
+iterator_devices_types end() {return container_devices_types.end();};
 
-iterator_esc_types find(const int key) { return container_esc_types.find(key); };
-iterator_esc_types upper_bound(const int key) { return container_esc_types.upper_bound(key); };
+iterator_devices_types find(const int key) { return container_devices_types.find(key); };
+iterator_devices_types upper_bound(const int key) { return container_devices_types.upper_bound(key); };
 
-void erase (iterator_esc_types iter) { container_esc_types.erase(iter); };
-iterator_esc_types insert (iterator_esc_types iter, const pair_esc_types& obj) 
+void erase (iterator_devices_types iter) { container_devices_types.erase(iter); };
+void erase (iterator_devices_types iter_beg,
+					iterator_devices_types iter_end) { container_devices_types.erase(iter_beg, iter_end); };
+
+iterator_devices_types insert (iterator_devices_types iter, const pair_devices_types& obj) 
 {
-  return (container_esc_types.insert(iter, obj)); 
+  return (container_devices_types.insert(iter, obj)); 
 }
 
-bool empty() const { return (container_esc_types.empty());}
-size_esc_types size() const {return (container_esc_types.size());};
+bool empty() const { return (container_devices_types.empty());}
+size_devices_types size() const {return (container_devices_types.size());};
 
 /*
 load parameters from config file
@@ -132,11 +135,11 @@ if (entry_name.compare(entries_names[ID])==0)
  		 message_type>0 &&	
 		! message_text.empty()) 
 	{
-	iterator_esc_types tmp_iter;
+	iterator_devices_types tmp_iter;
 
 	if (type_id<0)
 		{
-			tmp_iter=current_esc_type;
+			tmp_iter=current_devices_type;
 		} else {
 			tmp_iter=this->find(type_id);
 		};
@@ -144,7 +147,7 @@ if (entry_name.compare(entries_names[ID])==0)
 	if ( tmp_iter==this->end())
 		{
 					sys_sett_obj->sys_message(system_settings::ERROR_MSG,
-																string("Not found esc_type for message "));		
+																string("Not found devices_type for message "));		
 
 					return (false);
 		};
@@ -282,29 +285,29 @@ if (entry_name.compare(entries_names[INDEX])==0)
  		! signal_hint.empty() ) 
 	{
 	
-	iterator_esc_types tmp_iter_esc;
+	iterator_devices_types tmp_iter_device;
 	if (type_id<0)
 		{
-			tmp_iter_esc=current_esc_type;
+			tmp_iter_device=current_devices_type;
 		} else {
-			tmp_iter_esc=this->find(type_id);
+			tmp_iter_device=this->find(type_id);
 		};
-	if ( tmp_iter_esc==this->end())
+	if ( tmp_iter_device==this->end())
 		{
 					sys_sett_obj->sys_message(system_settings::ERROR_MSG,
-																string("Not found esc_type for signal "));		
+																string("Not found devices_type for signal "));		
 					return (false);
 		};
 
 	if (block_id<0)
 		{
-			block_id=current_esc_type_block->second.get_id();
+			block_id=current_device_type_block->second.get_id();
 		};
 		
-	metro_escalator_type::iterator_blocks tmp_iter_blocks=
-									tmp_iter_esc->second.blocks_find(block_id);
+	metro_device_type::iterator_blocks tmp_iter_blocks=
+									tmp_iter_device->second.blocks_find(block_id);
 
-	if (	tmp_iter_blocks==tmp_iter_esc->second.blocks_end()) 
+	if (	tmp_iter_blocks==tmp_iter_device->second.blocks_end()) 
 			{
 					string mess("Not found block id for signal id ");
 
@@ -317,8 +320,8 @@ if (entry_name.compare(entries_names[INDEX])==0)
 					return (false);
 			};
 
-		if (tmp_iter_esc->second.signals_find(signal_index)!=
-			tmp_iter_esc->second.signals_end())
+		if (tmp_iter_device->second.signals_find(signal_index)!=
+			tmp_iter_device->second.signals_end())
 				{
 						string mess("Signal with index ");
 
@@ -327,7 +330,7 @@ if (entry_name.compare(entries_names[INDEX])==0)
 						mess+=&tmp_chars[0];
 						mess+=" already present in type ";
 						
-						itoa(tmp_iter_esc->second.get_id(), &tmp_chars[0], 10);
+						itoa(tmp_iter_device->second.get_id(), &tmp_chars[0], 10);
 						mess+=&tmp_chars[0];
 
 						sys_sett_obj->sys_message(system_settings::ERROR_MSG,
@@ -337,9 +340,9 @@ if (entry_name.compare(entries_names[INDEX])==0)
 				};
 	
 
-		tmp_iter_esc->second.signals_insert (tmp_iter_esc->second.signals_upper_bound(signal_index), 
-																							metro_escalator_type::pair_signals(signal_index, 
-																																				escalator_signal(signal_index, 
+		tmp_iter_device->second.signals_insert (tmp_iter_device->second.signals_upper_bound(signal_index), 
+																							metro_device_type::pair_signals(signal_index, 
+																																				device_signal(signal_index, 
 																																									signal_name,
 																																									signal_hint)
 																																				)
@@ -425,11 +428,11 @@ if (entry_name.compare(entries_names[ID])==0)
 	if ( block_id>0 &&
 	! block_name.empty() ) 
 	{
-	iterator_esc_types tmp_iter;
+	iterator_devices_types tmp_iter;
 
 	if (type_id<0)
 		{
-			tmp_iter=current_esc_type;
+			tmp_iter=current_devices_type;
 		} else {
 			tmp_iter=this->find(type_id);
 		};
@@ -437,7 +440,7 @@ if (entry_name.compare(entries_names[ID])==0)
 	if ( tmp_iter==this->end())
 		{
 					sys_sett_obj->sys_message(system_settings::ERROR_MSG,
-																string("Not found esc_type for block "));		
+																string("Not found devices_type for block "));		
 
 					return (false);
 		};
@@ -455,9 +458,9 @@ if (entry_name.compare(entries_names[ID])==0)
 					return (false);
 		};
 	
-	current_esc_type_block=tmp_iter->second.blocks_insert (tmp_iter->second.blocks_upper_bound(block_id), 
-																							metro_escalator_type::pair_blocks(block_id, 
-																																				escalator_block(block_id, 
+	current_device_type_block=tmp_iter->second.blocks_insert (tmp_iter->second.blocks_upper_bound(block_id), 
+																							metro_device_type::pair_blocks(block_id, 
+																																				device_block(block_id, 
 																																									block_name)
 																																				)
 																							);
@@ -475,11 +478,11 @@ if (entry_name.compare(entries_names[ID])==0)
 bool load_type_parameters (system_settings *sys_sett_obj)
 {
 enum {ID=0, NAME, ENTRIES_COUNT};
-string entry_name, esc_type_name;
+string entry_name, devices_type_name;
 const char *entry_name_c_str;
 vector<char> temp_str(512);
 vector<string> entries_names(ENTRIES_COUNT);
-int esc_type_id(-1);
+int devices_type_id(-1);
 
 entries_names[ID]="id";
 entries_names[NAME]="name";
@@ -498,23 +501,23 @@ if (entry_name.compare(entries_names[ID])==0)
 			{
 				if (this->find(temp_int)==this->end())
 					{
-						esc_type_id=temp_int;
+						devices_type_id=temp_int;
 					} else 	{
-						string message("Escalator type with id  ");
+						string message("device type with id  ");
 						message+=&temp_str[0];
 						message+=" already exist";
 						sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
 						return(false);
 					};
 			} else {
-						string message("Wrong esc_type_id  ");
+						string message("Wrong devices_type_id  ");
 						message+=&temp_str[0];
 						sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
 						return(false);
 			};
 	
 	} else if (entry_name.compare(entries_names[NAME])==0) {
-		esc_type_name=&temp_str[0];
+		devices_type_name=&temp_str[0];
 			
 	} else {
 			string message("Unrecognized config entry  ");
@@ -530,19 +533,19 @@ if (entry_name.compare(entries_names[ID])==0)
 	};
 
 
-	if ( esc_type_id>0 &&
-	! esc_type_name.empty() ) 
+	if ( devices_type_id>0 &&
+	! devices_type_name.empty() ) 
 	{
 
-	current_esc_type=this->insert(this->upper_bound(esc_type_id), 
-													esc_types_container::pair_esc_types(esc_type_id, 
-																											metro_escalator_type(esc_type_id, esc_type_name)
+	current_devices_type=this->insert(this->upper_bound(devices_type_id), 
+													devices_types_container::pair_devices_types(devices_type_id, 
+																											metro_device_type(devices_type_id, devices_type_name)
 																											)
 													);
 	
 	} else {
 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
-															string ("Not found all of required entries for esc_types_container"));		
+															string ("Not found all of required entries for devices_types_container"));		
 		return(false);
 	};
 
@@ -552,6 +555,8 @@ if (entry_name.compare(entries_names[ID])==0)
 bool load (system_settings *sys_sett_obj, msg_types_container *msg_types_cont, string file_name)
 	{
  	enum {TYPE=0, BLOCK, SIGNAL, MESSAGE,  ENTRIES_COUNT};
+
+	erase (begin(), end());
 
 	string	section_name;
 	const char *section_name_c_str;

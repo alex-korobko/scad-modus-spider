@@ -42,13 +42,13 @@ struct ltint
 	};
 
 typedef  map <int, msg_type, ltint> msg_types_cont;	
+typedef  msg_types_cont::iterator msg_types_iterator;	
+typedef  msg_types_cont::value_type msg_types_pair;	
+typedef  msg_types_cont::size_type msg_types_size_type;	
 
 msg_types_cont	container_msg_types;
 
 public :
-typedef  msg_types_cont::iterator msg_types_iterator;	
-typedef  msg_types_cont::value_type msg_types_pair;	
-
 enum {DEFAULT_COLOR=Pg_BLACK};
 
 msg_types_iterator begin() {return container_msg_types.begin();};
@@ -57,6 +57,8 @@ msg_types_iterator end() {return container_msg_types.end();};
 msg_types_iterator find(const int key) { return container_msg_types.find(key); };
 msg_types_iterator upper_bound(const int key) { return container_msg_types.upper_bound(key); };
 void erase (msg_types_iterator iter) { container_msg_types.erase(iter); };
+void erase (msg_types_iterator iter_beg,
+					msg_types_iterator iter_end) { container_msg_types.erase(iter_beg, iter_end); };
 
 msg_types_iterator insert (msg_types_iterator iter, const msg_types_pair& obj) 
 {
@@ -64,7 +66,7 @@ msg_types_iterator insert (msg_types_iterator iter, const msg_types_pair& obj)
 }
 
 bool empty() const { return container_msg_types.empty();}
-int size() const {return container_msg_types.size();};
+msg_types_container::msg_types_size_type size() const {return container_msg_types.size();};
 
 bool load_type_parameters (system_settings *sys_sett_obj)
 {
@@ -164,6 +166,8 @@ bool load (system_settings *sys_sett_obj, string file_name)
 	string	section_name;
 	const char *section_name_c_str;
 	vector<string> sections_names(ENTRIES_COUNT);
+
+	erase(begin(), end());
 
 	sections_names[TYPE]="type";
  	

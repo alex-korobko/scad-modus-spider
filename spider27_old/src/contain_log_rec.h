@@ -50,12 +50,13 @@ get_ and set_  metods for private data members
 class log_filter : public unary_function<log_record, bool>
 {
 friend class log_records_container;
-public:
+private:
 	typedef  set<int> ids_container;	
 	typedef  ids_container::iterator ids_container_iterator;	
+	typedef  ids_container::const_iterator const_ids_container_iterator;	
 	typedef  ids_container::size_type ids_container_size_type;	
 
-private:
+
 	ids_container contain_id_msg_types;
 	ids_container contain_id_stations;
 	ids_container contain_id_devices;
@@ -64,8 +65,6 @@ private:
 	time_t	stop_time;	
 
 	bool all_times, all_devices, all_stations, all_msg_types,  filter_state;
-	void set_filter_state (bool new_filter_state) {filter_state=new_filter_state;}
-
 public:
 /*
 Constructor and destructor
@@ -80,17 +79,25 @@ Constructor and destructor
 		filter_state(false)
 	{
 	};
+
+	log_filter (const log_filter& filter_to_copy)  :
+		contain_id_msg_types (filter_to_copy.contain_id_msg_types),
+		contain_id_stations (filter_to_copy.contain_id_stations),
+		contain_id_devices(filter_to_copy.contain_id_devices),
+		start_time(filter_to_copy.start_time), 
+		stop_time(filter_to_copy.stop_time),
+		all_times(filter_to_copy.all_times), 
+		all_devices(filter_to_copy.all_devices), 
+		all_stations(filter_to_copy.all_stations),
+		all_msg_types(filter_to_copy.all_msg_types),
+		filter_state(filter_to_copy.filter_state)
+	{
+	};
+
 	
 /*
 get_ and set_ metods for private data members
 */	
-	bool is_filter_on() {return (filter_state);}
-
-	void reset_to_default()
-		{
-			all_msg_types=all_devices=all_times=all_stations=true;
-		}
-
 	bool get_all_devices() {return(all_devices);};
 	void set_all_devices(bool new_all_devices) {all_devices=new_all_devices;};
 	void insert_device (int device_id) {contain_id_devices.insert(device_id);};
@@ -100,47 +107,48 @@ get_ and set_ metods for private data members
 	void erase_device (int device_id) {contain_id_devices.erase(device_id);};
 	void erase_devices_range (ids_container_iterator first_dev_iter, 
 												ids_container_iterator last_dev_iter)
-											 {contain_id_devices.erase (first_dev_iter,last_dev_iter);};
+											 {contain_id_devices.erase (first_dev_iter, 
+											 											last_dev_iter);};
 	ids_container_iterator find_device(int dev_id) {return contain_id_devices.find(dev_id);};
 	ids_container_iterator devices_end() {return contain_id_devices.end();};
 	ids_container_iterator devices_begin() {return contain_id_devices.begin();};
 	ids_container_size_type devices_size() {return contain_id_devices.size();};
 	bool devices_empty() {return contain_id_devices.empty();};
-	void devices_advance(ids_container_iterator& cursor, ids_container_size_type distance)
-												{advance(cursor, distance);};
-	ids_container_size_type devices_distance(ids_container_iterator first_dev_iter, 
-												ids_container_iterator last_dev_iter)
-												{return distance(first_dev_iter, last_dev_iter);};
 
 	bool get_all_stations() {return(all_stations);};
 	void set_all_stations(bool new_all_stations) {all_stations=new_all_stations;};
 	void insert_station (int station_id) {contain_id_stations.insert(station_id);};
+	void insert_stations_range (ids_container_iterator begin_stations_id_iter,
+									ids_container_iterator end_stations_id_iter) 
+									{contain_id_stations.insert(begin_stations_id_iter,
+																				end_stations_id_iter);};
+
 	void erase_station (int station_id) {contain_id_stations.erase(station_id);};
+	void erase_stations_range (ids_container_iterator begin_stations_id_iter,
+									ids_container_iterator end_stations_id_iter)
+									{contain_id_stations.erase(begin_stations_id_iter,
+																				end_stations_id_iter);};
+
 	ids_container_iterator find_station(int station_id) {return contain_id_stations.find(station_id);};
 	ids_container_iterator stations_end()  {return contain_id_stations.end();};
 	ids_container_iterator stations_begin() {return contain_id_stations.begin();};
 	ids_container_size_type stations_size() {return contain_id_stations.size();};
 	bool stations_empty() {return contain_id_stations.empty();};
-	void stations_advance(ids_container_iterator& cursor, ids_container_size_type distance)
-												{return advance(cursor, distance);};
-	ids_container_size_type stations_distance(ids_container_iterator first_station_iter, 
-												ids_container_iterator last_station_iter)
-												{return distance(first_station_iter, last_station_iter);};
 
 	bool get_all_msg_types() {return(all_msg_types);};
 	void set_all_msg_types(bool new_all_msg_types) {all_msg_types=new_all_msg_types;};
 	void insert_msg_type (int msg_type_id) {contain_id_msg_types.insert(msg_type_id);};
-	void erase_msg_types (int msg_type_id) {contain_id_msg_types.erase(msg_type_id);};
+	
+	void erase_msg_type (int msg_type_id) {contain_id_msg_types.erase(msg_type_id);};
+	void erase_msg_types_range (ids_container_iterator begin_msg_type_id_iter,
+									ids_container_iterator end_msg_type_id_iter)
+					{contain_id_msg_types.erase(begin_msg_type_id_iter, end_msg_type_id_iter);};
+					
 	ids_container_iterator find_msg_type(int msg_type_id) {return contain_id_msg_types.find(msg_type_id);};
 	ids_container_iterator msg_types_end() {return contain_id_msg_types.end();};
 	ids_container_iterator msg_types_begin() {return contain_id_msg_types.begin();};
 	ids_container_size_type msg_types_size() {return contain_id_msg_types.size();};
 	bool msg_types_empty() {return contain_id_msg_types.empty();};
-	void msg_types_advance(ids_container_iterator& cursor, ids_container_size_type distance)
-												{return advance(cursor, distance);};
-	ids_container_size_type msg_types_distance(ids_container_iterator first_message_iter, 
-												ids_container_iterator last_message_iter)
-												{return distance(first_message_iter, last_message_iter);};
 
 	bool get_all_times() {return(all_times);};
 	void set_all_times(bool new_all_times) {all_times=new_all_times;};
@@ -149,31 +157,107 @@ get_ and set_ metods for private data members
 	time_t get_stop_time() {return(stop_time);};
 	void set_stop_time(time_t  new_stop_time) {stop_time=new_stop_time;};
 
+	bool get_filter_state() {return (filter_state);}
+	void set_filter_state(bool new_filter_state) {filter_state=new_filter_state;}
+
+	void reset_to_default()
+		{
+			all_msg_types=all_devices=all_times=all_stations=true;
+		}
+
 /*
 other
 */
 
+log_filter& operator = (log_filter& filter_to_assigment)
+	{
+		if (this== &filter_to_assigment) return *this;
+		
+		start_time=filter_to_assigment.start_time;
+		stop_time=filter_to_assigment.stop_time;
+		
+		all_times=filter_to_assigment.all_times;
+		all_devices=filter_to_assigment.all_devices;
+		all_stations=filter_to_assigment.all_stations;
+		all_msg_types=filter_to_assigment.all_msg_types;
+		filter_state=filter_to_assigment.filter_state;
+
+		contain_id_msg_types = filter_to_assigment.contain_id_msg_types;
+		contain_id_stations = filter_to_assigment.contain_id_stations;
+		contain_id_devices = filter_to_assigment.contain_id_devices;
+
+		return *this;
+	};
+
+
+bool operator == (const log_filter filter_to_compare) const
+	{
+		if (this == &filter_to_compare) return true;
+		
+		if (filter_state!=filter_to_compare.filter_state) return false;
+
+		if (all_times!=filter_to_compare.all_times) return false;
+		if (all_devices!=filter_to_compare.all_devices) return false;
+		if (all_stations!=filter_to_compare.all_stations) return false;
+		if (all_msg_types!=filter_to_compare.all_msg_types) return false;
+	
+		if (start_time!=filter_to_compare.start_time) return false;
+		if (stop_time!=filter_to_compare.stop_time) return false;
+
+		if (contain_id_msg_types.size()!= 
+			 filter_to_compare.contain_id_msg_types.size()) return false;
+		if (contain_id_devices.size()!= 
+			 filter_to_compare.contain_id_devices.size()) return false;
+		if (contain_id_stations.size()!= 
+			 filter_to_compare.contain_id_stations.size()) return false;
+
+		const_ids_container_iterator tmp_iter;
+	
+		tmp_iter=contain_id_msg_types.begin();
+		while (tmp_iter!=contain_id_msg_types.end())
+			{
+			if (filter_to_compare.contain_id_msg_types.find(*tmp_iter)==
+				filter_to_compare.contain_id_msg_types.end()) return false;
+			tmp_iter++;
+			};
+
+		tmp_iter=contain_id_stations.begin();
+		while (tmp_iter!=contain_id_stations.end())
+			{
+			if (filter_to_compare.contain_id_stations.find(*tmp_iter)==
+				filter_to_compare.contain_id_stations.end()) return false;
+			tmp_iter++;
+			};
+
+		tmp_iter=contain_id_devices.begin();
+		while (tmp_iter!=contain_id_devices.end())
+			{
+			if (filter_to_compare.contain_id_devices.find(*tmp_iter)==
+				filter_to_compare.contain_id_devices.end()) return false;
+			tmp_iter++;
+			};
+
+		return true;
+	};
+
 bool operator () (const log_record log_rec) const
 	{
 	if (! filter_state) {return (true);}
+
+	if (! all_msg_types)
+			if (contain_id_msg_types.end()==contain_id_msg_types.find(log_rec.get_msg_type())) {return (false);};
+
 	if (! all_times)
-			if (start_time<=log_rec.get_record_time() || stop_time>=log_rec.get_record_time()) return (false);
+			if (log_rec.get_record_time()<start_time ||
+				log_rec.get_record_time()>stop_time) return (false);
 
 	if (! all_stations)
 			{
 			if (contain_id_stations.end()==contain_id_stations.find(log_rec.get_station_id())) {return (false);};
 
 			if (! all_devices)
-				{		
 				if (contain_id_devices.end()==contain_id_devices.find(log_rec.get_device_id())) {return (false);};
-				};
 
-			};
-			
-			
-	if (! all_msg_types)
-			{
-				if (contain_id_msg_types.end()==contain_id_msg_types.find(log_rec.get_msg_type())) {return (false);};
 			};
 			
 	return(true);
@@ -186,11 +270,9 @@ bool operator () (const log_record log_rec) const
 class log_records_container {
 private :
 typedef	list<log_record> contain_log_rec;
-
-public :
 typedef  contain_log_rec::iterator iterator_log_rec;
+typedef  contain_log_rec::size_type size_type_log_rec;
 
-private :
 contain_log_rec container_log_rec;
 PtWidget_t	 *wnd, *filtration_state_indicator;
 tm last_saved_time;
@@ -213,9 +295,18 @@ bool operator () (log_record first_log_rec, log_record second_log_rec) const
 	return (first_log_rec.get_record_time()<second_log_rec.get_record_time());
 	}
 	
-};   
+}  log_rec_sorter;
 
-stw_sorter log_rec_sorter;
+/*
+Sort all interval by log_rec_sorter()
+and set  iter_end to container_log_rec.end()
+*/
+void sort_all ()
+	{
+	container_log_rec.sort (log_rec_sorter);
+
+	iter_end=container_log_rec.end();
+	}
 
 public :
 /*
@@ -241,24 +332,6 @@ log_records_container(): records_count(0)
 		iter_end=container_log_rec.end();
 		wnd=filtration_state_indicator=NULL;
 	};
-
-
-~log_records_container()
-{
-	PtArg_t arg;
-
-	if (wnd!=NULL) 
-		{
-				PtSetArg(&arg, 
-							Pt_ARG_POINTER , 
-							NULL, 
-							0);
-
-			 PtSetResources( wnd,
-					                    1,
-                    						&arg);
-		}
-}
 
 /*
 get_ and set_  metods for private data members
@@ -309,18 +382,6 @@ iterator_log_rec begin() {return (container_log_rec.begin());};
 iterator_log_rec end() {return (iter_end);};
 
 /*
-Sort all interval by log_rec_sorter()
-unset filter
-and set  iter_end to container_log_rec.end()
-*/
-void sort_all ()
-	{
-	container_log_rec.sort (log_rec_sorter);
-
-	iter_end=container_log_rec.end();
-	}
-
-/*
 Insert 
 new log_record rec into container
 if  rec in filter condition - it was inserted into it`s position in container
@@ -329,7 +390,7 @@ otherwise it pushed to back
 
 void insert (log_record rec) 
 	{ 
-	if (! container_log_rec.empty() && this->filter.is_filter_on() && this->filter(rec))
+	if (! container_log_rec.empty() && this->filter.get_filter_state() && this->filter(rec))
 		{
 			container_log_rec.insert(upper_bound(container_log_rec.begin(),
 																		iter_end,
@@ -357,6 +418,55 @@ int size() const{return (container_log_rec.size());};
 /*
 other metods
 */
+
+void prepare_to_display()
+	{
+	
+	if(wnd==NULL) return;
+
+	PtGenListRemoveItems(wnd, NULL,NULL);
+
+	unsigned short size=distance(begin(), 
+								end());
+
+   if (size==0) return ;
+
+	PtGenListItem_t *first, *last,  *list_item=new(PtGenListItem_t);
+
+	first=list_item;
+
+	first->prev=NULL;
+	first->next=NULL;
+	first->size.w=0;
+	first->size.h=system_settings::ROW_HEIGHT;
+	first->flags=0;
+
+	for (int i=1; i<size; i++)
+		{
+			last=	new(PtGenListItem_t);
+			last->prev=list_item;
+			last->next=NULL;
+			last->size.w=0;
+			last->size.h=system_settings::ROW_HEIGHT;
+			last->flags=0;
+			list_item->next=last;
+				
+			list_item=last;
+		};
+
+	 PtGenListAddItems(wnd, first, NULL);
+
+	 unsigned short *visible_count, top_item_pos;
+	 
+	 PtGetResource(wnd, Pt_ARG_VISIBLE_COUNT, &visible_count, 0);
+
+	if (*visible_count<size)
+		{
+			top_item_pos=size-*visible_count+1;
+			 PtSetResource(wnd, Pt_ARG_TOP_ITEM_POS,  &top_item_pos, 0);
+		};
+}
+
 bool load (string file_name)
 {
 	FILE		*logFile;
@@ -370,7 +480,8 @@ bool load (string file_name)
 	int mess_id, station_id, device_id;
 	time_t save_time;
 
-	set_filtering(false);
+	filter.set_filter_state(false);
+	set_filtering();
 	erase_all();
 
 	if ((logFile = fopen(file_name.c_str(), "r")) ==NULL)
@@ -522,23 +633,52 @@ bool load (string file_name)
 					return false;
 				};
 
-		msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(mess_id);
-		if(tmp_msg_iter==g_msgDictionary.end())
+		int msg_type=0;
+		int tmp_mess_id=mess_id&0x7FFF;
+		//what`s up, Doc?? see draw_log_item@draw.cpp for more details about information stored in message id
+		//begin : search message with that id in device type. if not found in g_msg_dictionary;
+		//if device id=0 search in g_msg_dictionary
+		if (device_id!=0)
 			{
-				vector<char> tmp_chars(10);
-				string mess="Error in  file ";
-				mess += file_name;
-				mess += "  not found message id ";
-				itoa (mess_id, &tmp_chars[0], 10);
-				mess +=&tmp_chars[0];
+				devices_types_container::iterator_devices_types iter_devices_types;
+				metro_escalators_container::iterator_metro_escalators iter_metro_devices;			
 
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				fclose (logFile);
-				return false;
+				iter_metro_devices=g_escalators.find(device_id);
+				if (iter_metro_devices!=g_escalators.end())
+					{
+						iter_devices_types=g_metro_devices_types.find(iter_metro_devices->second.get_type());
+						if (iter_devices_types!=g_metro_devices_types.end()) 
+							{
+								msg_dict_container::msg_dict_iterator tmp_msg_iter=
+									iter_devices_types->second.type_messages.find(tmp_mess_id);
+								if (tmp_msg_iter!=
+									iter_devices_types->second.type_messages.end()) 
+									{
+										msg_type=tmp_msg_iter->second.get_type();
+									};	
+							} // if (iter_devices_types=g_metro_devices_types.end())
+					}; // if (iter_metro_devices!=g_escalators.end())
 			};
 
+		if (msg_type==0)
+			{
+			msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(mess_id);
+			if(tmp_msg_iter==g_msg_dictionary.end())
+				{
+					vector<char> tmp_chars(10);
+					string mess="Error in  file ";
+					mess += file_name;
+					mess += "  not found message with id ";
+					itoa (mess_id, &tmp_chars[0], 10);
+					mess +=&tmp_chars[0];
 
-		int msg_type=tmp_msg_iter->second.get_type();
+					g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+					fclose (logFile);
+					return false;
+				}; // if(tmp_msg_iter==g_msg_dictionary.end())
+				//end : search message with that id in device type.
+				msg_type=tmp_msg_iter->second.get_type();
+			};
 
 		set_records_autoincrement(tmp_autoincrement);		
 		insert(log_record (
@@ -691,11 +831,10 @@ bool save (string file_name)
 return true;
 };
 
-void set_filtering( bool new_filtering_state)
+void set_filtering()
 {
 sort_all();
-filter.set_filter_state(new_filtering_state);
-if (new_filtering_state) 
+if (filter.get_filter_state()) 
 	{
 	iter_end=stable_partition(container_log_rec.begin(),
 											container_log_rec.end(),
@@ -727,7 +866,8 @@ bool rotate()
 		if (save(file_name))
 			{
 				erase_all();
-				set_filtering(false);
+				filter.set_filter_state(false);
+				set_filtering();
 			} else {
 				return false;
 			};

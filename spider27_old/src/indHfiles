@@ -1,8 +1,8 @@
 MYHDR =../alert.h\
  ../defines.h\
  ../system.h\
- ../esc_types.h\
- ../contain_metro_escalator_types.h\
+ ../devices_types.h\
+ ../contain_metro_devices_types.h\
  ../escalator.h\
  ../contain_metro_escalators.h\
  ../command.h\
@@ -26,7 +26,7 @@ MYHDR =../alert.h\
  ../unit_tests/contain_metro_lines_test.h\
   ../unit_tests/station_test.h\
  ../unit_tests/contain_metro_stations_test.h\
- ../unit_tests/contain_metro_escalators_types_test.h\
+ ../unit_tests/contain_metro_devices_types_test.h\
  ../unit_tests/escalator_test.h\
  ../unit_tests/contain_metro_escalators_test.h\
  ../unit_tests/unit_tests.h

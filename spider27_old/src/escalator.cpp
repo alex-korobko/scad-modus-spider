@@ -232,20 +232,20 @@ int metro_escalator::update_leds()
 	PtArg_t arg;
 
 	if (sys_sett_obj->get_paneled_escalator_id()==this->get_id()
-		&& !g_metro_escalator_types.empty())
+		&& !g_metro_devices_types.empty())
 	{
-		esc_types_container::iterator_esc_types iter_type;
-		iter_type=g_metro_escalator_types.find(type);
+		devices_types_container::iterator_devices_types iter_type;
+		iter_type=g_metro_devices_types.find(type);
 			
-		if (iter_type!=g_metro_escalator_types.end())
+		if (iter_type!=g_metro_devices_types.end())
 			{
-				metro_escalator_type::iterator_blocks iter_block;
+				metro_device_type::iterator_blocks iter_block;
 				for (iter_block=iter_type->second.blocks_begin(); 
 						iter_block!=iter_type->second.blocks_end();
 						iter_block++)
 				{
-					metro_escalator_type::iterator_signals iter_signal;	
-					escalator_block::iterator_signals_id iter_signals_id;
+					metro_device_type::iterator_signals iter_signal;	
+					device_block::iterator_signals_id iter_signals_id;
 					for (iter_signals_id=iter_block->second.signals_id_begin();
 							iter_signals_id!=iter_block->second.signals_id_end();
 							iter_signals_id++)
@@ -767,8 +767,8 @@ int metro_escalator::set_data()
 			{
 				msg |=	dataBlock.breaking_path_value << 16;
 
-				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
-				if(tmp_msg_iter==g_msgDictionary.end())
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(msg);
+				if(tmp_msg_iter==g_msg_dictionary.end())
 					{
 							vector<char> tmp_chars(10);
 							string mess("Not found message id ");
@@ -792,8 +792,8 @@ int metro_escalator::set_data()
 				
 			} else {
 
-				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
-				if(tmp_msg_iter==g_msgDictionary.end())
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(msg);
+				if(tmp_msg_iter==g_msg_dictionary.end())
 					{
 							vector<char> tmp_chars(10);
 							string mess("Not found message id ");
@@ -818,8 +818,8 @@ int metro_escalator::set_data()
 		}else if (msg & 0x8000)
 		{
 
-				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
-				if(tmp_msg_iter==g_msgDictionary.end())
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msg_dictionary.find(msg);
+				if(tmp_msg_iter==g_msg_dictionary.end())
 					{
 							vector<char> tmp_chars(10);
 							string mess("Not found message id ");

@@ -24,7 +24,8 @@ dword paneled_escalator_id;
 
 string devices_config_name;
 string global_messages_name;
-string escalator_types_name;
+string messages_types_name;
+string devices_types_name;
 string main_log_name;
 
 string routing_name;
@@ -163,7 +164,8 @@ system_settings() :
 	paneled_escalator_id(0),
 	devices_config_name("config.ini"),
 	global_messages_name("messages.ini"),
-	escalator_types_name("escalator_types.ini"),
+	messages_types_name("messages_types.ini"),
+	devices_types_name("devices_types.ini"),
 	main_log_name("main.log"),
 	routing_name("routing.ini")
 	{
@@ -357,15 +359,16 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 
 // working with fonts
 	bool small_font_prepared() {return (!font_for_messages_small.empty());};
-	const uchar_t* small_font() {return(&font_for_messages_small[0]);};
+	const uchar_t* get_small_font() {return(&font_for_messages_small[0]);};
 
 	bool large_font_prepared() {return (!font_for_messages_large.empty());};
-	const uchar_t* large_font(){return(&font_for_messages_large[0] );};
+	const uchar_t* get_large_font(){return(&font_for_messages_large[0] );};
 
 //config file names in project
 	string get_devices_config_name() {return(devices_config_name);};
 	string get_global_messages_name() {return(global_messages_name);};
-	string get_escalator_types_name() {return(escalator_types_name);};
+	string get_messages_types_name() {return(messages_types_name);};
+	string get_devices_types_name() {return(devices_types_name);};
 	string get_main_log_name() {return(main_log_name);};
 	string get_routing_name() {return(routing_name);};
 

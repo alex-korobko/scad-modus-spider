@@ -8,27 +8,27 @@ private:
 void test_insert()
 {
 
-g_msgDictionary.insert(g_msgDictionary.end(), msg_dict_container::msg_dict_pair(3, 
+g_msg_dictionary.insert(g_msg_dictionary.end(), msg_dict_container::msg_dict_pair(3, 
 																										dictionary_message(3,3 ,"Message number 3")
 																										)
 								);
 
-g_msgDictionary.insert(g_msgDictionary.begin(), msg_dict_container::msg_dict_pair(1, 
+g_msg_dictionary.insert(g_msg_dictionary.begin(), msg_dict_container::msg_dict_pair(1, 
 																										dictionary_message(1,1 ,"Message number 1")
 																										)
 								);
 
-g_msgDictionary.insert(g_msgDictionary.upper_bound(2), msg_dict_container::msg_dict_pair(2, 
+g_msg_dictionary.insert(g_msg_dictionary.upper_bound(2), msg_dict_container::msg_dict_pair(2, 
 																										dictionary_message(2,2 ,"Message number 2")
 																										)
 							 );
 
-g_msgDictionary.insert(g_msgDictionary.upper_bound(143), msg_dict_container::msg_dict_pair(143, 
+g_msg_dictionary.insert(g_msg_dictionary.upper_bound(143), msg_dict_container::msg_dict_pair(143, 
 																										dictionary_message(143,2 ,"Message number 143")
 																										)
 							 );
 
-g_msgDictionary.insert(g_msgDictionary.upper_bound(144), msg_dict_container::msg_dict_pair(144, 
+g_msg_dictionary.insert(g_msg_dictionary.upper_bound(144), msg_dict_container::msg_dict_pair(144, 
 																										dictionary_message(144, 2 ,"Message number 144")
 																										)
 							 );
@@ -39,43 +39,34 @@ g_msgDictionary.insert(g_msgDictionary.upper_bound(144), msg_dict_container::msg
 void test_erase()
 {
 msg_dict_container::msg_dict_iterator tmp_iter;
+msg_dict_container::msg_dict_size_type old_size;
+old_size=g_msg_dictionary.size();
+CPPUNIT_ASSERT(old_size==5);
+CPPUNIT_ASSERT(!g_msg_dictionary.empty());
 
-CPPUNIT_ASSERT(g_msgDictionary.size()==5);
+tmp_iter=g_msg_dictionary.find(1);
+CPPUNIT_ASSERT( tmp_iter!=g_msg_dictionary.end());
+g_msg_dictionary.erase(tmp_iter);
+CPPUNIT_ASSERT(old_size-1==g_msg_dictionary.size());
+CPPUNIT_ASSERT(!g_msg_dictionary.empty());
 
-tmp_iter=g_msgDictionary.find(1);
-CPPUNIT_ASSERT( tmp_iter!=g_msgDictionary.end());
-g_msgDictionary.erase(tmp_iter);
+g_msg_dictionary.erase(g_msg_dictionary.begin(),
+										g_msg_dictionary.end());
 
-tmp_iter=g_msgDictionary.find(2);
-CPPUNIT_ASSERT( tmp_iter!=g_msgDictionary.end());
-g_msgDictionary.erase(tmp_iter);
-
-tmp_iter=g_msgDictionary.find(3);
-CPPUNIT_ASSERT( tmp_iter!=g_msgDictionary.end());
-g_msgDictionary.erase(tmp_iter);
-
-tmp_iter=g_msgDictionary.find(143);
-CPPUNIT_ASSERT( tmp_iter!=g_msgDictionary.end());
-g_msgDictionary.erase(tmp_iter);
-
-tmp_iter=g_msgDictionary.find(144);
-CPPUNIT_ASSERT( tmp_iter!=g_msgDictionary.end());
-g_msgDictionary.erase(tmp_iter);
-
-CPPUNIT_ASSERT(g_msgDictionary.empty());
-CPPUNIT_ASSERT(g_msgDictionary.size()==0);
+CPPUNIT_ASSERT(g_msg_dictionary.empty());
+CPPUNIT_ASSERT(g_msg_dictionary.size()==0);
 };
 
 void test_load()
 {
-CPPUNIT_ASSERT(g_msgDictionary.load(&g_system_settings, &g_msg_types , file_name));
+CPPUNIT_ASSERT(g_msg_dictionary.load(&g_system_settings, &g_msg_types , file_name));
 };
 
  
 public:
 void setUp()
 {
-	file_name="../unit_tests/msg_dict_test.mgs";
+	file_name="../unit_tests/msg_dict_test.ini";
 }
 	
 void tearDown()
