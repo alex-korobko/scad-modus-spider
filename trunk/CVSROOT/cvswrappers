@@ -34,4 +34,5 @@
 *.wgti -k 'b'
 *.dfn -k 'b'
 *.wsp -k 'b'
-
+*.ini -k 'b' # unicode symbols
+*.dat -k 'b' # unicode symbols
