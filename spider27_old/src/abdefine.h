@@ -13,20 +13,24 @@ extern const int ABI_EscalatorMenu;
 #define ABM_EscalatorMenu                    &AbInternalLinks[ABI_EscalatorMenu]
 extern const int ABI_PrevCmdPoolDlg;
 #define ABM_PrevCmdPoolDlg                   &AbInternalLinks[ABI_PrevCmdPoolDlg]
+extern const int ABI_EscConfig;
+#define ABM_EscConfig                        &AbInternalLinks[ABI_EscConfig]
 
 /* 'main_wnd' Window link */
 extern const int ABN_main_wnd;
 #define ABW_main_wnd                         AbGetABW( ABN_main_wnd )
 extern const int ABN_toolBar;
 #define ABW_toolBar                          AbGetABW( ABN_toolBar )
-extern const int ABN_EscConfigBtn;
-#define ABW_EscConfigBtn                     AbGetABW( ABN_EscConfigBtn )
+extern const int ABN_esc_config_btn;
+#define ABW_esc_config_btn                   AbGetABW( ABN_esc_config_btn )
 extern const int ABN_ArchiveBtn;
 #define ABW_ArchiveBtn                       AbGetABW( ABN_ArchiveBtn )
 extern const int ABN_CmdPoolBtn;
 #define ABW_CmdPoolBtn                       AbGetABW( ABN_CmdPoolBtn )
 extern const int ABN_on_off_filter_main_log;
 #define ABW_on_off_filter_main_log           AbGetABW( ABN_on_off_filter_main_log )
+extern const int ABN_Scheme;
+#define ABW_Scheme                           AbGetABW( ABN_Scheme )
 extern const int ABN_AlertWnd;
 #define ABW_AlertWnd                         AbGetABW( ABN_AlertWnd )
 extern const int ABN_AlertMsg;
@@ -37,8 +41,6 @@ extern const int ABN_AlertTime;
 #define ABW_AlertTime                        AbGetABW( ABN_AlertTime )
 extern const int ABN_AlertCounter;
 #define ABW_AlertCounter                     AbGetABW( ABN_AlertCounter )
-extern const int ABN_Scheme;
-#define ABW_Scheme                           AbGetABW( ABN_Scheme )
 extern const int ABN_LogJournalPanel;
 #define ABW_LogJournalPanel                  AbGetABW( ABN_LogJournalPanel )
 extern const int ABN_main_log_wnd;
@@ -203,18 +205,32 @@ extern const int ABN_FilteringBtn;
 /* 'EscConfig' Dialog link */
 extern const int ABN_EscConfig;
 #define ABW_EscConfig                        AbGetABW( ABN_EscConfig )
-extern const int ABN_EscDirectionList;
-#define ABW_EscDirectionList                 AbGetABW( ABN_EscDirectionList )
-extern const int ABN_SetEscReverseBtn;
-#define ABW_SetEscReverseBtn                 AbGetABW( ABN_SetEscReverseBtn )
-extern const int ABN_SetEscDownBtn;
-#define ABW_SetEscDownBtn                    AbGetABW( ABN_SetEscDownBtn )
-extern const int ABN_SetEscUpBtn;
-#define ABW_SetEscUpBtn                      AbGetABW( ABN_SetEscUpBtn )
-extern const int ABN_EscConfCancel;
-#define ABW_EscConfCancel                    AbGetABW( ABN_EscConfCancel )
-extern const int ABN_EscConfDone;
-#define ABW_EscConfDone                      AbGetABW( ABN_EscConfDone )
+extern const int ABN_lbl_station;
+#define ABW_lbl_station                      AbGetABW( ABN_lbl_station )
+extern const int ABN_lbl_escalator;
+#define ABW_lbl_escalator                    AbGetABW( ABN_lbl_escalator )
+extern const int ABN_tglbtn_start_now;
+#define ABW_tglbtn_start_now                 AbGetABW( ABN_tglbtn_start_now )
+extern const int ABN_cb_start_day_mode;
+#define ABW_cb_start_day_mode                AbGetABW( ABN_cb_start_day_mode )
+extern const int ABN_cb_escalator_direction;
+#define ABW_cb_escalator_direction           AbGetABW( ABN_cb_escalator_direction )
+extern const int ABN_num_int_start_hour;
+#define ABW_num_int_start_hour               AbGetABW( ABN_num_int_start_hour )
+extern const int ABN_num_int_start_min;
+#define ABW_num_int_start_min                AbGetABW( ABN_num_int_start_min )
+extern const int ABN_cb_escalator_pref_direction;
+#define ABW_cb_escalator_pref_direction      AbGetABW( ABN_cb_escalator_pref_direction )
+extern const int ABN_esc_conf_cancel;
+#define ABW_esc_conf_cancel                  AbGetABW( ABN_esc_conf_cancel )
+extern const int ABN_esc_conf_save;
+#define ABW_esc_conf_save                    AbGetABW( ABN_esc_conf_save )
+extern const int ABN_cb_esc_config_list_mode;
+#define ABW_cb_esc_config_list_mode          AbGetABW( ABN_cb_esc_config_list_mode )
+extern const int ABN_cb_lines;
+#define ABW_cb_lines                         AbGetABW( ABN_cb_lines )
+extern const int ABN_rwlst_config_escalators;
+#define ABW_rwlst_config_escalators          AbGetABW( ABN_rwlst_config_escalators )
 
 /* 'SignalDlg' Dialog link */
 extern const int ABN_SignalDlg;

@@ -23,6 +23,8 @@ public:
 	typedef stl_string::size_type size_of_stl_string;
 	
 	enum {DEFAULT_COLOR=Pg_RED};
+
+	contain_morning_start morning_start;
 	
 	metro_line (
 				int new_line_id,

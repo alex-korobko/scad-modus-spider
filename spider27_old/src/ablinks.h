@@ -28,31 +28,31 @@ ApDialogLink_t LogFilterDlg = {
 ApDialogLink_t EscConfig = {
 	"EscConfig.wgtd",
 	&AbContext,
-	AbLinks_EscConfig, 90, 7
+	AbLinks_EscConfig, 90, 13
 	};
 
 ApDialogLink_t SignalDlg = {
 	"SignalDlg.wgtd",
 	&AbContext,
-	AbLinks_SignalDlg, 97, 2
+	AbLinks_SignalDlg, 104, 2
 	};
 
 ApDialogLink_t ArchiveDlg = {
 	"ArchiveDlg.wgtd",
 	&AbContext,
-	AbLinks_ArchiveDlg, 108, 2
+	AbLinks_ArchiveDlg, 115, 2
 	};
 
 ApWindowLink_t ArchiveLog = {
 	"ArchiveLog.wgtw",
 	&AbContext,
-	AbLinks_ArchiveLog, 112, 6
+	AbLinks_ArchiveLog, 119, 6
 	};
 
 ApDialogLink_t PrevCmdPoolDlg = {
 	"PrevCmdPoolDlg.wgtd",
 	&AbContext,
-	AbLinks_PrevCmdPoolDlg, 117, 6
+	AbLinks_PrevCmdPoolDlg, 124, 6
 	};
 
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {
@@ -70,7 +70,7 @@ ApMenuLink_t EscalatorMenu = {
 	ApItems_EscalatorMenu,
 	& AbContext,
 	AbLinks_EscalatorMenu,
-	122, 3, 3
+	129, 3, 3
 	};
 
 

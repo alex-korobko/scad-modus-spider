@@ -9,20 +9,21 @@ const int ABI_interface = 0;
 const int ABI_LogFilterDlg = 1;
 const int ABI_EscalatorMenu = 2;
 const int ABI_PrevCmdPoolDlg = 3;
+const int ABI_EscConfig = 4;
 
 /* 'main_wnd' Window link */
 const int ABN_main_wnd = 0;
 const int ABN_toolBar = 1;
-const int ABN_EscConfigBtn = 2;
+const int ABN_esc_config_btn = 2;
 const int ABN_ArchiveBtn = 3;
 const int ABN_CmdPoolBtn = 4;
 const int ABN_on_off_filter_main_log = 5;
-const int ABN_AlertWnd = 6;
-const int ABN_AlertMsg = 7;
-const int ABN_AlertOK = 8;
-const int ABN_AlertTime = 9;
-const int ABN_AlertCounter = 10;
-const int ABN_Scheme = 11;
+const int ABN_Scheme = 6;
+const int ABN_AlertWnd = 7;
+const int ABN_AlertMsg = 8;
+const int ABN_AlertOK = 9;
+const int ABN_AlertTime = 10;
+const int ABN_AlertCounter = 11;
 const int ABN_LogJournalPanel = 12;
 const int ABN_main_log_wnd = 13;
 
@@ -108,51 +109,58 @@ const int ABN_FilteringBtn = 89;
 
 /* 'EscConfig' Dialog link */
 const int ABN_EscConfig = 90;
-const int ABN_EscDirectionList = 91;
-const int ABN_SetEscReverseBtn = 92;
-const int ABN_SetEscDownBtn = 93;
-const int ABN_SetEscUpBtn = 94;
-const int ABN_EscConfCancel = 95;
-const int ABN_EscConfDone = 96;
+const int ABN_lbl_station = 91;
+const int ABN_lbl_escalator = 92;
+const int ABN_tglbtn_start_now = 93;
+const int ABN_cb_start_day_mode = 94;
+const int ABN_cb_escalator_direction = 95;
+const int ABN_num_int_start_hour = 96;
+const int ABN_num_int_start_min = 97;
+const int ABN_cb_escalator_pref_direction = 98;
+const int ABN_esc_conf_cancel = 99;
+const int ABN_esc_conf_save = 100;
+const int ABN_cb_esc_config_list_mode = 101;
+const int ABN_cb_lines = 102;
+const int ABN_rwlst_config_escalators = 103;
 
 /* 'SignalDlg' Dialog link */
-const int ABN_SignalDlg = 97;
-const int ABN_SignalPanel = 98;
-const int ABN_mode_header = 99;
-const int ABN_ModeIndicator = 100;
-const int ABN_ready_header = 101;
-const int ABN_ReadyIndicator = 102;
-const int ABN_RunningIndicator = 103;
-const int ABN_running_header = 104;
-const int ABN_BreakingPathIndicator = 105;
-const int ABN_breaking_path_header = 106;
-const int ABN_PanelTitle = 107;
+const int ABN_SignalDlg = 104;
+const int ABN_SignalPanel = 105;
+const int ABN_mode_header = 106;
+const int ABN_ModeIndicator = 107;
+const int ABN_ready_header = 108;
+const int ABN_ReadyIndicator = 109;
+const int ABN_RunningIndicator = 110;
+const int ABN_running_header = 111;
+const int ABN_BreakingPathIndicator = 112;
+const int ABN_breaking_path_header = 113;
+const int ABN_PanelTitle = 114;
 
 /* 'ArchiveDlg' Dialog link */
-const int ABN_ArchiveDlg = 108;
-const int ABN_ArchiveFiles = 109;
-const int ABN_LoadArchiveBtn = 110;
-const int ABN_ArchiveCancelBtn = 111;
+const int ABN_ArchiveDlg = 115;
+const int ABN_ArchiveFiles = 116;
+const int ABN_LoadArchiveBtn = 117;
+const int ABN_ArchiveCancelBtn = 118;
 
 /* 'ArchiveLog' Window link */
-const int ABN_ArchiveLog = 112;
-const int ABN_ArchiveLogWnd = 113;
-const int ABN_ArchiveLogCancelBtn = 114;
-const int ABN_ArchiveLogOpenBtn = 115;
-const int ABN_on_off_filter_archive_log = 116;
+const int ABN_ArchiveLog = 119;
+const int ABN_ArchiveLogWnd = 120;
+const int ABN_ArchiveLogCancelBtn = 121;
+const int ABN_ArchiveLogOpenBtn = 122;
+const int ABN_on_off_filter_archive_log = 123;
 
 /* 'PrevCmdPoolDlg' Dialog link */
-const int ABN_PrevCmdPullDlg = 117;
-const int ABN_CmdPoolDlgBtnClose = 118;
-const int ABN_SendCommandButton = 119;
-const int ABN_DeleteCommandBtn = 120;
-const int ABN_CommandPoolRwLst = 121;
+const int ABN_PrevCmdPullDlg = 124;
+const int ABN_CmdPoolDlgBtnClose = 125;
+const int ABN_SendCommandButton = 126;
+const int ABN_DeleteCommandBtn = 127;
+const int ABN_CommandPoolRwLst = 128;
 
 /* 'EscalatorMenu' Menu link */
-const int ABN_EscalatorMenu = 122;
-const int ABN_MoveUp = 123;
-const int ABN_MoveStop = 124;
-const int ABN_MoveDown = 125;
+const int ABN_EscalatorMenu = 129;
+const int ABN_MoveUp = 130;
+const int ABN_MoveStop = 131;
+const int ABN_MoveDown = 132;
 
 
 #if defined(__cplusplus)

@@ -5,10 +5,234 @@
 #include "global.h"
 
 log_filter temp_log_filter;
+contain_morning_start tmp_morning_start;
 
 /*
 Local functions
 */
+static void empty_detalize_escalator_start( PtWidget_t *esc_config_window)
+{
+	string tmp_string;
+	PtWidget_t *tmp_widget;
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_lbl_station);
+	if (tmp_widget!=NULL)
+		{
+			tmp_string="Станция: ";
+			PtSetResource(tmp_widget, 
+									Pt_ARG_TEXT_STRING,
+									tmp_string.c_str(),
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"empty_detalize_escalator_start: not found pointer to ABN_lbl_station");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_lbl_escalator);
+	if (tmp_widget!=NULL)
+		{
+			tmp_string="Эскалатор: ";
+			PtSetResource(tmp_widget, 
+									Pt_ARG_TEXT_STRING,
+									tmp_string.c_str(),
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"empty_detalize_escalator_start: not found pointer to ABN_lbl_escalator");
+			return;
+		}; 
+};
+
+static void detalize_escalator_start( PtWidget_t *esc_config_window,
+														escalator_start esc_start)
+{
+
+	int escalator_number;
+	vector<char> tmp_chars(10);
+	string tmp_string;
+	PtWidget_t *tmp_widget;
+	
+	{
+	metro_escalators_container::iterator_metro_escalators iter_escalators;
+	iter_escalators=g_escalators.find(esc_start.get_escalator_id());
+	if (iter_escalators!=g_escalators.end())
+		{
+		    	metro_stations_container::iterator_metro_stations iter_stations;
+			escalator_number=iter_escalators->second.get_number();
+			iter_stations=g_stations.find(iter_escalators->second.get_station_id());
+			if (iter_stations!=g_stations.end())
+				{
+					tmp_string=iter_stations->second.get_stl_name_string();
+				} else {
+					string mess="Not found station for escalator id ";
+					itoa(iter_escalators->second.get_id(), 
+						   &tmp_chars[0], 
+						   10);
+					mess+=&tmp_chars[0];	   
+					mess+=" for re-drawing escalator_start items";
+					g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+				};
+		} else { // if (iter_escalators!=g_
+			string mess="Not found escalator with id ";
+			itoa(esc_start.get_escalator_id(), 
+				   &tmp_chars[0], 
+				   10);
+			mess+=&tmp_chars[0];	   
+			mess+=" for re-drawing escalator_start items";
+			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+		}; // if (iter_escalators!=g_
+		};
+	
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_lbl_station);
+	if (tmp_widget!=NULL)
+		{
+			tmp_string="Станция: "+tmp_string;
+			PtSetResource(tmp_widget, 
+									Pt_ARG_TEXT_STRING,
+									tmp_string.c_str(),
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_lbl_station");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_lbl_escalator);
+	if (tmp_widget!=NULL)
+		{
+			tmp_string="Эскалатор: ";
+			itoa(escalator_number,
+				   &tmp_chars[0],
+	      			10);
+			tmp_string+=&tmp_chars[0];
+			PtSetResource(tmp_widget, 
+									Pt_ARG_TEXT_STRING,
+									tmp_string.c_str(),
+									0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_lbl_escalator");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_cb_start_day_mode);
+	if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									esc_start.get_start_mode()+1,
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_cb_start_day_mode");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_cb_escalator_pref_direction);
+	if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									esc_start.get_escalator_pref_direction(),
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_cb_escalator_pref_direction");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_cb_escalator_direction);
+	if (tmp_widget!=NULL)
+		{
+			vector<PtArg_t>	args(3);
+			if (esc_start.get_escalator_pref_direction()==system_settings::DIRECTION_REVERSE)
+				{
+					PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+					PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+					PtSetArg(&args[2],
+									Pt_ARG_CBOX_SEL_ITEM,
+									esc_start.get_escalator_direction(),
+									0);
+				};
+
+			if (esc_start.get_escalator_pref_direction()==system_settings::DIRECTION_UP ||
+				esc_start.get_escalator_pref_direction()==system_settings::DIRECTION_DOWN)
+				{
+					PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+					PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+					PtSetArg(&args[2],
+									Pt_ARG_CBOX_SEL_ITEM,
+									esc_start.get_escalator_pref_direction(),
+									0);
+				};
+
+			PtSetResources(tmp_widget,
+									args.size(),
+									  &args[0]);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_cb_escalator_direction");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_num_int_start_hour);
+	if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									esc_start.get_start_hour(),
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_num_int_start_hour");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_num_int_start_min);
+	if (tmp_widget!=NULL)
+		{
+			PtSetResource(tmp_widget,
+									Pt_ARG_NUMERIC_VALUE,
+									esc_start.get_start_minute(),
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_num_int_start_min");
+			return;
+		}; 
+
+	tmp_widget=ApGetWidgetPtr(esc_config_window,
+ 												ABN_tglbtn_start_now);
+	if (tmp_widget!=NULL)
+		{
+			if (esc_start.get_start_enabled())
+				{
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+																"detalize_escalator_start: not found pointer to ABN_tglbtn_start_now");
+			return;
+		}; 
+		
+}
+
 
 static void redraw_devices_list_in_filter_dlg(
 													PtWidget_t *link_instance,
@@ -581,7 +805,7 @@ activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		ptr_log_rec_cont->filter.get_stop_time()<=
 		ptr_log_rec_cont->filter.get_start_time()) 	
 				g_system_settings.message_window(system_settings::WARN_MSG, 
-																		"Коая дата фильтрации должна быть позже, чем начальная");
+																		"Ко дата фильтрации должна быть позже, чем начальная");
 
 	if (! ptr_log_rec_cont->filter.get_all_times() &&
 		ptr_log_rec_cont->filter.get_stop_time()<=
@@ -815,17 +1039,6 @@ RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
 
 	g_system_settings.set_main_window(widget);
-	
-	g_msg_types.load(&g_system_settings, 
-								g_system_settings.get_messages_types_name() );
-
-	g_msg_dictionary.load(&g_system_settings, 
-										&g_msg_types,
-										g_system_settings.get_global_messages_name() );
-
-	g_metro_devices_types.load( &g_system_settings,
-			  										&g_msg_types,	
-													g_system_settings.get_devices_types_name() );
 
 	g_main_log.set_widget(ABW_main_log_wnd);
 	g_main_log.load(g_system_settings.get_main_log_name());
@@ -987,187 +1200,6 @@ ResizeScheme( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	return( Pt_CONTINUE );
 
 	}
-
-
-int
-OpenArchive( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
- 	PtWidget_t*	wnd= g_archive_log.get_widget();
-
-	if (wnd!=NULL)
-	{
-		PtWindowToFront(wnd);
-		return (Pt_IGNORE);
-	}
-
-
-	return( Pt_CONTINUE );
-
-	}
-/*
-escalator callbacks
-*/
-
-int
-SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	int		direction, index;
-	vector<PtArg_t> args(3);
-
-	metro_escalators_container::iterator_metro_escalators iter_esc;
-	
-	index=((PtListCallback_t*)cbinfo->cbdata)->item_pos-1;
-	
-	if ( (!g_escalators.empty())
-		&& (cbinfo->reason == Pt_CB_SELECTION) 
-		&& (cbinfo->reason_subtype == Pt_LIST_SELECTION_BROWSE)
-		&& (index<g_escalators.size())	
-	)
-	{
-
-		iter_esc=g_escalators.begin();
-		advance(iter_esc, index);
-		g_escalators.set_current_escalator_in_directions(iter_esc);
-		direction = iter_esc->second.get_pref_direction();
-
-
-		switch(direction)
-		{
-			case system_settings::DIRECTION_STOP:
-				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				break;
-			case system_settings::DIRECTION_UP:
-				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				break;
-			case system_settings::DIRECTION_DOWN:
-				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				break;
-			case system_settings::DIRECTION_REVERSE:
-				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-				PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				break;
-			default:
-				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
-				break;
-		}		
-
-	PtSetResources(ABW_SetEscUpBtn, 1, &args[0]);
-	PtSetResources(ABW_SetEscDownBtn, 1, &args[1]);
-	PtSetResources(ABW_SetEscReverseBtn, 1, &args[2]);
-	}
-
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-SetUpDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	PtArg_t		arg_other;
-	string	str_to_list;
-	metro_stations_container::iterator_metro_stations iter_stat;
-	metro_escalators_container::iterator_metro_escalators  selected_escalator_in_directions=g_escalators.get_current_escalator_in_directions();
-	
-	if (selected_escalator_in_directions!=g_escalators.end())
-	{
-		str_to_list.reserve(128);
-		vector<char> tmp_char(10);
-		itoa(selected_escalator_in_directions->second.get_number(),&tmp_char[0],10);
-		
-		PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-		PtSetResources(ABW_SetEscDownBtn, 1, &arg_other);
-		PtSetResources(ABW_SetEscReverseBtn, 1, &arg_other);
-		
-		selected_escalator_in_directions->second.set_pref_direction(system_settings::DIRECTION_UP);
-		iter_stat=g_stations.find(selected_escalator_in_directions->second.get_station_id());
-		if(iter_stat!=g_stations.end())
-			{
-			str_to_list=iter_stat->second.get_stl_name_string();			
-			};
-			str_to_list+="\t";
-			str_to_list+=&tmp_char[0];
-			str_to_list+="\tподьем";
-			
-			PtListReplaceItemPos(ABW_EscDirectionList, 
-											(const char**)(str_to_list.c_str()), 
-											1, 
-											distance(g_escalators.begin(), selected_escalator_in_directions) + 1);	
-	}
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-SetDownDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-	PtArg_t		arg_other;
-	string	str_to_list;
-	metro_stations_container::iterator_metro_stations iter_stat;
-	metro_escalators_container::iterator_metro_escalators  selected_escalator_in_directions=g_escalators.get_current_escalator_in_directions();
-	
-	if (selected_escalator_in_directions!=g_escalators.end())
-	{
-		str_to_list.reserve(128);
-		vector<char> tmp_char(10);
-		itoa(selected_escalator_in_directions->second.get_number(),&tmp_char[0],10);
-		
-		PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-		PtSetResources(ABW_SetEscUpBtn, 1, &arg_other);
-		PtSetResources(ABW_SetEscReverseBtn, 1, &arg_other);
-		
-		selected_escalator_in_directions->second.set_pref_direction(system_settings::DIRECTION_DOWN);
-		iter_stat=g_stations.find(selected_escalator_in_directions->second.get_station_id());
-		if(iter_stat!=g_stations.end())
-			{
-			str_to_list=iter_stat->second.get_stl_name_string();			
-			};
-			str_to_list+="\t";
-			str_to_list+=&tmp_char[0];
-			str_to_list+="\tспуск";
-
-			PtListReplaceItemPos(ABW_EscDirectionList,
-											(const char**)(str_to_list.c_str()),
-											1,
-											distance(g_escalators.begin(), selected_escalator_in_directions) + 1);	
-	}
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-OnSaveDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	if (!g_escalators.save_directions("directions.dat") )
-		{
-		g_system_settings.message_window (system_settings::ERROR_MSG, string("Не удсь сохранить направления движеня эскалаторов в айле !"));
-		};
-
-	return( Pt_CONTINUE );
-
-	}
-
 
 int
 MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
@@ -1331,109 +1363,6 @@ SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 			return( Pt_END );
 
 		};
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-SetReverseDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	PtArg_t		arg_other;
-	string	str_to_list;
-	metro_stations_container::iterator_metro_stations iter_stat;
-	metro_escalators_container::iterator_metro_escalators  selected_escalator_in_directions=g_escalators.get_current_escalator_in_directions();
-	
-	if (selected_escalator_in_directions!=g_escalators.end())
-	{
-		str_to_list.reserve(128);
-		vector<char> tmp_char(10);
-		itoa(selected_escalator_in_directions->second.get_number(), &tmp_char[0],10);
-	
-		PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-		PtSetResources(ABW_SetEscDownBtn, 1, &arg_other);
-		PtSetResources(ABW_SetEscUpBtn, 1, &arg_other);
-		
-		selected_escalator_in_directions->second.set_pref_direction(system_settings::DIRECTION_REVERSE);
-		iter_stat=g_stations.find(selected_escalator_in_directions->second.get_station_id());
-		if(iter_stat!=g_stations.end())
-			{
-			str_to_list=iter_stat->second.get_stl_name_string();			
-			};
-			str_to_list+="\t";
-			str_to_list+=&tmp_char[0];
-			str_to_list+="\tреверсивный";
-					
-			PtListReplaceItemPos(ABW_EscDirectionList, 
-											(const char**)(str_to_list.c_str()),
-											1,
-											distance(g_escalators.begin(), selected_escalator_in_directions) + 1);	
-	}
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-OnChancelDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-	if (!g_escalators.load_directions(g_system_settings.get_devices_config_name()) )
-		{
-		g_system_settings.message_window (system_settings::ERROR_MSG, string("Не удалось загрузить направления движени эскалаторов из файла !"));
-		};
-
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-FillEscConfList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-		vector<const char*> list_strings;
-		enum{UNDEFINED=0, UP, DOWN, REVERSE, ITEMS_COUNT};
-		vector<string> directions_strings(ITEMS_COUNT);
-				
-		directions_strings[UNDEFINED]="не определено";
-		directions_strings[UP]="вверх";
-		directions_strings[DOWN]="вниз";
-		directions_strings[REVERSE]="реерсивный";
-	
-		string item_string;
-		vector<char> tmp_chars(8);
-		int tmp_int;
-		
-		metro_stations_container::iterator_metro_stations iter_stat;
-		metro_escalators_container::iterator_metro_escalators iter_esc=g_escalators.begin();
-		
-		while(iter_esc!=g_escalators.end())		
-		{
-			iter_stat=g_stations.find(iter_esc->second.get_station_id());		
-			if (iter_stat==g_stations.end()) 
-				{
-					item_string="нет станции !\t";
-				} else {
-					item_string=iter_stat->second.get_stl_name_string();
-					item_string="\t";
-				};
-			itoa(iter_esc->second.get_number(), &tmp_chars[0],10);
-			item_string+=&tmp_chars[0];
-			item_string+="\t";
-			tmp_int=iter_esc->second.get_pref_direction();
-			if (tmp_int<=UNDEFINED ||
-				tmp_int>=ITEMS_COUNT) tmp_int=UNDEFINED;
-				
-			item_string+=directions_strings[tmp_int];
-			list_strings.push_back(item_string.c_str());
-				
-			iter_esc++;
-		};
-	
-		PtListAddItems(ABW_EscDirectionList, &list_strings[0], list_strings.size(), 0);	
 
 	return( Pt_CONTINUE );
 
@@ -2222,7 +2151,7 @@ activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 		{ 
 			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
 			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_RED, 0);				
-			indicator_text="Фильтр ВКЛ";
+			indicator_text="Фил ВКЛ";
 		} else {
 			PtSetArg( &args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
 			PtSetArg( &args[1], Pt_ARG_COLOR, system_settings::COLOR_BLACK, 0);				
@@ -2260,6 +2189,1034 @@ activate_on_off_filter_archive_log( PtWidget_t *widget, ApInfo_t *apinfo, PtCall
 
 
 	return( Pt_CONTINUE );
+
+	}
+
+int
+OpenArchive( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+
+ 	PtWidget_t*	wnd= g_archive_log.get_widget();
+
+	if (wnd!=NULL)
+	{
+		PtWindowToFront(wnd);
+		return (Pt_IGNORE);
+	}
+
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+/*
+escalator configuration list
+*/
+
+int
+link_setup_EscConfig( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtWidget_t  *tmp_widget;
+	int line_id=0;
+
+	contain_morning_start *ptr_morn_start_cont=NULL;
+	ptr_morn_start_cont=static_cast<contain_morning_start*>(cbinfo->cbdata);
+	if (ptr_morn_start_cont==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of contain_morning_start (ptr_morn_start_cont)");
+			return( Pt_HALT );
+		}
+	PtSetResource(link_instance, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);
+	ptr_morn_start_cont->set_widget(link_instance);
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_cb_lines);
+	if (tmp_widget!=NULL)
+		{
+			if (!g_lines.empty())
+				{
+					metro_lines_container::iterator_metro_lines iter_lines=g_lines.begin();
+					const char *items[1];
+					line_id=iter_lines->second.get_id();
+					while (iter_lines!=g_lines.end())
+					{
+						items[0]=iter_lines->second.get_c_name_string();
+
+						PtListAddItems(tmp_widget,
+												items,
+												1,
+												0);
+
+						iter_lines++;
+					}
+					PtSetResource(tmp_widget,
+											Pt_ARG_CBOX_SEL_ITEM,
+											1,
+											0);
+				};
+	
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of ABN_cb_lines");
+			return( Pt_HALT );
+		}
+
+	if (line_id==0)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found metro lines is empty in link_setup_EscConfig@callbacks.cpp");
+			return( Pt_HALT );
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_cb_start_day_mode);
+	if (tmp_widget!=NULL)
+		{
+			system_settings::strings_container start_day_mode_strings=g_system_settings.get_start_days_modes_russ_strings();
+			system_settings::strings_container::iterator str_iter=start_day_mode_strings.begin();
+	
+			const char *items[1];
+			while (str_iter!=start_day_mode_strings.end())
+			{
+				items[0]=str_iter->c_str();
+
+				PtListAddItems(tmp_widget,
+										items,
+										1,
+										0);
+
+				str_iter++;
+			}
+
+			PtSetResource(tmp_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									1,
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of ABN_cb_start_day_mode");
+			return( Pt_HALT );
+		}
+
+tmp_widget=ApGetWidgetPtr(link_instance, ABN_cb_escalator_pref_direction);
+	if (tmp_widget!=NULL)
+		{
+			system_settings::strings_container directions_strings=g_system_settings.get_directions_russ_strings();
+		
+			const char *items[3];
+			items[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
+			items[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+			items[2]=directions_strings[system_settings::DIRECTION_REVERSE].c_str();
+			
+			PtListAddItems(tmp_widget,
+									items,
+									3,
+									0);
+
+			PtSetResource(tmp_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									1,
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of ABN_cb_escalator_pref_direction");
+			return( Pt_HALT );
+		}
+
+tmp_widget=ApGetWidgetPtr(link_instance, ABN_cb_escalator_direction);
+	if (tmp_widget!=NULL)
+		{
+			system_settings::strings_container directions_strings=g_system_settings.get_directions_russ_strings();
+		
+			const char *items[2];
+			items[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
+			items[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+			
+			PtListAddItems(tmp_widget,
+									items,
+									2,
+									0);
+
+			PtSetResource(tmp_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									1,
+									0);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of ABN_cb_escalator_direction");
+			return( Pt_HALT );
+		}
+
+
+	if (	ptr_morn_start_cont==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to (ptr_morn_start_cont)");
+			return( Pt_HALT );
+		}
+
+	ptr_morn_start_cont->only_starting();
+
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_rwlst_config_escalators);
+	if (tmp_widget!=NULL)
+		{
+				ptr_morn_start_cont->prepare_to_display();
+
+				if (ptr_morn_start_cont->size()>0)
+					{
+					unsigned short sel_index=1;
+					PtGenListSetSelIndexes( 
+									        tmp_widget,
+									        &sel_index,
+											1);
+								
+					detalize_escalator_start(link_instance,
+														*(ptr_morn_start_cont->begin()));
+					};
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"Not found ponter to instanse of ABN_rwlst_config_escalators");
+			return( Pt_HALT );
+		}
+
+		return( Pt_CONTINUE );
+
+	}
+
+
+int
+activate_esc_config_btn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+					
+	metro_lines_container::iterator_metro_lines line_iter=g_lines.begin();
+
+	if (line_iter->second.morning_start.get_was_created_in_this_day())
+		{
+			tmp_morning_start=line_iter->second.morning_start;
+		} else {
+			metro_line::station_id_container stations_in_current_line(line_iter->second.begin_stations_id(),
+																									line_iter->second.end_stations_id());
+			metro_escalators_container tmp_esc_container=
+						g_escalators.get_escalators_by_line_id (stations_in_current_line,
+  																					  &g_stations);
+			tmp_morning_start.prepare_morning_start( tmp_esc_container);
+		};
+
+	PtCallbackInfo_t clbc_info;
+	clbc_info.cbdata=&tmp_morning_start;
+
+	ApCreateModule( ABM_EscConfig, NULL, &clbc_info);
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+item_selection_cb_lines( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	if (g_lines.empty()) return( Pt_CONTINUE);
+	
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+
+	if (ptr_to_EscConfig==NULL)
+	{
+		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+															"item_selection_cb_lines ptr_to_EscConfig is NULL");
+		return (Pt_HALT);
+	}
+	
+	PtGetResource(ptr_to_EscConfig, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);
+			
+	if (ptr_morn_start_cont==NULL) 
+	{
+		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+															"item_selection_cb_lines ptr_morn_start_cont is NULL");
+		return (Pt_HALT);
+	}
+
+	ushort_t *internal_sel_item_index, sel_item_index;
+	PtGetResource(widget,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+	sel_item_index=*internal_sel_item_index;
+
+	metro_lines_container::iterator_metro_lines iter_lines=g_lines.begin();
+	advance(iter_lines, static_cast<int>(sel_item_index-1));
+
+	if (line_iter->second.morning_start.get_was_created_in_this_day())
+		{
+			*ptr_morn_start_cont=line_iter->second.morning_start;
+		} else {
+			metro_line::station_id_container stations_in_current_line(line_iter->second.begin_stations_id(),
+																									line_iter->second.end_stations_id());
+			metro_escalators_container tmp_esc_container=
+						g_escalators.get_escalators_by_line_id (stations_in_current_line,
+  																					  &g_stations);
+			ptr_morn_start_cont->prepare_morning_start( tmp_esc_container);
+		};
+
+	PtWidget_t *ptr_to_cb_esc_config_list_mode=ApGetWidgetPtr(ptr_to_EscConfig, 	
+																								ABN_cb_esc_config_list_mode);
+	if (ptr_to_cb_esc_config_list_mode==NULL)
+	{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+													"item_selection_cb_lines ptr_to_cb_esc_config_list_mode is NULL");
+			return (Pt_HALT);
+	};
+
+	PtGetResource(ptr_to_cb_esc_config_list_mode,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+
+	sel_item_index=*internal_sel_item_index;
+	if (sel_item_index==1)	ptr_morn_start_cont->only_starting(); //else saved sort_all()
+					
+	ptr_morn_start_cont->prepare_to_display();
+	PtWidget_t *ptr_to_rwlst_config_escalators=ApGetWidgetPtr(ptr_to_EscConfig, 	
+																								ABN_rwlst_config_escalators);
+	if (ptr_to_rwlst_config_escalators==NULL)
+		{
+		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+															"item_selection_cb_lines ptr_to_rwlst_config_escalators is NULL");
+		return (Pt_HALT);
+		};
+
+	if (ptr_morn_start_cont->size()>0)
+		{
+		unsigned short sel_index=1;
+		PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators,
+										        &sel_index,
+											1);
+				
+		detalize_escalator_start(ptr_to_EscConfig,
+											*(ptr_morn_start_cont->begin()));
+		};
+
+return( Pt_CONTINUE );
+
+}
+
+
+int
+item_selection_cb_esc_config_list_mode( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	ushort_t *internal_sel_item_index, sel_item_index;
+	PtGetResource(widget,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+
+	sel_item_index=*internal_sel_item_index;
+
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_esc_config_list_mode: not found pointer to ptr_to_EscConfig");
+
+			return Pt_HALT;
+		};
+
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+
+	if (ptr_morn_start_cont!=NULL) 
+		{
+			if (sel_item_index==1)
+				{
+					ptr_morn_start_cont->only_starting();
+				} else {
+					ptr_morn_start_cont->sort_all();
+				};
+
+				ptr_morn_start_cont->prepare_to_display();
+				PtWidget_t *list_widget = ApGetWidgetPtr(ptr_to_EscConfig,
+																				ABN_rwlst_config_escalators);
+
+				if (list_widget==NULL) 
+				{
+					g_system_settings.sys_message(system_settings::ERROR_MSG,
+																		"item_selection_cb_esc_config_list_mode: not found list_widget");
+					return( Pt_HALT );
+				};
+
+				if (ptr_morn_start_cont->size()>0)
+					{
+					unsigned short sel_index=1;
+					PtGenListSetSelIndexes( 
+									        list_widget,
+									        &sel_index,
+											1);
+								
+					detalize_escalator_start( ptr_to_EscConfig,
+														*(ptr_morn_start_cont->begin()));
+					};
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_esc_config_list_mode: ponter to ptr_morn_start_cont is NULL");
+			return( Pt_HALT );
+		}
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+item_selection_cb_start_day_mode( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	ushort_t *internal_sel_item_index, new_start_day_mode;
+	PtGetResource(widget,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+
+	new_start_day_mode=*internal_sel_item_index;
+
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_start_day_mode: ptr_to_EscConfig==NULL");
+
+			return Pt_HALT;
+		};
+
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+
+	if (ptr_morn_start_cont==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_start_day_mode: ptr_morn_start_cont==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	PtWidget_t *ptr_to_rwlst_config_escalators = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_rwlst_config_escalators);
+	if (ptr_to_rwlst_config_escalators==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_start_day_mode: ptr_to_rwlst_config_escalators==NULL");
+
+			return Pt_HALT;
+		} ;
+
+		vector<PtArg_t> args(2);
+		const unsigned short  *internal_sel_count, *internal_top_item_pos;
+		unsigned short sel_item_count, top_item_pos;
+
+		PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+		PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+		PtGetResources (ptr_to_rwlst_config_escalators, args.size(), &args[0]);	
+		sel_item_count=*internal_sel_count;
+		top_item_pos=*internal_top_item_pos;
+
+		if (sel_item_count>0) 
+		{
+			vector<unsigned short> sel_indexes(sel_item_count);
+			PtGenListGetSelIndexes( ptr_to_rwlst_config_escalators, 
+								                   &sel_indexes[0]);
+
+			if (ptr_morn_start_cont->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+			{
+				contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+				advance(iter_morn_start, sel_indexes[0]-1);
+				iter_morn_start->set_start_mode(new_start_day_mode-1);
+
+				detalize_escalator_start( ptr_to_EscConfig,
+														*iter_morn_start);
+				ptr_morn_start_cont->prepare_to_display();
+				PtSetResource( ptr_to_rwlst_config_escalators, 
+										Pt_ARG_TOP_ITEM_POS, 
+										&top_item_pos, 
+										0 );
+				PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+									                   &sel_indexes[0], 
+									                   sel_item_count);
+														
+			}else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																	"item_selection_cb_start_day_mode: ptr_morn_start_cont->size()<=sel_item_index-1");
+				return Pt_HALT;
+			} ;
+		};
+
+	return Pt_CONTINUE;
+
+	}
+
+
+int
+item_selection_cb_escalator_direction( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	ushort_t *internal_sel_item_index, new_direction;
+	PtGetResource(widget,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+
+	new_direction=*internal_sel_item_index;
+
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_direction: ptr_to_EscConfig==NULL");
+
+			return Pt_HALT;
+		};
+
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+
+	if (ptr_morn_start_cont==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_direction: ptr_morn_start_cont==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	PtWidget_t *ptr_to_rwlst_config_escalators = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_rwlst_config_escalators);
+
+	if (ptr_to_rwlst_config_escalators==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_direction: ptr_to_rwlst_config_escalators==NULL");
+
+			return Pt_HALT;
+		} ;
+
+		vector<PtArg_t> args(2);
+		const unsigned short  *internal_sel_count, *internal_top_item_pos;
+		unsigned short sel_item_count, top_item_pos;
+
+		PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+		PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+		PtGetResources (ptr_to_rwlst_config_escalators, args.size(), &args[0]);	
+		sel_item_count=*internal_sel_count;
+		top_item_pos=*internal_top_item_pos;
+
+		if (sel_item_count>0) 
+		{
+			vector<unsigned short> sel_indexes(sel_item_count);
+			PtGenListGetSelIndexes( ptr_to_rwlst_config_escalators, 
+								                   &sel_indexes[0]);
+
+			if (ptr_morn_start_cont->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+			{
+				contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+				advance(iter_morn_start, sel_indexes[0]-1);
+				iter_morn_start->set_escalator_direction(new_direction);
+
+				detalize_escalator_start( ptr_to_EscConfig,
+														*iter_morn_start);
+				ptr_morn_start_cont->prepare_to_display();
+				PtSetResource( ptr_to_rwlst_config_escalators, 
+										Pt_ARG_TOP_ITEM_POS, 
+										&top_item_pos, 
+										0 );
+				PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+									                   &sel_indexes[0], 
+									                   sel_item_count);
+														
+			}else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																	"item_selection_cb_escalator_direction: ptr_morn_start_cont->size()<=sel_item_index-1");
+				return Pt_HALT;
+			} ;
+		};
+
+	
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+item_selection_cb_escalator_pref_direction( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	ushort_t *internal_sel_item_index, sel_item_index;
+	vector<PtArg_t> args;
+	PtGetResource(widget,
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+
+	sel_item_index=*internal_sel_item_index;
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_pref_direction: not found pointer to ptr_to_EscConfig");
+
+			return Pt_HALT;
+		};
+
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+
+	if (ptr_morn_start_cont==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_pref_direction: ptr_morn_start_cont==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	PtWidget_t *ptr_to_rwlst_config_escalators = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_rwlst_config_escalators);
+	if (ptr_to_rwlst_config_escalators==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"item_selection_cb_escalator_pref_direction: ptr_to_rwlst_config_escalators==NULL");
+
+			return Pt_HALT;
+		} ;
+
+
+	const unsigned short  *internal_sel_count, *internal_top_item_pos;
+	unsigned short sel_item_count, top_item_pos;
+
+	args.resize(2);
+	PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+	PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+	PtGetResources (ptr_to_rwlst_config_escalators, args.size(), &args[0]);	
+	sel_item_count=*internal_sel_count;
+	top_item_pos=*internal_top_item_pos;
+
+	if (sel_item_count>0) 
+	{
+		vector<unsigned short> sel_indexes(sel_item_count);
+		PtGenListGetSelIndexes( ptr_to_rwlst_config_escalators, 
+							                   &sel_indexes[0]);
+		if (ptr_morn_start_cont->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+		{
+			contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+			advance(iter_morn_start, sel_indexes[0]-1);
+				
+			PtWidget_t *ptr_to_cb_escalator_direction = ApGetWidgetPtr(ptr_to_EscConfig,
+																										ABN_cb_escalator_direction);
+			if (ptr_to_cb_escalator_direction==NULL) 
+			{
+				g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																	"item_selection_cb_escalator_pref_direction: ptr_to_cb_escalator_direction==NULL");
+
+				return Pt_HALT;
+			} ;
+
+			iter_morn_start->set_escalator_pref_direction(sel_item_index);
+
+			if (sel_item_index==system_settings::DIRECTION_REVERSE)
+			{
+				args.resize(3);
+				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+				sel_item_index=iter_morn_start->get_escalator_direction();
+				PtSetArg(&args[2],
+								Pt_ARG_CBOX_SEL_ITEM,
+								sel_item_index,
+								0);
+			} else {
+				args.resize(3);
+				PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+				iter_morn_start->set_escalator_direction(sel_item_index);
+				PtSetArg(&args[2],
+								Pt_ARG_CBOX_SEL_ITEM,
+								sel_item_index,
+								0);
+			};
+			PtSetResources(ptr_to_cb_escalator_direction,
+     								args.size(),
+           							  &args[0]);
+				
+			detalize_escalator_start( ptr_to_EscConfig,
+												*iter_morn_start);
+			ptr_morn_start_cont->prepare_to_display();
+			PtSetResource( ptr_to_rwlst_config_escalators, 
+									Pt_ARG_TOP_ITEM_POS, 
+									&top_item_pos, 
+									0 );
+			PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+								                   &sel_indexes[0], 
+								                   sel_item_count);
+														
+			}else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																	"item_selection_cb_escalator_pref_direction: ptr_morn_start_cont->size()<=sel_item_index-1");
+				return Pt_HALT;
+			} ;
+		};
+		
+	return( Pt_CONTINUE );
+	}
+
+
+int
+unrealized_EscConfig( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(widget, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);
+	if (ptr_morn_start_cont!=NULL) 
+		{
+			ptr_morn_start_cont->set_widget(NULL);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"unrealized_EscConfig ponter to ptr_morn_start_cont is NULL");
+			return( Pt_HALT );
+		}
+
+	return( Pt_CONTINUE );
+
+	}
+
+void selection_escalator_start_item(
+        PtWidget_t *widget, PtGenListItem_t *item, int pos, int column,
+        int nitems, int subtype, PhEvent_t *ev
+        ) {
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig!=NULL)
+			{
+			PtGetResource(ptr_to_EscConfig, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);
+			
+			if (ptr_morn_start_cont!=NULL) 
+				{
+					if (static_cast<int>(ptr_morn_start_cont->size())<pos)
+						{
+							g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																		"selection_escalator_start_item pos<ptr_morn_start_cont->size()");
+							return;
+						};
+		
+					contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+					advance(iter_morn_start, pos-1);
+					detalize_escalator_start(ptr_to_EscConfig, 
+															*iter_morn_start);
+				} else {
+					g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																		"selection_escalator_start_item ptr_morn_start_cont is NULL");
+					return;
+				}
+			
+			} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"selection_escalator_start_item ptr_to_EscConfig is NULL");
+			return;
+			}
+		
+	}
+
+
+int
+activate_tglbtn_start_now( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	long flags;
+	long const *internal_flags;
+	PtGetResource(widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+
+	flags=*internal_flags;
+
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_tglbtn_start_now: ptr_to_EscConfig==NULL");
+
+			return Pt_HALT;
+		};
+
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+
+	if (ptr_morn_start_cont==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_tglbtn_start_now: ptr_morn_start_cont==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	PtWidget_t *ptr_to_rwlst_config_escalators = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_rwlst_config_escalators);
+
+	if (ptr_to_rwlst_config_escalators==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_tglbtn_start_now: ptr_to_rwlst_config_escalators==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	vector<PtArg_t> args(2);
+	const unsigned short  *internal_sel_count, *internal_top_item_pos;
+	unsigned short sel_item_count, top_item_pos;
+
+	PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+	PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+	PtGetResources (ptr_to_rwlst_config_escalators, args.size(), &args[0]);	
+	sel_item_count=*internal_sel_count;
+	top_item_pos=*internal_top_item_pos;
+
+	if (sel_item_count>0) 
+	{
+		vector<unsigned short> sel_indexes(sel_item_count);
+		PtGenListGetSelIndexes( ptr_to_rwlst_config_escalators, 
+							                   &sel_indexes[0]);
+
+		if (ptr_morn_start_cont->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+		{
+			contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+			bool button_state=(flags & Pt_SET)!=0;
+			advance(iter_morn_start, sel_indexes[0]-1);
+
+			iter_morn_start->set_start_enabled(button_state);
+			
+			PtWidget_t *ptr_to_cb_esc_config_list_mode = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_cb_esc_config_list_mode);
+			if (ptr_to_cb_esc_config_list_mode==NULL) 
+				{
+					g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																		"activate_tglbtn_start_now: ptr_to_cb_esc_config_list_mode==NULL");
+
+					return Pt_HALT;
+				} ;
+
+			ushort_t *internal_sel_item_index, listing_mode;
+			PtGetResource(ptr_to_cb_esc_config_list_mode,
+									Pt_ARG_CBOX_SEL_ITEM,
+									&internal_sel_item_index,
+									0);
+
+			listing_mode=*internal_sel_item_index;
+			if (listing_mode==1 &&  //only starting
+				!button_state) //item must be removed from list
+				{
+					ptr_morn_start_cont->only_starting(); //remove not started item from list
+					if (ptr_morn_start_cont->size()>0)
+					{
+						iter_morn_start=ptr_morn_start_cont->begin();
+						top_item_pos=1;
+						sel_item_count=1;
+						sel_indexes.resize(sel_item_count);
+						sel_indexes[0]=1;
+						detalize_escalator_start( ptr_to_EscConfig,
+																*iter_morn_start);
+						ptr_morn_start_cont->prepare_to_display();
+						PtSetResource( ptr_to_rwlst_config_escalators, 
+												Pt_ARG_TOP_ITEM_POS, 
+												&top_item_pos, 
+												0 );
+						PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+											                   &sel_indexes[0], 
+											                   sel_item_count);
+					} else {
+						empty_detalize_escalator_start(ptr_to_EscConfig);
+						ptr_morn_start_cont->prepare_to_display();
+					};
+				} else {
+					detalize_escalator_start( ptr_to_EscConfig,
+															*iter_morn_start);
+					ptr_morn_start_cont->prepare_to_display();
+					PtSetResource( ptr_to_rwlst_config_escalators, 
+											Pt_ARG_TOP_ITEM_POS, 
+											&top_item_pos, 
+											0 );
+					PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+										                   &sel_indexes[0], 
+										                   sel_item_count);
+				};
+					 			 			 
+														
+		}else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_tglbtn_start_now: ptr_morn_start_cont->size()<=sel_item_index-1");
+			return Pt_HALT;
+		} ;
+	};
+
+	
+	return Pt_CONTINUE ;
+
+	}
+
+int
+changed_num_int_start_time( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	enum {SET_START_HOUR=0, SET_START_MINUTE, SET_INVALID};
+	int  setting_mode=SET_INVALID;
+
+	PtNumericIntegerCallback_t *intenal_numeric_value=
+			static_cast<PtNumericIntegerCallback_t*>(cbinfo->cbdata);
+	int new_numeric_value=intenal_numeric_value->numeric_value;
+
+	PtWidget_t *ptr_to_EscConfig = ApGetInstance(widget);
+	if (ptr_to_EscConfig==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: ptr_to_EscConfig==NULL");
+
+			return Pt_HALT;
+		};
+
+
+
+
+	PtWidget_t *ptr_to_num_int_start_hour = ApGetWidgetPtr(ptr_to_EscConfig,
+																						 ABN_num_int_start_hour);	
+	if (ptr_to_num_int_start_hour==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: ptr_to_num_int_start_hour==NULL");
+
+			return Pt_HALT;
+		};
+	if (ptr_to_num_int_start_hour==widget)
+		{
+			setting_mode=SET_START_HOUR;
+		};	
+	PtWidget_t *ptr_to_num_int_start_min = ApGetWidgetPtr(ptr_to_EscConfig,
+																						 ABN_num_int_start_min);	
+	if (ptr_to_num_int_start_min==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: ptr_to_num_int_start_min==NULL");
+
+			return Pt_HALT;
+		};
+	if (ptr_to_num_int_start_min==widget)
+		{
+			setting_mode=SET_START_MINUTE;
+		};	
+
+	if (setting_mode==SET_INVALID)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: setting_mode==SET_INVALID");
+
+			return Pt_HALT;
+		};
+
+ 
+ 
+
+	contain_morning_start *ptr_morn_start_cont=NULL;	
+	PtGetResource(ptr_to_EscConfig, 
+							Pt_ARG_POINTER,
+							&ptr_morn_start_cont, 
+							0);
+	if (ptr_morn_start_cont==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: ptr_morn_start_cont==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	PtWidget_t *ptr_to_rwlst_config_escalators = ApGetWidgetPtr(ptr_to_EscConfig, 
+																								 ABN_rwlst_config_escalators);
+	if (ptr_to_rwlst_config_escalators==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"changed_num_int_start_time: ptr_to_rwlst_config_escalators==NULL");
+
+			return Pt_HALT;
+		} ;
+
+	vector<PtArg_t> args(2);
+	const unsigned short  *internal_sel_count, *internal_top_item_pos;
+	unsigned short sel_item_count, top_item_pos;
+
+	PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+	PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+	PtGetResources (ptr_to_rwlst_config_escalators, args.size(), &args[0]);	
+	sel_item_count=*internal_sel_count;
+	top_item_pos=*internal_top_item_pos;
+
+	if (sel_item_count>0) 
+	{
+		vector<unsigned short> sel_indexes(sel_item_count);
+		PtGenListGetSelIndexes( ptr_to_rwlst_config_escalators, 
+							                   &sel_indexes[0]);
+
+		if (ptr_morn_start_cont->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+			{
+				contain_morning_start::iterator_morining_start iter_morn_start=ptr_morn_start_cont->begin();
+				advance(iter_morn_start, sel_indexes[0]-1);
+				
+				 switch (setting_mode)
+				{
+					case SET_START_MINUTE:
+						{
+							iter_morn_start->set_start_minute(new_numeric_value);
+							break;
+						}
+					case SET_START_HOUR:
+						{
+							iter_morn_start->set_start_hour(new_numeric_value);
+							break;
+						};
+				};
+
+
+				detalize_escalator_start( ptr_to_EscConfig,
+														*iter_morn_start);
+				ptr_morn_start_cont->prepare_to_display();
+				PtSetResource( ptr_to_rwlst_config_escalators, 
+										Pt_ARG_TOP_ITEM_POS, 
+										&top_item_pos, 
+										0 );
+				PtGenListSetSelIndexes( ptr_to_rwlst_config_escalators, 
+									                   &sel_indexes[0], 
+									                   sel_item_count);
+														
+			}else {
+				g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																	"changed_num_int_start_time: ptr_morn_start_cont->size()<=sel_item_index-1");
+				return Pt_HALT;
+			} ;
+		};
+
+	
+	return Pt_CONTINUE;
 
 	}
 

@@ -13,7 +13,8 @@ ApEventLink_t AbInternalLinks[] = {
 	{ 11, 0, 0L, 0L, 0L, &interface, NULL, NULL, 0, NULL, 0, 0, 0, 0, },
 	{ 4, 0, 0L, 0L, 0L, &LogFilterDlg, NULL, NULL, 0, link_setup_LogFilterDlg, 1, 9, 0, 0, },
 	{ 5, 0, 0L, 0L, 0L, &EscalatorMenu, NULL, NULL, 0, NULL, 0, 3, 0, 0, },
-	{ 4, 0, 0L, 0L, 0L, &PrevCmdPoolDlg, NULL, NULL, 0, NULL, 0, 0, 0, 0, },
+	{ 4, 0, 0L, 0L, 0L, &PrevCmdPoolDlg, NULL, NULL, 0, NULL, 0, 9, 0, 0, },
+	{ 4, 0, 0L, 0L, 0L, &EscConfig, NULL, NULL, 0, link_setup_EscConfig, 1, 9, 0, 0, },
 	{ 0 }
 	};
 
@@ -21,13 +22,13 @@ static const ApEventLink_t AbLinks_main_wnd[] = {
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "main_wnd", 1009, Uninitialize, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "main_wnd", 1012, RealizeMainWnd, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "main_wnd", 18024, CloseMainWnd, 0, 0, 0, 0, },
-	{ 4, 0, 0L, 0L, 0L, &EscConfig, NULL, "EscConfigBtn", 2009, NULL, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "esc_config_btn", 2009, activate_esc_config_btn, 0, 0, 0, 0, },
 	{ 3, 0, 0L, 0L, 0L, &ArchiveLog, NULL, "ArchiveBtn", 2009, OpenArchive, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "CmdPoolBtn", 2009, activate_CmdPoolBtn, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "on_off_filter_main_log", 2009, activate_on_off_filter_main_log, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "Scheme", 10003, ResizeScheme, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AlertOK", 2007, NextAlert, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "AlertOK", 2009, ActivateAlertBtn, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "Scheme", 10003, ResizeScheme, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "main_log_wnd", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_log_item, 0, 0, 0, 0, },
 	{ 0 }
 	};
@@ -53,13 +54,19 @@ static const ApEventLink_t AbLinks_LogFilterDlg[] = {
 	};
 
 static const ApEventLink_t AbLinks_EscConfig[] = {
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscConfig", 1012, FillEscConfList, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscDirectionList", 23010, SelectEscalatorDirection, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscReverseBtn", 2009, SetReverseDirection, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscDownBtn", 2009, SetDownDirection, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscUpBtn", 2009, SetUpDirection, 0, 0, 0, 0, },
-	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "EscConfCancel", 2009, OnChancelDirections, 0, 0, 0, 0, },
-	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "EscConfDone", 2009, OnSaveDirections, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscConfig", 1013, unrealized_EscConfig, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "tglbtn_start_now", 2009, activate_tglbtn_start_now, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_start_day_mode", 23010, item_selection_cb_start_day_mode, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_escalator_direction", 23010, item_selection_cb_escalator_direction, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "num_int_start_hour", 53015, changed_num_int_start_time, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "num_int_start_min", 53015, changed_num_int_start_time, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_escalator_pref_direction", 23010, item_selection_cb_escalator_pref_direction, 0, 0, 0, 0, },
+	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "esc_conf_cancel", 2009, NULL, 0, 0, 0, 0, },
+	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "esc_conf_save", 2009, NULL, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_esc_config_list_mode", 23010, item_selection_cb_esc_config_list_mode, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_lines", 23010, item_selection_cb_lines, 0, 0, 0, 0, },
+	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "rwlst_config_escalators", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_escalator_start_item, 0, 0, 0, 0, },
+	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "rwlst_config_escalators", 68003, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) selection_escalator_start_item, 0, 0, 0, 0, },
 	{ 0 }
 	};
 

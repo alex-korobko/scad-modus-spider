@@ -19,6 +19,7 @@ typedef  map <int,  metro_station, ltint> metro_stations_map;
 metro_stations_map	container_metro_stations;
 typedef 	metro_stations_map::iterator iterator_metro_stations;	
 typedef 	metro_stations_map::value_type pair_metro_stations;	
+typedef 	metro_stations_map::size_type size_type_metro_stations;	
 
 private :
 int stations_count;
@@ -46,13 +47,16 @@ iterator_metro_stations find(const int key) { return container_metro_stations.fi
 iterator_metro_stations upper_bound(const int key) { return container_metro_stations.upper_bound(key); };
 
 void erase (iterator_metro_stations iter) { container_metro_stations.erase(iter); };
+void erase (iterator_metro_stations iter_beg,
+					iterator_metro_stations iter_end) { container_metro_stations.erase(iter_beg, iter_end); };
+
 iterator_metro_stations insert (iterator_metro_stations iter, const pair_metro_stations& obj) 
 {
   return (container_metro_stations.insert(iter,obj)); 
 }
 
 bool empty() const { return container_metro_stations.empty();}
-int size() const {return container_metro_stations.size();};
+size_type_metro_stations size() const {return container_metro_stations.size();};
 
 /*
 bool 
@@ -264,7 +268,11 @@ bool load (system_settings *sys_sett_obj, metro_lines_container *metro_lines_con
 
 		return 0;
 	};
+
+	erase(begin(), end());	
+
 	section_name_c_str=PxConfigNextSection();
+	
 	while (section_name_c_str!=NULL) 
 	{
 
