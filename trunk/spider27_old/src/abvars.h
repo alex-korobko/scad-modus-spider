@@ -141,11 +141,14 @@ const int ABN_ArchiveLogWnd = 115;
 const int ABN_ArchiveLogOpenBtn = 116;
 const int ABN_ArchiveLogCancelBtn = 117;
 
+/* 'PrevCmdPullDlg' Dialog link */
+const int ABN_PrevCmdPullDlg = 118;
+
 /* 'EscalatorMenu' Menu link */
-const int ABN_EscalatorMenu = 118;
-const int ABN_MoveUp = 119;
-const int ABN_MoveStop = 120;
-const int ABN_MoveDown = 121;
+const int ABN_EscalatorMenu = 119;
+const int ABN_MoveUp = 120;
+const int ABN_MoveStop = 121;
+const int ABN_MoveDown = 122;
 
 
 #if defined(__cplusplus)

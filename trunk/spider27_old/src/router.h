@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <string.h>
 
+#define SKIP_TEST_COUNT 4
+
 enum {addRoute, delRoute};
 
 class Net
@@ -22,10 +24,13 @@ protected:
 	in_addr_t	ip;
 	in_addr_t	curr_gateway_ip;
 	int			broken;
+	int skip_count;
 	Net*		next;
 	Net*		prev;
 public:
 	Net();
+	Net* first_Net();
+	Net* next_Net();
 	virtual ~Net();
 };
 
@@ -37,8 +42,6 @@ protected:
 	int				tableSize;
 	Net*			leftLine;
 	Net*			rightLine;
-	Net*			leftLineTail;
-	Net*			rightLineTail;
 	in_addr			leftGate, rightGate;
 public:
 	Router();

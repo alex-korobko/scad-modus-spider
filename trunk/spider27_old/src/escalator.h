@@ -121,7 +121,8 @@ public:
    	int SendTime();   
    	int CheckStatus();
    	int GetData();
-   	int GetNumber() { return number; }
+   	int GetNumber() { return number; };
+	int Discard_Blocking( PtWidget_t *widget);
 };
 
 void SetIndicator(PtWidget_t *widget, const char *text, int enable);

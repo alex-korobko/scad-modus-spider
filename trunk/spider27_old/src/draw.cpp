@@ -99,6 +99,7 @@ char *blockingNames[] = {
  "БТП" //  "Блок-контакт рабочего тормоза правый                    ",  //0
 };
 
+
 void draw_log_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where)
@@ -115,6 +116,9 @@ void draw_log_item(
    	char  translate[256*MB_LEN_MAX];	
    	int		msgID, param;
    	DictEntry*		curEntry = NULL;
+  //for block circuts
+  	char pblock_text[256];
+	int typeIndex;
 	
 	
 	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
@@ -209,7 +213,31 @@ void draw_log_item(
 				//if (translate_string(blockingNames[abs(short(msgID))], translate, translate_set))
 				//{				
 					PgSetTextColor(COLOR_GREEN);		
+	
+	//				PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
+	
+		ALL_ESCALATORS
+		{
+			if (g_escalators[i].number == record->escalatorID && g_escalators[i].stationID == record->stationID)
+				{
+					if (g_escTypes)
+						{
+						typeIndex = g_escalators[i].type-1;
+
+						if (typeIndex!=0) {
+														
+						printf("\nEscalator type %d id %d message %d record ID %d record station %d mess id %d", typeIndex, g_escalators[i].id, msgID, record->escalatorID, record->stationID, abs(short(msgID)));
+						g_escTypes[typeIndex].blocks[0].signals[abs(short(msgID))].name.Get(pblock_text, 250);			
+						PgDrawText(pblock_text, strlen(pblock_text), &point, Pg_TEXT_BOTTOM);
+														} else {								
 					PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
+														};
+						}
+				break;
+				 };
+		};	
+	
+	
 				//}
 		}
 		}

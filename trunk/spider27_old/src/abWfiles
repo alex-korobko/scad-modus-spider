@@ -1,1 +1,1 @@
-ABMOD = ArchiveDlg.wgtd ArchiveLog.wgtw EscConfig.wgtd LogFilterDlg.wgtd SignalDlg.wgtd interface.wgtp main_wnd.wgtw 
+ABMOD = ArchiveDlg.wgtd ArchiveLog.wgtw EscConfig.wgtd LogFilterDlg.wgtd PrevCmdPullDlg.wgtd SignalDlg.wgtd interface.wgtp main_wnd.wgtw 

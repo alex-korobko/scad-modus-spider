@@ -15,7 +15,8 @@ extern ApDialogLink_t EscConfig;
 extern ApDialogLink_t SignalDlg;
 extern ApDialogLink_t ArchiveDlg;
 extern ApWindowLink_t ArchiveLog;
-extern ApWidget_t AbWidgets[ 118 ];
+extern ApDialogLink_t PrevCmdPullDlg;
+extern ApWidget_t AbWidgets[ 119 ];
 
 extern ApMenuLink_t EscalatorMenu;
 
@@ -62,8 +63,8 @@ int LoadArchive( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetupPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int DiscardBlocking( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int OnChancelDirections( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int FillEscConfList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int DiscardBlocking( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif
