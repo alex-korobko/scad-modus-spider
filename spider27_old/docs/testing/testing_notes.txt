@@ -1,0 +1,2 @@
+test all variants of moving directions for escalators. 
+also consider to testing cases with difficult previos directions.
