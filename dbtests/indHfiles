@@ -1,0 +1,29 @@
+HDRS = test_cond.h\
+ defines.h\
+ dbobject_exception.h\
+ dbobject_interface.h
+ 
+ifdef MOCK_OBJECT
+HDRS +=dbobject_mock.h
+endif
+
+HDRS +=test_exception.h\
+ test_interface.h\
+
+ifdef TEST_1
+HDRS +=test_1.h
+endif
+
+ifdef UNIT_TESTING
+
+ifdef MOCK_OBJECT
+HDRS += test_dbobject_mock.h
+endif
+
+ifdef TEST_1
+HDRS +=test_test_1.h
+endif
+
+HDRS += all_tests.h
+endif
+
