@@ -136,7 +136,7 @@ word system_settings::crc(vector<byte> buffer)
 {
 	byte highCRC = 0xFF;
 	byte lowCRC = 0xFF;
-	word	index;
+	word	 index;
 	
 	if ( buffer.empty()) return(0);
 	

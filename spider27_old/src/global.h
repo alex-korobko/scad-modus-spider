@@ -13,7 +13,7 @@
 #include <sys/neutrino.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-// #include <sys/asoundlib.h>
+#include <sys/asoundlib.h>
 #include <sys/select.h>
 #include <sys/slog.h>
 #include <sys/slogcodes.h>
@@ -36,6 +36,7 @@
 #include <list>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 /* Local headers */
 #include "ablibs.h"
@@ -50,7 +51,7 @@ using namespace std;
 #include "defines.h"
 
 #include "system.h"
-extern system_settings g_system_settings ;
+extern system_settings g_system_settings;
 
 #include "router.h"
 extern router g_router;
@@ -64,7 +65,9 @@ extern router g_router;
 *	Container class for log records - wrapper of STL container vector 			*
 *	Container class for alerts - wrapper of STL container vector with stack functions*
 *****************************************************************************/
-#include "dictionary.h"
+#include "contain_msg_types.h"
+extern msg_types_container g_msg_types;
+
 #include "contain_msg_dict.h"
 extern msg_dict_container g_msgDictionary;
 
@@ -72,17 +75,17 @@ extern msg_dict_container g_msgDictionary;
 #include "contain_metro_escalator_types.h"
 extern esc_types_container g_metro_escalator_types;
 
-#include "escalator.h"
-#include "contain_metro_escalators.h"
-extern  metro_escalators_container g_escalators;
+#include "line.h"
+#include "contain_metro_lines.h"
+extern metro_lines_container g_lines;
 
 #include "station.h"
 #include "contain_metro_stations.h"
 extern metro_stations_container g_stations;
 
-#include "line.h"
-#include "contain_metro_lines.h"
-extern metro_lines_container g_lines;
+#include "escalator.h"
+#include "contain_metro_escalators.h"
+extern  metro_escalators_container g_escalators;
 
 #include "command.h"
 #include "contain_cmd_pool.h"
@@ -102,7 +105,29 @@ extern pthread_t	g_pingTID, g_timerTID;
 
 
 #ifdef __UNIT_TESTING__
+
+#include <cppunit/ui/text/TestRunner.h> 
+#include <cppunit/TestFixture.h> 
+#include <cppunit/TestSuite.h> 
+#include <cppunit/TestCaller.h> 
+
+#include "unit_tests/system_test.h"
+#include "unit_tests/sound_test.h"
+
+#include "unit_tests/contain_msg_types_test.h"
+#include "unit_tests/contain_msg_dict_test.h"
+#include "unit_tests/contain_log_rec_test.h"
+
+#include "unit_tests/line_test.h"
+#include "unit_tests/contain_metro_lines_test.h"
+#include "unit_tests/station_test.h"
+#include "unit_tests/contain_metro_stations_test.h"
+#include "unit_tests/contain_metro_escalators_types_test.h"
+#include "unit_tests/escalator_test.h"
+#include "unit_tests/contain_metro_escalators_test.h"
+
 #include "unit_tests/unit_tests.h"
+
 #endif
 
 

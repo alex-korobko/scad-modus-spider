@@ -7,15 +7,6 @@
 /*
 Local functions
 */
-static void fill_station_list()
-{
-metro_stations_container::iterator_metro_stations iter_station=g_stations.begin();
-while (iter_station!=g_stations.end())
-{
-	PtListAddItems(ABW_StationList, (const char**)(iter_station->second.get_stl_name_string().c_str()), 1, 0);
-	iter_station++;
-};
-}
 
 static void re_calculate_command_items_count(PtWidget_t *cmd_pool_list)
 	{
@@ -72,7 +63,6 @@ static int CreateScheme()
 	{
 		vector<PhPoint_t>  points;
 		
-		temp_lines_iterator->second.sort_stations_id();
 		metro_line::iterator_stations_id temp_stations_id_iterator=temp_lines_iterator->second.begin_stations_id();
 		while(temp_stations_id_iterator!=temp_lines_iterator->second.end_stations_id())
 		{
@@ -260,232 +250,80 @@ Callbacks log filter window
 int
 activate_FilterBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	PtWidget_t *filter_dlg_wnd= ApCreateModule( ABM_LogFilterDlg, NULL, NULL);
-	PtArg_t arg;
-
-	if (filter_dlg_wnd!=NULL)
-		{
-			PtSetArg(&arg, Pt_ARG_POINTER, &g_main_log, 0);
-			PtSetResources(filter_dlg_wnd, 1, &arg);											
-		} else {
-			string mess ="Can`t get  filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);			
-			return( Pt_END );
-		};
-
-	PtWidget_t *tmp_widget_pointer=NULL; // pointer for widget instances
-
-//begin: station and escalators range widgets setting
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StationList);
-	// now tmp_widget_pointer point to  ABN__StationList instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get StationList for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);			
-			return( Pt_END );
-		} else {
-			vector<const char*> stations_names(g_stations.size()+1);
-			stations_names[0]="Все станции";
-			metro_stations_container::iterator_metro_stations iter_stat=g_stations.begin();			
-			for (int i=1; iter_stat!=g_stations.end(); i++,  iter_stat++)
-						stations_names[i]=iter_stat->second.get_c_name_string();
-			
-//			PtListAddItems(tmp_widget_pointer, (const char**)(), stations_names.size(), 0);
-
-			PtListAddItems(tmp_widget_pointer, const_cast<const char**>(&stations_names[0]), stations_names.size(), 0);
-			PtSetResource(tmp_widget_pointer, Pt_ARG_CBOX_SEL_ITEM, 1, 0);
-		}; 
-		
-//end: station and escalators range widgets setting
-
-//begin: messages types widgets setting
-	int 	messages=g_main_log.filter.get_messages();
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_LocalMsgBtn);
-	// now tmp_widget_pointer point to  ABN_LocalMsgBtn instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get LocalMsgBtn for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			long widget_flags;
-			PtGetResource (tmp_widget_pointer, Pt_ARG_FLAGS, &widget_flags,0);
-			(messages||log_filter::MSG_LOCAL)?
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & Pt_SET), 0) :
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & ~Pt_SET), 0);
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_BlockMsgBtn);
-	// now tmp_widget_pointer point to  ABN_BlockMsgBtn instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get BlockMsgBtn for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			long widget_flags;
-			PtGetResource (tmp_widget_pointer, Pt_ARG_FLAGS, &widget_flags,0);
-			(messages||log_filter::MSG_BLOCK)?
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & Pt_SET), 0) :
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & ~Pt_SET), 0);
-
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_SysMsgBtn);
-	// now tmp_widget_pointer point to  ABN_SysMsgBtn instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get SysMsgBtn for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			long widget_flags;
-			PtGetResource (tmp_widget_pointer, Pt_ARG_FLAGS, &widget_flags,0);
-			(messages||log_filter::MSG_SYSTEM)?
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & Pt_SET), 0) :
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & ~Pt_SET), 0);
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_AlertMsgBtn);
-	// now tmp_widget_pointer point to  ABN_AlertMsgBtn instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get AlertMsgBtn for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			long widget_flags;
-			PtGetResource (tmp_widget_pointer, Pt_ARG_FLAGS, &widget_flags,0);
-			(messages||log_filter::MSG_ALERT)?
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & Pt_SET), 0) :
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & ~Pt_SET), 0);
-		};
-// end: messages types widgets setting
-
-//begin: timerange widgets settings
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_CalendarStart); 
-	// now tmp_widget_pointer point to  ABN_CalendarStart instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get CalendarStart for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-		time_t tmp_time=g_main_log.filter.get_start_time();
-		struct tm cur_time_tm;
-		if (tmp_time==0)
-			{
-			tmp_time=time(NULL);
-			};
-		localtime_r(&tmp_time, &cur_time_tm);
-		PtSetResource(tmp_widget_pointer, Pt_ARG_CALENDAR_TIME_T, tmp_time, 0);
-		tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StartHourNumeric); 
-		// now tmp_widget_pointer point to  ABN_StartHourNumeric instance in window
-		if (tmp_widget_pointer==NULL) 
-			{
-				string mess ="Can`t get StartHourNumeric for filter window";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				return( Pt_END );
-			} else {
-				PtSetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_VALUE, cur_time_tm.tm_hour, 0);
-			};
-		PtSetResource(tmp_widget_pointer, Pt_ARG_CALENDAR_TIME_T, tmp_time, 0);
-		tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StartMinNumeric); 
-		// now tmp_widget_pointer point to  ABN_StartHourNumeric instance in window
-		if (tmp_widget_pointer==NULL) 
-			{
-				string mess ="Can`t get StartMinNumeric for filter window";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				return( Pt_END );
-			} else {
-				PtSetResource(tmp_widget_pointer,  Pt_ARG_NUMERIC_VALUE, cur_time_tm.tm_min, 0);
-			};
-		};
-		
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_CalendarEnd);
-	// now tmp_widget_pointer point to  ABN_CalendarEnd instance in window
-	if (tmp_widget_pointer!=NULL) 
-		{
-			string mess ="Can`t get CalendarEnd for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-		time_t tmp_time=g_main_log.filter.get_stop_time();
-		struct tm cur_time_tm;
-		if (tmp_time==0)
-			{
-			tmp_time=time(NULL);
-			};
-		localtime_r(&tmp_time, &cur_time_tm);
-		PtSetResource(tmp_widget_pointer, Pt_ARG_CALENDAR_TIME_T, tmp_time, 0);
-		
-		tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_EndHourNumeric); 
-		// now tmp_widget_pointer point to  ABN_EndHourNumeric instance in window
-		if (tmp_widget_pointer==NULL) 
-			{
-				string mess ="Can`t get EndHourNumeric for filter window";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				return( Pt_END );
-			} else {
-				PtSetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_VALUE, cur_time_tm.tm_hour, 0);
-			};
-		PtSetResource(tmp_widget_pointer, Pt_ARG_CALENDAR_TIME_T, tmp_time, 0);
-		
-		tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_EndMinNumeric); 
-		// now tmp_widget_pointer point to  ABN_EndMinNumeric instance in window
-		if (tmp_widget_pointer==NULL) 
-			{
-				string mess ="Can`t get EndMinNumeric for filter window";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				return( Pt_END );
-			} else {
-				PtSetResource(tmp_widget_pointer,  Pt_ARG_NUMERIC_VALUE, cur_time_tm.tm_min, 0);
-			};
-		};
-
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_AllTimeRangeBtn);
-	// now tmp_widget_pointer point to  ABN_AllTimeRangeBtn instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get AllTimeRangeBtn for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			long widget_flags;
-			PtGetResource (tmp_widget_pointer, Pt_ARG_FLAGS, &widget_flags,0);
-			(g_main_log.filter.get_all_times()==0)?
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & Pt_SET), 0) :
-								PtSetResource(tmp_widget_pointer, Pt_ARG_FLAGS, (widget_flags & ~Pt_SET), 0);
-		};
-
-//end: time range widgets settings
 
 	return( Pt_CONTINUE );
 	}
-
-
-int
-realize_filter_dlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-
-	return( Pt_CONTINUE );
-
-	}
-
 
 
 int
 activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
-		vector<PtArg_t>	args;
-		time_t*		date;
-		int				elapsed = 0;
-		int station_index;
-		string	message = "Внимание! В журнале включен фильт ообщений";
+	string	message = "Внимание! В журнале включен фильт ообщений";
+
+	log_records_container* ptr_log_rec_cont=NULL;
+	PtWidget_t  *dialog_widget=NULL, *tmp_widget=NULL;
+	
+	dialog_widget=ApGetInstance(widget);
+	if (dialog_widget==NULL)
+		{
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABM_LogFilterDlg"));
+		return( Pt_END );		
+		}
+
+	PtGetResource(dialog_widget, Pt_ARG_POINTER, &ptr_log_rec_cont, 0);
+
+
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_FilteringBtn);
+	if (tmp_widget!=NULL)
+		{
+				long flags;
+				long const *internal_flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+				flags=*internal_flags;
+				ptr_log_rec_cont->set_filtering((flags & Pt_SET)!=0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_FilteringBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(dialog_widget, ABN_AllTimeRangeBtn);
+	if (tmp_widget!=NULL)
+		{
+				long flags;
+				long const *internal_flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &internal_flags, 0);				
+				flags=*internal_flags;
+				ptr_log_rec_cont->filter.set_all_times((flags & Pt_SET)!=0);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllTimeRangeBtn"));
+		}
+
+		
 /*
+
+		log_records_container* log_rec_cont;
+		PtWidget_t *window_wgt = ApGetInstance( widget );
+		PtGetResource(window_wgt, Pt_ARG_POINTER, &log_rec_cont, 0);				
+	
+		if(log_rec_cont==NULL) 	
+			{
+				g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t get log_rec_container for ABN_LogFilterDlg1"));
+				return(Pt_END );
+			}
+
+		PtWidget_t *tmp_widget=ApGetWidgetPtr(window_wgt, ABN_FilteringBtn);
+		if( tmp_widget!=NULL) 
+			{
+				long flags;
+				PtGetResource(tmp_widget, Pt_ARG_FLAGS, &flags, 0);				
+				log_rec_cont->set_filtering((flags & Pt_SET)!=0);
+
+			}else {
+				g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t get instansed widget for ABN_FilteringBtn"));
+				return(Pt_END );
+			}
+
+
+
 		g_logFilter.set_station_index(get_widget_scalar(ABW_StationList, Pt_ARG_CBOX_SEL_ITEM) - 1);
 		
 		PtSetArg(&args[0], Pt_ARG_FLAGS, 0, 0);
@@ -620,330 +458,68 @@ activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 	}
 
 int
-combobox_close_StationList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-
-	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer, *widget_tree_cursor;
-	int tree_return_value, first_escalators_in_station=1, count_escalators_in_station=0;	
-	unsigned short index;
-	long new_state_widgets_flag=0, widget_flags;
-	
-	filter_dlg_wnd=ApGetInstance(	widget);
-	if (filter_dlg_wnd==NULL) {
-		string mess ="Can`t get filter window";
-		g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-		return( Pt_END );
-	};
-	
-	PtGetResource(widget, Pt_ARG_CBOX_SEL_ITEM, &index, 0);
-	// indexes of combo box items begining at 1  and item number 1 that is "All stations"
-	if (index<2 || index>g_stations.size())
-			{
-				  new_state_widgets_flag=Pt_GHOST  | Pt_BLOCKED;
-	 		 } else {
-				metro_stations_container::iterator_metro_stations iter_stat=g_stations.begin();
-				advance(iter_stat, index-2);
-
-	 		 	count_escalators_in_station=iter_stat->second.size_escalators_id();
-				new_state_widgets_flag=~Pt_GHOST & ~Pt_BLOCKED;  	 
-			};
-
-	if (first_escalators_in_station>count_escalators_in_station)  first_escalators_in_station=count_escalators_in_station;
-
-	vector<PtArg_t> args(2);
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_OneEscalatorNumeric);
-	// now tmp_widget_pointer point to  ABN_OneEscalatorNumeric instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get OneEscalatorNumeric for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, &first_escalators_in_station, 0);
-			PtSetArg(&args[1], Pt_ARG_NUMERIC_MAX, &count_escalators_in_station, 0);
-
-			PtSetResources (tmp_widget_pointer, args.size(), &args[0]);
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_RangeStartNumeric);
-	// now tmp_widget_pointer point to  ABN_RangeStartNumeric instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get RangeStartNumeric for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, &first_escalators_in_station, 0);
-			PtSetArg(&args[1], Pt_ARG_NUMERIC_MAX, &count_escalators_in_station, 0);
-
-			PtSetResources (tmp_widget_pointer, args.size(), &args[0]);
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_RangeEndNumeric);
-	// now tmp_widget_pointer point to  ABN_RangeEndNumeric instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get RangeEndNumeric for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			PtSetArg(&args[0], Pt_ARG_NUMERIC_VALUE, &first_escalators_in_station, 0);
-			PtSetArg(&args[1], Pt_ARG_NUMERIC_MAX, &count_escalators_in_station, 0);
-
-			PtSetResources (tmp_widget_pointer, args.size(), &args[0]);
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StationEscalatorsPanel);
-	// now tmp_widget_pointer point to  ABN_StationEscalatorsPanel instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get StationEscalatorsPanel for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-			widget_tree_cursor=tmp_widget_pointer;
-			tree_return_value=Pt_TRAVERSE_START;
-
-			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
-																			&widget_tree_cursor,
-																			tree_return_value ) 
-						) !=Pt_TRAVERSE_DONE)
-			{
-			PtGetResource (widget_tree_cursor, Pt_ARG_FLAGS, &widget_flags,0);
-			PtSetResource(widget_tree_cursor, Pt_ARG_FLAGS, (widget_flags & new_state_widgets_flag), 0);
-     		};
-
-		};
-	
-	return( Pt_CONTINUE );
-	}
-
-
-int
-activate_AllRangeBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
-	{
-		unsigned short index;
-		PtWidget_t *filter_dlg_wnd, *tmp_widget_pointer;
-		int first_escalators_in_station=1, count_escalators_in_station=0;	
-		
-		filter_dlg_wnd=ApGetInstance(widget);
-
-		if (filter_dlg_wnd==NULL) {
-			string mess ="Can`t get filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-			};
-
-		tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StationList);
-		// now tmp_widget_pointer point to  ABN_StationList instance in window
-		if (tmp_widget_pointer==NULL) 
-			{
-				string mess ="Can`t get StationList for filter window";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				return( Pt_END );
-			} else {
-							
-				PtGetResource(tmp_widget_pointer, Pt_ARG_CBOX_SEL_ITEM, &index, 0);
-
-				tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_RangeStartNumeric);
-				// now tmp_widget_pointer point to  ABN_RangeStartNumeric instance in window
-				if (tmp_widget_pointer==NULL) 
-				{
-					string mess ="Can`t get RangeStartNumeric for filter window";
-					g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-					return( Pt_END );
-				} else {
-					PtGetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_MAX, &count_escalators_in_station, 0);
-					if (first_escalators_in_station>count_escalators_in_station) first_escalators_in_station=count_escalators_in_station;
-					PtSetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_VALUE, &first_escalators_in_station, 0);
-				};
-
-				tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_RangeEndNumeric);
-				// now tmp_widget_pointer point to  ABN_RangeEndNumeric instance in window
-				if (tmp_widget_pointer==NULL) 
-				{
-					string mess ="Can`t get RangeEndNumeric for filter window";
-					g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-					return( Pt_END );
-				} else {
-					PtGetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_MAX, &count_escalators_in_station, 0);
-					PtSetResource(tmp_widget_pointer, Pt_ARG_NUMERIC_VALUE, &count_escalators_in_station, 0);
-				};
-			};
-		
-	return( Pt_CONTINUE );
-
-	}
-
-
-int
-activate_ResetFilter( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-	string message("Фильтр сообщений выключен");
-	vector<PtArg_t>	args(2);
-	
-	g_main_log.filter.set_filter_off();
-
-	PtSetArg(&args[0], Pt_ARG_TEXT_STRING,  message.c_str(), 0);
-	PtSetArg(&args[1], Pt_ARG_COLOR,  Pg_BLACK, 0);	
-	PtSetResources(ABW_log_status, args.size(), &args[0]);
-
-	return( Pt_CONTINUE );
-	}
-
-
-int
-activate_EscalatorsGroup( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-	enum { SINGLE_ESCALATOR=0,
-				RANGE_ESCALATORS
-				};
-	
-	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer, *widget_tree_cursor;
-	int index, tree_return_value;	
-	long widget_flags, range_widgets_flag, single_widgets_flag;
-	
-	filter_dlg_wnd=ApGetInstance(	widget);
-	if (filter_dlg_wnd==NULL) {
-		string mess ="Can`t get filter window";
-		g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-		return( Pt_END );
-	};
-	
-	PtGetResource(widget, Pt_ARG_USER_DATA, &index, 0);
-	
-	switch (index)
-	{
-		case RANGE_ESCALATORS:
-			range_widgets_flag=~Pt_GHOST & ~Pt_BLOCKED;
-			single_widgets_flag=Pt_GHOST  | Pt_BLOCKED;
-			break;
-		case SINGLE_ESCALATOR:		
-		default:
-			range_widgets_flag=Pt_GHOST  | Pt_BLOCKED;
-			single_widgets_flag=~Pt_GHOST & ~Pt_BLOCKED;
-			break;
-	};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_SingleEscalatorsGroup);
-	// now tmp_widget_pointer point to  ABN_SingleEscalatorsGroup instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get SingleEscalatorsGroup for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-
-			widget_tree_cursor=tmp_widget_pointer;
-			tree_return_value=Pt_TRAVERSE_START;
-
-			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
-																			&widget_tree_cursor,
-																			tree_return_value ) 
-						) !=Pt_TRAVERSE_DONE)
-			{
-			PtGetResource (widget_tree_cursor, Pt_ARG_FLAGS, &widget_flags,0);
-			PtSetResource(widget_tree_cursor, Pt_ARG_FLAGS, (widget_flags & single_widgets_flag), 0);
-     		};
-
-		};
-
-	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_RangeEscalatorsGroup);
-	// now tmp_widget_pointer point to  ABN_RangeEscalatorsGroup instance in window
-	if (tmp_widget_pointer==NULL) 
-		{
-			string mess ="Can`t get RangeEscalatorsGroup for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_END );
-		} else {
-
-			widget_tree_cursor=tmp_widget_pointer;
-			tree_return_value=Pt_TRAVERSE_START;
-
-			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
-																			&widget_tree_cursor,
-																			tree_return_value ) 
-						) !=Pt_TRAVERSE_DONE)
-			{
-			PtGetResource (widget_tree_cursor, Pt_ARG_FLAGS, &widget_flags,0);
-			PtSetResource(widget_tree_cursor, Pt_ARG_FLAGS, (widget_flags & range_widgets_flag), 0);
-     		};
-
-		};
-
-
-	return( Pt_CONTINUE );
-	}
-
-
-int
 activate_AllTimeRangeBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	
+
 	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer, *widget_tree_cursor;
 	int tree_return_value;	
-	long widget_flags, new_state_widgets_flag=0;
+	vector<PtArg_t> args(2);
 	
 	filter_dlg_wnd=ApGetInstance(	widget);
 	if (filter_dlg_wnd==NULL) {
-		string mess ="Can`t get filter window";
-		g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string ("Can`t get pointer to LogFilterDlg"));
 		return( Pt_END );
 	};
 	
-	PtGetResource(widget, Pt_ARG_FLAGS, &widget_flags, 0);
+	PtBasicCallback_t *tmp_cbdata=static_cast<PtBasicCallback_t*>(cbinfo->cbdata);
+		
+	if (static_cast<long>(tmp_cbdata->value) !=0)	 //previos state
+	 {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+	} else {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+	};
 	
-	if (widget_flags & Pt_SET)
-			{ new_state_widgets_flag=(Pt_GHOST  | Pt_BLOCKED);}
-			else 
-			{new_state_widgets_flag=(~Pt_GHOST & ~Pt_BLOCKED);};
-	
-
 	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StartTimePanel);
 	// now tmp_widget_pointer point to  ABN_StartTimePanel instance in window
 	if (tmp_widget_pointer==NULL) 
 		{
-			string mess ="Can`t get StartTimePanel for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get StartTimePanel for LogFilterDlg window"));
 			return( Pt_END );
 		} else {
-
 			widget_tree_cursor=tmp_widget_pointer;
 			tree_return_value=Pt_TRAVERSE_START;
-
+			
+			PtSetResources(widget_tree_cursor, args.size(), &args[0]);
 			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
 																			&widget_tree_cursor,
 																			tree_return_value ) 
 						) !=Pt_TRAVERSE_DONE)
 			{
-			PtGetResource (widget_tree_cursor, Pt_ARG_FLAGS, &widget_flags,0);
-			PtSetResource(widget_tree_cursor, Pt_ARG_FLAGS, (widget_flags & new_state_widgets_flag), 0);
+				PtSetResources(widget_tree_cursor, args.size(), &args[0]);
      		};
 
 		};
 
-
 	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_EndTimePanel);
-	// now tmp_widget_pointer point to  ABN_EndTimePanel instance in window
+	// now tmp_widget_pointer point to  ABN_StartTimePanel instance in window
 	if (tmp_widget_pointer==NULL) 
 		{
-			string mess ="Can`t get EndTimePanel for filter window";
-			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get EndTimePanel for LogFilterDlg window"));
 			return( Pt_END );
 		} else {
-
 			widget_tree_cursor=tmp_widget_pointer;
 			tree_return_value=Pt_TRAVERSE_START;
-
+			
+			PtSetResources(widget_tree_cursor, args.size(), &args[0]);
 			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
 																			&widget_tree_cursor,
 																			tree_return_value ) 
 						) !=Pt_TRAVERSE_DONE)
 			{
-			PtGetResource (widget_tree_cursor, Pt_ARG_FLAGS, &widget_flags,0);
-			PtSetResource(widget_tree_cursor, Pt_ARG_FLAGS, (widget_flags & new_state_widgets_flag), 0);
+				PtSetResources(widget_tree_cursor, args.size(), &args[0]);
      		};
 
 		};
@@ -1109,10 +685,25 @@ RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
  	g_main_log.load(g_system_settings.get_main_log_name());
 	
 	// добавляем сообщение
+	int msg_id=msg_dict_container::MSG_PROGRAM_STARTED;	
+	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg_id);
+	if(tmp_msg_iter==g_msgDictionary.end())
+			{
+				vector<char> tmp_chars(10);
+				string mess("Not found message id ");
+				itoa(msg_id, &tmp_chars[0], 10);
+				mess +=&tmp_chars[0];
+
+				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+				return false;
+		};
+	int msg_type=tmp_msg_iter->second.get_type();
+	
  	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1); 
 	g_main_log.insert(log_record (
 												 g_main_log.get_records_autoincrement(),
-												 143, //	message_id  Program started
+												 msg_id, //	message_id  Program started
+												 msg_type, //	message_type
 												 0, // station_id -  broadcast
 												 0, // device_id -  broadcast
 												 time(NULL)
@@ -1126,23 +717,34 @@ RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 int
 CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
-
 	g_system_settings.set_main_window(NULL);
 
 	// добавляем сообщение
-	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1);
+	int msg_id=msg_dict_container::MSG_PROGRAM_CLOSED;	
+	msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg_id);
+	if(tmp_msg_iter==g_msgDictionary.end())
+			{
+				vector<char> tmp_chars(10);
+				string mess("Not found message id ");
+				itoa(msg_id, &tmp_chars[0], 10);
+				mess +=&tmp_chars[0];
+
+				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+				return false;
+		};
+	int msg_type=tmp_msg_iter->second.get_type();
+	
+ 	g_main_log.set_records_autoincrement(g_main_log.get_records_autoincrement()+1); 
 	g_main_log.insert(log_record (
 												 g_main_log.get_records_autoincrement(),
-												 143, //	message_id Program closed
+												 msg_id, //	message_id  Program started
+												 msg_type, //	message_type
 												 0, // station_id -  broadcast
 												 0, // device_id -  broadcast
 												 time(NULL)
 												)
 							);
-
-
 
 	return( Pt_CONTINUE );
 
@@ -1550,7 +1152,7 @@ SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 			itoa(escalator_id, &tmp_chars[0], 10);
 			mess+=&tmp_chars[0];
 			g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-			return( Pt_HALT );
+			return( Pt_END );
 
 		};
 
@@ -1705,11 +1307,8 @@ RealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *c
 			if (iter_types!=g_metro_escalator_types.end()) 
 				{
 				PtWidget_t* panelTabs = ApGetWidgetPtr(widget, ABN_SignalPanel);
-				
-				for ( metro_escalator_type::iterator_blocks iter_blocks=iter_types->second.blocks_begin();
-						iter_blocks!=iter_types->second.blocks_end();
-						iter_blocks++)
-						iter_blocks->second.create_panel(panelTabs);
+				iter_types->second.create_panels(panelTabs,
+									&g_system_settings);
 						
 				}; //if (iter_types!...
 			
@@ -1751,6 +1350,397 @@ PopupControlMenu( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 			ApCreateModule(ABM_EscalatorMenu, widget, cbinfo);
 			}
 	}
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	PtCallbackInfo_t clbc_info;
+	clbc_info.cbdata=&g_main_log;
+	PtWidget_t *wnd= ApCreateModule( ABM_LogFilterDlg, NULL, &clbc_info);
+	if (wnd!=NULL)
+		{
+			g_main_log.set_widget(wnd);
+//			PtRealizeWidget(wnd);			
+
+		} else {
+			g_system_settings.sys_message (system_settings::ERROR_MSG, string("Can`t ApCreateModule ABM_LogFilterDlg"));	
+		};
+
+	return( Pt_CONTINUE );
+
+	}
+
+int
+link_setup_LogFilterDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	log_records_container* ptr_log_rec_cont=NULL;
+	ptr_log_rec_cont=static_cast<log_records_container*>(cbinfo->cbdata);
+	PtWidget_t *tmp_widget=NULL;
+
+	if (ptr_log_rec_cont==NULL)
+	 {
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to log_records_container"));
+		return( Pt_END );
+	}
+	PtSetResource(link_instance, Pt_ARG_POINTER, ptr_log_rec_cont, 0);
+	
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_FilteringBtn);
+	if (tmp_widget!=NULL)
+		{
+
+			if (ptr_log_rec_cont->filter.is_filter_on())
+				{
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+				
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_FilteringBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_AllTimeRangeBtn);
+	if (tmp_widget!=NULL)
+		{
+			PtCallbackInfo_t cbinfo_actvate;
+			PtBasicCallback_t cbdata_actvate;
+			int toggle_state;
+
+			if (ptr_log_rec_cont->filter.get_all_times())
+				{
+		 			toggle_state=1;
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+		 			toggle_state=0;
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+			
+			cbdata_actvate.value=toggle_state;
+			cbinfo_actvate.cbdata=&cbdata_actvate;
+			activate_AllTimeRangeBtn( tmp_widget, NULL, &cbinfo_actvate);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllTimeRangeBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_AllMessagesTypesBtn);
+	if (tmp_widget!=NULL)
+		{
+			PtCallbackInfo_t cbinfo_actvate;
+			PtBasicCallback_t cbdata_actvate;
+			int toggle_state;
+			if (ptr_log_rec_cont->filter.get_all_msg_types())
+				{
+		 			toggle_state=1;
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+		 			toggle_state=0;
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+				
+			cbdata_actvate.value=toggle_state;
+			cbinfo_actvate.cbdata=&cbdata_actvate;
+			activate_AllMessagesTypesBtn( tmp_widget, NULL, &cbinfo_actvate);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllMessagesTypesBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_AllStationsBtn);
+	if (tmp_widget!=NULL)
+		{
+			PtCallbackInfo_t cbinfo_actvate;
+			PtBasicCallback_t cbdata_actvate;
+			int toggle_state;
+
+			if (ptr_log_rec_cont->filter.get_all_stations())
+				{
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+
+			cbdata_actvate.value=toggle_state;
+			cbinfo_actvate.cbdata=&cbdata_actvate;
+			activate_AllStationsBtn( tmp_widget, NULL, &cbinfo_actvate);
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllStationsBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_AllDevicesBtn);
+	if (tmp_widget!=NULL)
+		{
+			PtCallbackInfo_t cbinfo_actvate;
+			PtBasicCallback_t cbdata_actvate;
+			int toggle_state;
+		
+			if (ptr_log_rec_cont->filter.get_all_devices())
+				{
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
+				} else {
+					PtSetResource(tmp_widget, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET); 
+				};
+	
+			cbdata_actvate.value=toggle_state;
+			cbinfo_actvate.cbdata=&cbdata_actvate;
+			activate_AllStationsBtn( tmp_widget, NULL, &cbinfo_actvate);
+
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_AllDevicesBtn"));
+		}
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_MessagesTypesList);
+	if (tmp_widget!=NULL)
+		{
+		if (!g_msg_types.empty())
+			{
+					vector<unsigned short> indexes_of_selected_items;
+					const char* list_items[1];
+					indexes_of_selected_items.reserve(ptr_log_rec_cont->filter.msg_types_size());
+					unsigned short current_index=1;
+					msg_types_container::msg_types_iterator tmp_iter=g_msg_types.begin();
+	
+					while (tmp_iter!=g_msg_types.end())
+					{
+					list_items[0]=tmp_iter->second.get_type_description().c_str();
+
+					PtListAddItems( tmp_widget,
+								             list_items,
+								             1,
+									         0);
+					
+					if (ptr_log_rec_cont->filter.msg_types_end()!=
+						ptr_log_rec_cont->filter.find_msg_type(tmp_iter->second.get_type_id()))
+						{
+							indexes_of_selected_items.push_back(current_index);
+						};
+			
+					current_index++;
+					tmp_iter++;
+					}
+
+					if (! indexes_of_selected_items.empty())
+						{									       
+							PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, &indexes_of_selected_items[0], indexes_of_selected_items.size()); 
+						} else {
+							PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, NULL, 0); 
+						};
+
+			};
+
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_MessagesTypesList"));
+		}
+
+
+	tmp_widget=ApGetWidgetPtr(link_instance, ABN_StationsList);
+	if (tmp_widget!=NULL)
+		{
+		if (!g_stations.empty())
+			{
+					vector<unsigned short> indexes_of_selected_items;
+					const char* list_items[1];
+					indexes_of_selected_items.reserve(ptr_log_rec_cont->filter.stations_size());
+					unsigned short current_index=1;
+					metro_stations_container::iterator_metro_stations tmp_iter=g_stations.begin();
+	
+					while (tmp_iter!=g_stations.end())
+					{
+					list_items[0]=tmp_iter->second.get_c_name_string();
+
+					PtListAddItems( tmp_widget,
+								             list_items,
+								             1,
+									         0);
+					
+					if (ptr_log_rec_cont->filter.msg_types_end()!=
+						ptr_log_rec_cont->filter.find_msg_type(tmp_iter->second.get_id()))
+						{
+							indexes_of_selected_items.push_back(current_index);
+						};
+			
+					current_index++;
+					tmp_iter++;
+					}
+
+					if (! indexes_of_selected_items.empty())
+						{									       
+							PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, &indexes_of_selected_items[0], indexes_of_selected_items.size()); 
+						} else {
+							PtSetResource(tmp_widget, Pt_ARG_SELECTION_INDEXES, NULL, 0); 
+						};
+
+			};
+
+
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to instanse of ABN_StationsList"));
+		}
+
+
+
+	return( Pt_CONTINUE );
+	}
+
+
+int
+unrealized_LogFilterDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+	{
+	log_records_container* ptr_log_rec_cont=NULL;
+    
+	PtGetResource(widget, Pt_ARG_POINTER, &ptr_log_rec_cont, 0);
+
+	if (ptr_log_rec_cont!=NULL)
+		{
+			ptr_log_rec_cont->set_widget(NULL);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Not found ponter to log_records_container"));
+		}
+
+
+	return( Pt_CONTINUE );
+	}
+
+
+int
+activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+
+	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer, *widget_tree_cursor;
+	int tree_return_value;	
+	vector<PtArg_t> args(2);
+	
+	filter_dlg_wnd=ApGetInstance(	widget);
+	if (filter_dlg_wnd==NULL) {
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string ("Can`t get pointer to LogFilterDlg"));
+		return( Pt_END );
+	};
+	
+	PtBasicCallback_t *tmp_cbdata=static_cast<PtBasicCallback_t*>(cbinfo->cbdata);
+		
+	if (static_cast<long>(tmp_cbdata->value) !=0)	 //previos state
+	 {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+	} else {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+	};
+	
+	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_StationsList);
+	if (tmp_widget_pointer==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get StationsList for LogFilterDlg window"));
+			return( Pt_END );
+		} else {
+				PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
+		};
+
+	
+	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_DevicesPane);
+	// now tmp_widget_pointer point to  ABN_DevicesPane instance in window
+	if (tmp_widget_pointer==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get DevicesPane for LogFilterDlg window"));
+			return( Pt_END );
+		} else {
+			widget_tree_cursor=tmp_widget_pointer;
+			tree_return_value=Pt_TRAVERSE_START;
+			PtSetResources(widget_tree_cursor, args.size(), &args[0]);
+			while( ( tree_return_value=PtWidgetTree( tmp_widget_pointer,
+																			&widget_tree_cursor,
+																			tree_return_value ) 
+						) !=Pt_TRAVERSE_DONE)
+			{
+				PtSetResources(widget_tree_cursor, args.size(), &args[0]);
+     		};
+
+		};
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer;
+	vector<PtArg_t> args(2);
+	
+	filter_dlg_wnd=ApGetInstance(	widget);
+	if (filter_dlg_wnd==NULL) {
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string ("Can`t get pointer to LogFilterDlg"));
+		return( Pt_END );
+	};
+	
+	PtBasicCallback_t *tmp_cbdata=static_cast<PtBasicCallback_t*>(cbinfo->cbdata);
+		
+	if (static_cast<long>(tmp_cbdata->value) !=0)	 //previos state
+	 {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+	} else {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+	};
+	
+	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_DevicesList);
+	if (tmp_widget_pointer==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get DevicesList for LogFilterDlg window"));
+			return( Pt_END );
+		} else {
+			PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
+		};
+
+	return( Pt_CONTINUE );
+
+	}
+
+
+int
+activate_AllMessagesTypesBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	PtWidget_t   *filter_dlg_wnd, *tmp_widget_pointer;
+	vector<PtArg_t> args(2);
+	
+	filter_dlg_wnd=ApGetInstance(	widget);
+	if (filter_dlg_wnd==NULL) {
+		g_system_settings.sys_message(system_settings::ERROR_MSG, string ("Can`t get pointer to LogFilterDlg"));
+		return( Pt_END );
+	};
+	
+	PtBasicCallback_t *tmp_cbdata=static_cast<PtBasicCallback_t*>(cbinfo->cbdata);
+		
+	if (static_cast<long>(tmp_cbdata->value) !=0)	 //previos state
+	 {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
+	} else {
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+	};
+	
+	tmp_widget_pointer=ApGetWidgetPtr(filter_dlg_wnd, ABN_MessagesTypesList);
+	if (tmp_widget_pointer==NULL) 
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, string("Can`t get MessagesTypesList for LogFilterDlg window"));
+			return( Pt_END );
+		} else {
+			PtSetResources(tmp_widget_pointer, args.size(), &args[0]);
+		};
 
 	return( Pt_CONTINUE );
 

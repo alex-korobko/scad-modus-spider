@@ -231,7 +231,7 @@ int metro_escalator::update_leds()
 	{
 	PtArg_t arg;
 
-	if (g_system_settings.get_paneled_escalator_id()==this->get_id()
+	if (sys_sett_obj->get_paneled_escalator_id()==this->get_id()
 		&& !g_metro_escalator_types.empty())
 	{
 		esc_types_container::iterator_esc_types iter_type;
@@ -244,11 +244,32 @@ int metro_escalator::update_leds()
 						iter_block!=iter_type->second.blocks_end();
 						iter_block++)
 				{
-					escalator_block::iterator_signals iter_signal;	
-					for (iter_signal=iter_block->second.signals_begin();
-							iter_signal!=iter_block->second.signals_end();
-							iter_signal++)
+					metro_escalator_type::iterator_signals iter_signal;	
+					escalator_block::iterator_signals_id iter_signals_id;
+					for (iter_signals_id=iter_block->second.signals_id_begin();
+							iter_signals_id!=iter_block->second.signals_id_end();
+							iter_signals_id++)
 							{
+							iter_signal=iter_type->second.signals_find(*iter_signals_id);
+							
+							if (iter_signal==iter_type->second.signals_end()) 
+								{
+								vector<char> tmp_chars(5);
+								string mess = "Not found signal ";
+								itoa(iter_signal->second.get_index(), &tmp_chars[0] , 10);
+								mess+=&tmp_chars[0]; 
+								mess+=" in block ";
+								itoa(iter_block->first, &tmp_chars[0] , 10);
+								mess+=&tmp_chars[0]; 
+								mess+=" escalator ";
+								itoa(this->get_id(), &tmp_chars[0] , 10);
+								mess+=&tmp_chars[0]; 
+								
+							 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
+											mess);
+								return 0;			
+								};
+								
 							if (iter_signal->second.get_led()==NULL) 
 								{
 								vector<char> tmp_chars(5);
@@ -262,7 +283,7 @@ int metro_escalator::update_leds()
 								itoa(this->get_id(), &tmp_chars[0] , 10);
 								mess+=&tmp_chars[0]; 
 								
-						 		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+						 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
 								mess);
 								return 0;			
 								} 
@@ -273,20 +294,20 @@ int metro_escalator::update_leds()
 							switch(signal)
 								{	
 								case 0:
-								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREEN_LED), 0);
+								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::BLOCK_GREEN_LED), 0);
 								break;
 								
 								case 1:
- 								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_BLUE_LED), 0);
+ 								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::BLOCK_BLUE_LED), 0);
 								break;
 								
 								case 2:
-								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_RED_LED), 0);
+								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::BLOCK_RED_LED), 0);
 								break;
 
 								case 4:
 								default:				
- 								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::BLOCK_GREY_LED), 0);
+ 								PtSetArg(&arg, Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::BLOCK_GREY_LED), 0);
 								break;				
 								}			
 							PtSetResources(iter_signal->second.get_led(), 1, &arg);		
@@ -294,7 +315,7 @@ int metro_escalator::update_leds()
 							}//for (iter_signal=it
 				}//for (iter_block=
 			}  else { //if (iter_type!=..
-	 		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+	 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
 			string ("metro_escalator::update_leds  - escalator types empty"));
 			return(0);};
 	}
@@ -307,6 +328,10 @@ void metro_escalator::update_escalator()
    	{
 	vector<PtArg_t> args(2);
 
+	
+	if (this->get_block_label_widget()==NULL ||
+		this->get_arrow_label_widget()==NULL) return;
+
 	if (this->get_enabled()== system_settings::ENABLED)
 	{
 		if (this->get_online() == system_settings::ONLINE)
@@ -318,6 +343,7 @@ void metro_escalator::update_escalator()
 			 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "БЛОК", 0);			
 			 	PtSetArg(&args[1], Pt_ARG_INLINE_COLOR, system_settings::BLOCK_COLOR, 0);			
 			};
+	
 
  		PtSetResources(this->get_block_label_widget(), args.size(), &args[0]);			
  		
@@ -327,119 +353,120 @@ void metro_escalator::update_escalator()
 				{		
 					case system_settings::STATE_UP_MAIN_DRIVE:
 					case system_settings::STATE_UP_SMALL_DRIVE:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREEN_UP), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREEN_UP), 0);
 						break;
 					case system_settings::STATE_STOP:
 
 						if (this->get_pref_direction() == system_settings::DIRECTION_UP) {
 								if (this->get_ready()!=system_settings::STATE_NOT_READY) {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_UP), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_UP), 0);
 								} else {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_UP), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_UP), 0);
 								};
 					    } else if (this->get_pref_direction() ==  system_settings::DIRECTION_DOWN) {
 								if (dataBlock.ready!=system_settings::STATE_NOT_READY) {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_DOWN), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_DOWN), 0);
 								} else {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_DOWN), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_DOWN), 0);
 								};
 					  	} else if (this->get_pref_direction() ==  system_settings::DIRECTION_REVERSE) {
 							if (this->get_direction() == system_settings::DIRECTION_UP)
 								{
 									if (this->get_ready()!=system_settings::STATE_NOT_READY) {
-									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_UP), 0);
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_UP), 0);
 									} else {
-									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_UP), 0);
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_UP), 0);
 									};
 								} else if (this->get_direction() == system_settings::DIRECTION_DOWN) {
 									if (this->get_ready()!=system_settings::STATE_NOT_READY) {
-									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_DOWN), 0);
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_DOWN), 0);
 									} else {
-									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_DOWN), 0);
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_DOWN), 0);
 									};
 								} else {
-									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0); 
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0); 
 								};
 						} else {
-							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 						};
 						break;
 					case system_settings::STATE_DOWN_MAIN_DRIVE:
 					case system_settings::STATE_DOWN_SMALL_DRIVE:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREEN_DOWN), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREEN_DOWN), 0);
 						break;
 					default:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 				} // switch(this->get_status())
 			} 	else {
 				switch(this->get_status())
 				{		
 					case system_settings::STATE_UP_MAIN_DRIVE:
 					case system_settings::STATE_UP_SMALL_DRIVE:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREEN_S_UP), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREEN_S_UP), 0);
 						break;
 
 					case system_settings::STATE_STOP:
 						if (this->get_pref_direction() == system_settings::DIRECTION_UP)
 							{					
 								if (this->get_ready()!=system_settings::STATE_NOT_READY) {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_S_UP), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_S_UP), 0);
 								} else {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_S_UP), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_S_UP), 0);
 								};
 							} else if (this->get_pref_direction() == system_settings::DIRECTION_DOWN) {
 								if (this->get_ready()!=system_settings::STATE_NOT_READY) {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_S_DOWN), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_S_DOWN), 0);
 								} else {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_S_DOWN), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_S_DOWN), 0);
 								};
 							} else if (this->get_pref_direction() ==  system_settings::DIRECTION_REVERSE) 	{
 								if (this->get_direction() == system_settings::DIRECTION_UP)
 									{
 										if (this->get_ready()!=system_settings::STATE_NOT_READY) 
 											{
-											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_S_UP), 0);
+											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_S_UP), 0);
 											} else {
-											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_S_UP), 0);
+											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_S_UP), 0);
 											};
 									} else if (this->get_direction() == system_settings::DIRECTION_DOWN) {
 										if (this->get_ready()!=system_settings::STATE_NOT_READY) 
 											{
-											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::YELLOW_S_DOWN), 0);
+											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::YELLOW_S_DOWN), 0);
 											} else {
-											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::RED_S_DOWN), 0);
+											PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::RED_S_DOWN), 0);
 											};
 									} else {
-										PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+										PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 									};
 							} else {
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 							};
 						break;
 					case system_settings::STATE_DOWN_MAIN_DRIVE:
 					case system_settings::STATE_DOWN_SMALL_DRIVE:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREEN_S_DOWN), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREEN_S_DOWN), 0);
 						break;
 					default:
-						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 						break;
 				}
 			}	
 			PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
-			PtSetResources(arrow, args.size(), &args[0]);		
+			
+			PtSetResources(this->get_arrow_label_widget(), args.size(), &args[0]);		
 		}
 		else
 		{
-				PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_STOP), 0);
+				PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_STOP), 0);
 				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
-				PtSetResources(arrow, args.size(), &args[0]);		
+				PtSetResources(this->get_arrow_label_widget(), args.size(), &args[0]);		
 		} //	if (this->get_online()...
 	}
 	else
 	{
-		PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, g_system_settings.get_image(system_settings::GREY_OFF), 0);
+		PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, sys_sett_obj->get_image(system_settings::GREY_OFF), 0);
 		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
-		PtSetResources(arrow, args.size(), &args[0]);		
+		PtSetResources(this->get_arrow_label_widget(), args.size(), &args[0]);		
 	} // //	if (this->get_enabled()...
 	};
 
@@ -449,7 +476,7 @@ int metro_escalator::create_station_window(int x, int y)
 	vector<PtArg_t> args;
 	vector<char> label_buffer(10);
 
-	ApDBase_t*  dbase=g_system_settings.get_widgets_dbase();
+	ApDBase_t*  dbase=sys_sett_obj->get_widgets_dbase();
 
     PtSetParentWidget(get_station_widget());
     args.resize(1);
@@ -461,7 +488,7 @@ int metro_escalator::create_station_window(int x, int y)
 				wnd=NULL;
 				};
     	
-    if (!wnd)   		
+    if (wnd==NULL)   		
 		return 0;
 
 	if (!args.empty()) {
@@ -494,17 +521,17 @@ void metro_escalator::update_panel()
 	{
 	vector<PtArg_t> args(3);
 
-	if (g_system_settings.get_paneled_escalator_id()==this->get_id())
+	if (sys_sett_obj->get_paneled_escalator_id()==this->get_id())
 	{
 		if (this->get_online()==system_settings::ONLINE)
 		{			
 			PtSetArg(&args[0], Pt_ARG_FILL_COLOR, system_settings::INDICATOR_ENABLED_NORMA_FILL, 0);
 			PtSetArg(&args[1], Pt_ARG_COLOR, system_settings::INDICATOR_ENABLED_NORMA_TEXT, 0);
 
-			PtSetArg(&args[2], Pt_ARG_TEXT_STRING, (g_system_settings.get_escalator_mode_text(this->get_mode())).c_str(), 0);
+			PtSetArg(&args[2], Pt_ARG_TEXT_STRING, (sys_sett_obj->get_escalator_mode_text(this->get_mode())).c_str(), 0);
 			PtSetResources(ABW_ModeIndicator, args.size(), &args[0]);
 			
-			PtSetArg(&args[2], Pt_ARG_TEXT_STRING, (g_system_settings.get_escalator_ready_text(this->get_ready())).c_str(), 0);
+			PtSetArg(&args[2], Pt_ARG_TEXT_STRING, (sys_sett_obj->get_escalator_ready_text(this->get_ready())).c_str(), 0);
 			PtSetResources(ABW_ReadyIndicator, args.size(), &args[0]);
 
 			vector<char> tmp_str(10);
@@ -540,7 +567,7 @@ if(iter!=g_stations.end())
 		string mess="Station widget not found for esc id ";
 		vector<char> tmp_buff(10);
 		mess+=itoa(id_escalator, &tmp_buff[0], 10);
-		g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+		sys_sett_obj->sys_message(system_settings::ERROR_MSG, mess);
 		return(NULL);
 		};
 };
@@ -642,37 +669,94 @@ int metro_escalator::set_data()
 	vector<byte>	buffer;
 	vector<PtArg_t> args(2);
 	vector<char> 	block_circut(80);
-	
-//	printf("Set esc data\n");
-
+	system_settings::bytes tmp_bytes;
 
 	metro_escalator::lock_mutex data_mutex(this->get_in_mutex());
 		this->swap_in_buffer(buffer);
 	delete (&data_mutex);
 
-	if(buffer.empty()) return (0);
+	if(buffer.empty() || buffer.size()<system_settings::MODBUS_BUFFER_SIZE) 
+		{
+		return (0);
+		}
 
-	dataBlock.status = ntohs(*((word*)&buffer[0]));
-	dataBlock.mode = ntohs(*((word*)&buffer[2]));
-	dataBlock.ready = ntohs(*((word*)&buffer[4]));
-	dataBlock.block_circuts_status = ntohs(*((word*)&buffer[6]));	
-	dataBlock.breaking_path_status = ntohs(*((word*)&buffer[8]));
-	dataBlock.channels = ntohs(*((word*)&buffer[10]));
-	dataBlock.message_number = ntohs(*((word*)&buffer[12]));
-	dataBlock.count_of_messages = ntohs(*((word*)&buffer[14]));
-	dataBlock.reserved1 = ntohs(*((word*)&buffer[16]));
-	dataBlock.breaking_path_value = ntohl(*((dword*)&buffer[18]));
-	dataBlock.running_path_value = ntohl(*((dword*)&buffer[22]));
-	dataBlock.reserved2 = ntohs(*((word*)&buffer[26]));
-	dataBlock.reserved3 = ntohs(*((word*)&buffer[28]));
+	tmp_bytes.resize(2);
+	tmp_bytes[0]=buffer[0];
+	tmp_bytes[1]=buffer[1];
+	dataBlock.status = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+	
+	tmp_bytes[0]=buffer[2];
+	tmp_bytes[1]=buffer[3];
+	dataBlock.mode = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
 
-	int tmp_size = dataBlock.signals.size();
-	for(int i=0; i<tmp_size; i++)
-		dataBlock.signals[i] = ntohs(*((word*)&buffer[30+i*2]));
+	tmp_bytes[0]=buffer[4];
+	tmp_bytes[1]=buffer[5];
+	dataBlock.ready = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[6];
+	tmp_bytes[1]=buffer[7];
+	dataBlock.block_circuts_status = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[8];
+	tmp_bytes[1]=buffer[9];
+	dataBlock.breaking_path_status = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[10];
+	tmp_bytes[1]=buffer[11];
+	dataBlock.channels = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[12];
+	tmp_bytes[1]=buffer[13];
+	dataBlock.message_number = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[14];
+	tmp_bytes[1]=buffer[15];
+	dataBlock.count_of_messages = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[16];
+	tmp_bytes[1]=buffer[17];
+	dataBlock.reserved1 = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+	
+	tmp_bytes.resize(4);
+	tmp_bytes[0]=buffer[18];
+	tmp_bytes[1]=buffer[19];
+	tmp_bytes[2]=buffer[20];
+	tmp_bytes[3]=buffer[21];
+	dataBlock.breaking_path_value = ntohl(sys_sett_obj->type_from_bytes<dword>(tmp_bytes));
+	
+	tmp_bytes[0]=buffer[22];
+	tmp_bytes[1]=buffer[23];
+	tmp_bytes[2]=buffer[24];
+	tmp_bytes[3]=buffer[25];
+	dataBlock.running_path_value = ntohl(sys_sett_obj->type_from_bytes<dword>(tmp_bytes));
+
+	tmp_bytes.resize(2);	
+	tmp_bytes[0]=buffer[26];
+	tmp_bytes[1]=buffer[27];
+	dataBlock.reserved2 = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+	tmp_bytes[0]=buffer[26];
+	tmp_bytes[1]=buffer[27];
+	dataBlock.reserved3 = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+
+
+	data_block::data_container::size_type tmp_size = dataBlock.signals.size();
+	for(data_block::data_container::size_type i=0; i<tmp_size; i++)
+		{
+			tmp_bytes[0]=buffer[30+i*2];
+			tmp_bytes[1]=buffer[30+i*2+1];
+		
+			dataBlock.signals[i] = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+		}
 
 	tmp_size = dataBlock.messages.size();
-	for(int i=0; i<tmp_size; i++)
-		dataBlock.messages[i] = ntohs(*((word*)&buffer[60+i*2]));
+	for(data_block::data_container::size_type i=0; i<tmp_size; i++)
+		{
+			tmp_bytes[0]=buffer[60+i*2];
+			tmp_bytes[1]=buffer[60+i*2+1];
+		
+			dataBlock.messages[i] = ntohs(sys_sett_obj->type_from_bytes<word>(tmp_bytes));
+		}
 
 	for(int i=0; i<dataBlock.count_of_messages; i++)
 	{
@@ -683,23 +767,78 @@ int metro_escalator::set_data()
 			{
 				msg |=	dataBlock.breaking_path_value << 16;
 
-				int tmp_id=g_main_log.get_records_autoincrement();
-				g_main_log.set_records_autoincrement(++tmp_id);
-				g_main_log.insert(log_record(tmp_id, msg, id_station, number, time(NULL))); // NOTICE: time(NULL) must be replaced by time from escalator
-				
-			} else {
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
+				if(tmp_msg_iter==g_msgDictionary.end())
+					{
+							vector<char> tmp_chars(10);
+							string mess("Not found message id ");
+							itoa(msg, &tmp_chars[0], 10);
+							mess +=&tmp_chars[0];
+
+							sys_sett_obj->sys_message(system_settings::ERROR_MSG, mess);
+					};
+				int msg_type=tmp_msg_iter->second.get_type();
 
 				int tmp_id=g_main_log.get_records_autoincrement();
 				g_main_log.set_records_autoincrement(++tmp_id);
-				g_main_log.insert(log_record(tmp_id, msg, id_station, number, time(NULL))); // NOTICE: time(NULL) must be replaced by time from escalator
+				g_main_log.insert(log_record(
+															tmp_id, 
+															msg, 
+															msg_type, 
+															id_station, 
+															number, 
+															time(NULL))); 
+					// NOTICE: time(NULL) must be replaced by time from escalator
+				
+			} else {
+
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
+				if(tmp_msg_iter==g_msgDictionary.end())
+					{
+							vector<char> tmp_chars(10);
+							string mess("Not found message id ");
+							itoa(msg, &tmp_chars[0], 10);
+							mess +=&tmp_chars[0];
+
+							sys_sett_obj->sys_message(system_settings::ERROR_MSG, mess);
+					};
+				int msg_type=tmp_msg_iter->second.get_type();
+
+				int tmp_id=g_main_log.get_records_autoincrement();
+				g_main_log.set_records_autoincrement(++tmp_id);
+				g_main_log.insert(log_record(tmp_id, 
+															msg, 
+															msg_type, 
+															id_station, 
+															number, 
+															time(NULL))); 
+						// NOTICE: time(NULL) must be replaced by time from escalator
 
 			};
 		}else if (msg & 0x8000)
 		{
 
+				msg_dict_container::msg_dict_iterator tmp_msg_iter=g_msgDictionary.find(msg);
+				if(tmp_msg_iter==g_msgDictionary.end())
+					{
+							vector<char> tmp_chars(10);
+							string mess("Not found message id ");
+							itoa(msg, &tmp_chars[0], 10);
+							mess +=&tmp_chars[0];
+
+							sys_sett_obj->sys_message(system_settings::ERROR_MSG, mess);
+					};
+				int msg_type=tmp_msg_iter->second.get_type();
+
 				int tmp_id=g_main_log.get_records_autoincrement();
 				g_main_log.set_records_autoincrement(++tmp_id);
-				g_main_log.insert(log_record(tmp_id, msg, id_station, number, time(NULL))); // NOTICE: time(NULL) must be replaced by time from escalator
+				g_main_log.insert(log_record(tmp_id,
+															msg,
+															msg_type,
+															id_station,
+															number,
+															time(NULL)));
+					// NOTICE: time(NULL) must be replaced by time from escalator
 
 		};
 
@@ -917,10 +1056,12 @@ void metro_escalator::send_command(byte cmd)
 	vector<byte>::iterator  iter_end=buffer.end();
 	advance(iter_beg,6);
 	advance(iter_end,6+6);
-	crc = g_system_settings.crc(vector<byte>(iter_beg, iter_end));
-	buffer[12] =g_system_settings.second_byte(crc);
-	buffer[13] =g_system_settings.first_byte(crc);
-							
+	crc = sys_sett_obj->crc(vector<byte>(iter_beg, iter_end));
+	
+	system_settings::bytes tmp_bytes=sys_sett_obj->bytes_of_type<word>(crc);
+	buffer[12] =tmp_bytes[1];
+	buffer[13] =tmp_bytes[0];
+						
 	metro_escalator::lock_mutex data_mutex(this->get_out_mutex());
 		this->append_out_buffer(buffer.begin(), buffer.end());
 	delete(&data_mutex);
@@ -930,11 +1071,12 @@ void metro_escalator::send_command(byte cmd)
 void metro_escalator::send_time()
 {
 	vector<byte>		buffer(19);
-	word		crc, reg_time_t;
+	word		crc;
 	time_t 	time_now;
 	
 /*
-// Begin: Checking  - remove it!!!
+// ATTENTION 
+//Begin: Checking  - remove it!!!
 	tm temp_time;
 	
 	temp_time.tm_sec=10;
@@ -969,26 +1111,43 @@ void metro_escalator::send_time()
 	//текущее время
 //	time_now=mktime(&temp_time);
 	time_now=time(NULL);
+	
+/*
 	// получение старшего слова
 	reg_time_t=(word)((time_now>>1*16) & 0xFFFF);
-	
-	buffer[13] =g_system_settings.second_byte(reg_time_t);
-	buffer[14] =g_system_settings.first_byte(reg_time_t);
-
-	
+	buffer[13] =sys_sett_obj->second_byte(reg_time_t);
+	buffer[14] =sys_sett_obj->first_byte(reg_time_t);
 	// получеие ладшео слова	
 	reg_time_t=(word)((time_now>>0*16) & 0xFFFF);
+	buffer[15] =sys_sett_obj->second_byte(reg_time_t);
+	buffer[16] =sys_sett_obj->first_byte(reg_time_t);
+*/
 
-	buffer[15] =g_system_settings.second_byte(reg_time_t);
-	buffer[16] =g_system_settings.first_byte(reg_time_t);
+
+	system_settings::bytes tmp_bytes=sys_sett_obj->bytes_of_type<time_t>(time_now);
+	buffer[13] =tmp_bytes[1];
+	buffer[14] =tmp_bytes[0];
+	
+	buffer[15] =tmp_bytes[2];
+	buffer[16] =tmp_bytes[3];
+
+	
 
 	vector<byte>::iterator  iter_beg=buffer.begin();
 	vector<byte>::iterator  iter_end=buffer.end();
 	advance(iter_beg,6);
 	advance(iter_end,6+11);
-	crc = g_system_settings.crc(vector<byte>(iter_beg, iter_end));
-	buffer[17] =g_system_settings.second_byte(crc);
-	buffer[18] =g_system_settings.first_byte(crc);
+
+	crc = sys_sett_obj->crc(vector<byte>(iter_beg, iter_end));
+/*
+	buffer[17] =sys_sett_obj->second_byte(crc);
+	buffer[18] =sys_sett_obj->first_byte(crc);
+*/
+
+	tmp_bytes=sys_sett_obj->bytes_of_type<word>(crc);
+	buffer[17] =tmp_bytes[1];
+	buffer[18] =tmp_bytes[0];
+
 
 	metro_escalator::lock_mutex data_mutex(this->get_out_mutex());
 		this->append_out_buffer(buffer.begin(), buffer.end());
@@ -1014,9 +1173,14 @@ void metro_escalator::check_status()
 	vector<byte>::iterator  iter_end=buffer.end();
 	advance(iter_beg,6);
 	advance(iter_end,6+6);
-	crc = g_system_settings.crc(vector<byte>(iter_beg, iter_end));
-	buffer[12] =g_system_settings.second_byte(crc);
-	buffer[13] =g_system_settings.first_byte(crc);
+/*
+	crc = sys_sett_obj->crc(vector<byte>(iter_beg, iter_end));
+	buffer[12] =sys_sett_obj->second_byte(crc);
+	buffer[13] =sys_sett_obj->first_byte(crc);
+*/
+	system_settings::bytes tmp_bytes=sys_sett_obj->bytes_of_type<word>(crc);
+	buffer[12] =tmp_bytes[1];
+	buffer[13] =tmp_bytes[0];
 
 
 	metro_escalator::lock_mutex data_mutex(this->get_out_mutex());
@@ -1042,9 +1206,14 @@ void metro_escalator::get_data()
 	vector<byte>::iterator  iter_end=buffer.end();
 	advance(iter_beg,6);
 	advance(iter_end,6+6);
-	crc = g_system_settings.crc(vector<byte>(iter_beg, iter_end));
-	buffer[12] =g_system_settings.second_byte(crc);
-	buffer[13] =g_system_settings.first_byte(crc);
+/*
+	crc = sys_sett_obj->crc(vector<byte>(iter_beg, iter_end));
+	buffer[12] =sys_sett_obj->second_byte(crc);
+	buffer[13] =sys_sett_obj->first_byte(crc);
+*/
+	system_settings::bytes tmp_bytes=sys_sett_obj->bytes_of_type<word>(crc);
+	buffer[12] =tmp_bytes[1];
+	buffer[13] =tmp_bytes[0];
 
 
 	metro_escalator::lock_mutex data_mutex(this->get_out_mutex());
@@ -1057,7 +1226,7 @@ int metro_escalator::connect_to_channel(int channel)
 	connection_id = ConnectAttach(0, 0, channel, _NTO_SIDE_CHANNEL, 0 );
 	if (!connection_id)
 	{
- 		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+ 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
 												string("Fail connect to pulse channel"));
 		return 0;
 	}
@@ -1077,7 +1246,7 @@ int metro_escalator::start()
 	{
 		if (pthread_create(&tid, NULL, &Run, this) != EOK)
 		{
-	 		g_system_settings.sys_message(system_settings::ERROR_MSG, 
+	 		sys_sett_obj->sys_message(system_settings::ERROR_MSG, 
 												string("Fail to create escalator's thread"));
 			return 0;
 		}

@@ -21,14 +21,12 @@ extern const int ABN_toolBar;
 #define ABW_toolBar                          AbGetABW( ABN_toolBar )
 extern const int ABN_EscConfigBtn;
 #define ABW_EscConfigBtn                     AbGetABW( ABN_EscConfigBtn )
-extern const int ABN_FilterBtn;
-#define ABW_FilterBtn                        AbGetABW( ABN_FilterBtn )
-extern const int ABN_ResetFilter;
-#define ABW_ResetFilter                      AbGetABW( ABN_ResetFilter )
 extern const int ABN_ArchiveBtn;
 #define ABW_ArchiveBtn                       AbGetABW( ABN_ArchiveBtn )
 extern const int ABN_CmdPoolBtn;
 #define ABW_CmdPoolBtn                       AbGetABW( ABN_CmdPoolBtn )
+extern const int ABN_btn_on_off_filter;
+#define ABW_btn_on_off_filter                AbGetABW( ABN_btn_on_off_filter )
 extern const int ABN_AlertWnd;
 #define ABW_AlertWnd                         AbGetABW( ABN_AlertWnd )
 extern const int ABN_AlertMsg;
@@ -183,50 +181,26 @@ extern const int ABN_EndMinNumeric;
 #define ABW_EndMinNumeric                    AbGetABW( ABN_EndMinNumeric )
 extern const int ABN_EndHourNumeric;
 #define ABW_EndHourNumeric                   AbGetABW( ABN_EndHourNumeric )
-extern const int ABN_EscalatorsPanel;
-#define ABW_EscalatorsPanel                  AbGetABW( ABN_EscalatorsPanel )
-extern const int ABN_StationEscalatorsPanel;
-#define ABW_StationEscalatorsPanel           AbGetABW( ABN_StationEscalatorsPanel )
-extern const int ABN_EscalatorsGroup;
-#define ABW_EscalatorsGroup                  AbGetABW( ABN_EscalatorsGroup )
-extern const int ABN_OneEscalatorBtn;
-#define ABW_OneEscalatorBtn                  AbGetABW( ABN_OneEscalatorBtn )
-extern const int ABN_RangeEscalatorBtn;
-#define ABW_RangeEscalatorBtn                AbGetABW( ABN_RangeEscalatorBtn )
-extern const int ABN_SingleEscalatorsGroup;
-#define ABW_SingleEscalatorsGroup            AbGetABW( ABN_SingleEscalatorsGroup )
-extern const int ABN_OneEscalatorLabel;
-#define ABW_OneEscalatorLabel                AbGetABW( ABN_OneEscalatorLabel )
-extern const int ABN_OneEscalatorNumeric;
-#define ABW_OneEscalatorNumeric              AbGetABW( ABN_OneEscalatorNumeric )
-extern const int ABN_RangeEscalatorsGroup;
-#define ABW_RangeEscalatorsGroup             AbGetABW( ABN_RangeEscalatorsGroup )
-extern const int ABN_RangeStartLabel;
-#define ABW_RangeStartLabel                  AbGetABW( ABN_RangeStartLabel )
-extern const int ABN_RangeStartNumeric;
-#define ABW_RangeStartNumeric                AbGetABW( ABN_RangeStartNumeric )
-extern const int ABN_RangeEndLabel;
-#define ABW_RangeEndLabel                    AbGetABW( ABN_RangeEndLabel )
-extern const int ABN_RangeEndNumeric;
-#define ABW_RangeEndNumeric                  AbGetABW( ABN_RangeEndNumeric )
-extern const int ABN_AllRangeBtn;
-#define ABW_AllRangeBtn                      AbGetABW( ABN_AllRangeBtn )
-extern const int ABN_StationList;
-#define ABW_StationList                      AbGetABW( ABN_StationList )
-extern const int ABN_MessagesPanel;
-#define ABW_MessagesPanel                    AbGetABW( ABN_MessagesPanel )
-extern const int ABN_SysMsgBtn;
-#define ABW_SysMsgBtn                        AbGetABW( ABN_SysMsgBtn )
-extern const int ABN_AlertMsgBtn;
-#define ABW_AlertMsgBtn                      AbGetABW( ABN_AlertMsgBtn )
-extern const int ABN_BlockMsgBtn;
-#define ABW_BlockMsgBtn                      AbGetABW( ABN_BlockMsgBtn )
-extern const int ABN_LocalMsgBtn;
-#define ABW_LocalMsgBtn                      AbGetABW( ABN_LocalMsgBtn )
+extern const int ABN_MessagesTypesList;
+#define ABW_MessagesTypesList                AbGetABW( ABN_MessagesTypesList )
+extern const int ABN_AllMessagesTypesBtn;
+#define ABW_AllMessagesTypesBtn              AbGetABW( ABN_AllMessagesTypesBtn )
+extern const int ABN_AllStationsBtn;
+#define ABW_AllStationsBtn                   AbGetABW( ABN_AllStationsBtn )
+extern const int ABN_StationsList;
+#define ABW_StationsList                     AbGetABW( ABN_StationsList )
+extern const int ABN_DevicesPane;
+#define ABW_DevicesPane                      AbGetABW( ABN_DevicesPane )
+extern const int ABN_AllDevicesBtn;
+#define ABW_AllDevicesBtn                    AbGetABW( ABN_AllDevicesBtn )
+extern const int ABN_DevicesList;
+#define ABW_DevicesList                      AbGetABW( ABN_DevicesList )
 extern const int ABN_LogFIlterCancel;
 #define ABW_LogFIlterCancel                  AbGetABW( ABN_LogFIlterCancel )
 extern const int ABN_LogFilterOK;
 #define ABW_LogFilterOK                      AbGetABW( ABN_LogFilterOK )
+extern const int ABN_FilteringBtn;
+#define ABW_FilteringBtn                     AbGetABW( ABN_FilteringBtn )
 
 /* 'EscConfig' Dialog link */
 extern const int ABN_EscConfig;

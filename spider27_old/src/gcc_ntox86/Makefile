@@ -37,8 +37,8 @@ LD  = qcc
 
 CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I. -I /usr/local/include/ -L /usr/local/lib/
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) -lphexlib -lsocket $(ABLIB) $(PHABOPTS)
-SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket -lcppunit $(ABLIB) $(PHABOPTS) 
+LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) -lphexlib -lsocket  -lcppunit -lasound $(ABLIB) $(PHABOPTS)
+SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) -lphexlib -lsocket -lcppunit -lasound $(ABLIB) $(PHABOPTS) 
 
 VPATH = ..
 

@@ -16,7 +16,7 @@ extern ApDialogLink_t SignalDlg;
 extern ApDialogLink_t ArchiveDlg;
 extern ApWindowLink_t ArchiveLog;
 extern ApDialogLink_t PrevCmdPoolDlg;
-extern ApWidget_t AbWidgets[ 135 ];
+extern ApWidget_t AbWidgets[ 122 ];
 
 extern ApMenuLink_t EscalatorMenu;
 
@@ -32,14 +32,11 @@ int RealizeMainWnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo
 int CloseMainWnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int NextAlert( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int link_setup_LogFilterDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_LogFilterOK( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int realize_filter_dlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int combobox_close_StationList( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_AllRangeBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetUpDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetDownDirection( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_ResetFilter( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 void draw_log_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where
@@ -68,10 +65,13 @@ int activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInf
 int realized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int unrealized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_CmdPoolBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_FilterBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int activate_EscalatorsGroup( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllTimeRangeBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int realized_main_log_wnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int unrealized_main_log_wnd( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_on_off_filter_main_log( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int unrealized_LogFilterDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_AllStationsBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_AllDevicesBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_AllMessagesTypesBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif

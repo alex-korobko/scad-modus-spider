@@ -9,33 +9,33 @@ class metro_station
 {
 private:
  	typedef vector<int> escalators_id_container;
-    
+ 	typedef string stl_string;
+ 	
    	metro_station();
 
    	PtWidget_t *wnd;
    	int			id;
 	int			line_id;
 	int			xcoord, ycoord;
-   	string			name;
-   	int     	order; //order number in line
+   	stl_string			name;
    		  
 	escalators_id_container escalators_id;     
 public:
 	typedef escalators_id_container::iterator iterator_escalators_id;
 	typedef escalators_id_container::size_type size_type_escalators_id;
+	typedef stl_string::size_type size_of_stl_string;
 
 	metro_station(int new_id_station,
 						  int new_id_line,
 						  int new_x_coord,
 						  int new_y_coord,
-						  string new_name,
-  						  int new_order):
+						  string new_name
+  						  ):
 	id(new_id_station),
 	line_id(new_id_line),
 	xcoord(new_x_coord),
 	ycoord(new_y_coord),
-	name(new_name),
-	order(new_order) 
+	name(new_name)
 	{
 		wnd = NULL;
 	}
@@ -56,10 +56,10 @@ get_ and set_  metods for private data members
 	
 	PtWidget_t* 	get_wnd() { return wnd; }
 
-	void set_stl_name_string(string new_station_name) {name=new_station_name;};
+	void set_stl_name_string(stl_string new_station_name) {name=new_station_name;};
 	const char* get_c_name_string() { return name.c_str(); }
-	string get_stl_name_string() { return name; }
-	int  get_c_name_string_size() { return name.size(); }
+	stl_string get_stl_name_string() { return name; }
+	size_of_stl_string  get_c_name_string_size() { return name.size(); }
 
 	int get_line_id() {return(line_id);};
 	void set_line_id(int new_line_id) { line_id=new_line_id;};
@@ -70,7 +70,6 @@ get_ and set_  metods for private data members
 	int get_y_coord() {return(ycoord);};
 	void set_y_coord (int new_ycoord) { ycoord=new_ycoord;};
 
-	int get_order() {return (order);};		
 /*
 wrappers of current STL escalators`s iterators`s  container metods
 */

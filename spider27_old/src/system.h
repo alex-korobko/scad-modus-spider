@@ -17,6 +17,8 @@ unsigned_chars_container font_for_messages_large;
 images_container images;
 strings_container mode_text;
 strings_container ready_text;
+strings_container directions_text;
+strings_container outer_states_text;
 
 dword paneled_escalator_id;
 
@@ -30,6 +32,7 @@ string routing_name;
 public:
 typedef images_container::size_type images_size_type;
 typedef strings_container::size_type strings_size_type;
+typedef  vector<byte>  bytes;
 
 //Enumerated constants
 
@@ -64,17 +67,22 @@ typedef strings_container::size_type strings_size_type;
 	//states
 	enum {OFFLINE=0,
 				ONLINE=1,
-				DISABLED=0,
-				ENABLED=1,
 				BLOCK_NORMA=1,
 				BREAKING_PATH_NORMA=1
+				};
+				
+	//outer states
+	enum {	DISABLED=0,
+				ENABLED,
+				OUTER_STATES_COUNT
 				};
    
 	//directions
 	enum {DIRECTION_STOP=0,
 				DIRECTION_UP,
 				DIRECTION_DOWN,
-				DIRECTION_REVERSE
+				DIRECTION_REVERSE,
+				DIRECTIONS_COUNT
 				};
 
 	//escalator command codes (for modbus register 40001)
@@ -118,8 +126,10 @@ typedef strings_container::size_type strings_size_type;
 				DEBUG_MSG=0,
 				ERROR_MSG,
 				INFO_MSG,
-				WARN_MSG
+				WARN_MSG,
+				MESSAGES_COUNT
 			};
+
 
 //colors 
 	enum {
@@ -145,6 +155,7 @@ typedef strings_container::size_type strings_size_type;
 				SYSTEM_TICK	=1, // c
 				RECEIVE_TIMEOUT=1,
 				MODBUS_TCP_PORT=502,
+				MODBUS_BUFFER_SIZE=100,
 				TIME_CORR_INTER=10000 //interval (in cicles of requests to hardware) between sending timeset request
 				};
 
@@ -158,7 +169,7 @@ system_settings() :
 	{
 		widget_dbase=NULL;
 		main_window=escalator_panel=NULL;
-	
+
 		mode_text.resize(MODES_COUNT);
 		mode_text[MODE_UNUSED]="Ошибка режима!!";
 		mode_text[MODE_MAIN_DRIVE_AT_PANEL]="ГП со щита";
@@ -177,7 +188,18 @@ system_settings() :
 		ready_text[STATE_BRAKING_OFF_READY]="Раст. готов";
 		ready_text[STATE_RUNNING_OUT_READY]="Выбег готов";
 		ready_text[STATE_NOT_READY]="Не готов";
-	
+
+		directions_text.resize(DIRECTIONS_COUNT);
+		directions_text[DIRECTION_STOP]="stop";
+		directions_text[DIRECTION_UP]="up";
+		directions_text[DIRECTION_DOWN]="down";
+		directions_text[DIRECTION_REVERSE]="reverse";
+
+		outer_states_text.resize(OUTER_STATES_COUNT);
+		outer_states_text[ENABLED]="enabled";
+		outer_states_text[DISABLED]="disabled";
+
+
 	};
 
 
@@ -247,6 +269,9 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 //get_ and set_ metods for private data members
 	ApDBase_t* get_widgets_dbase() {return(widget_dbase);};
 
+	strings_container get_directions_strings() {return directions_text;};
+	strings_container get_outer_states_strings() {return outer_states_text;};
+
 	PtWidget_t* get_main_window() {return(main_window);};
 	void set_main_window(PtWidget_t *new_main_window) {main_window=new_main_window;};
 
@@ -297,8 +322,34 @@ void prepare_visualization(ApDBase_t* new_widget_dbase)
 
 //CRC16 coding function
 	word crc(vector<byte> buffer);
-	byte first_byte(int data) {return(data & 0x00FF); };
-	byte second_byte(int data)	{return((data & 0xFF00) >> 8);};
+
+// splitting and merging per bytes -  very dangerous templates using
+	template<typename T>
+	bytes bytes_of_type (T value_to_splitting) 
+				{
+					bytes ret_val(sizeof(T));
+					for (bytes::size_type i=0; i<ret_val.size();i++)
+						{
+							ret_val[i]=((value_to_splitting & (0x00FF<<i*8))>>i*8);
+						};
+				return  ret_val;
+				};
+
+	template<typename T>
+	T type_from_bytes (bytes bytes_to_merging)
+				{
+					T ret_val=0;
+					bytes::size_type count=__min(bytes_to_merging.size(), sizeof(T));
+					for (bytes::size_type i=0; i<count; i++)
+						{
+							ret_val |=(bytes_to_merging[i] << (i*8) );
+						};
+				return  ret_val;
+				};
+
+				
+//	byte first_byte(int data) {return(data & 0x00FF); };
+//	byte second_byte(int data)	{return((data & 0xFF00) >> 8);};
 
 //directions managment
 	int save_directions(const string file_name);

@@ -6,49 +6,27 @@ class metro_line
 {
 private:   
  	typedef vector<int> station_id_container;
-
+ 	typedef string stl_string;
+ 	
 	metro_line();
 	
    int			id;
-   string 	name;
+   stl_string 	name;
    PgColor_t	color;   
    PtWidget_t* line;
 
 	station_id_container stations_id;     
 	
-/*
-functor class for sorting line`s stations by data member order
-*/
-	class stations_sorter:public binary_function<int, int, bool>
-	{
-	public:
-	bool operator ()(const int& first_station_id, const int& second_station_id)
-	  { 
-	  metro_stations_container::iterator_metro_stations iter_first_station, iter_second_station;
-
-	 iter_first_station=g_stations.find(first_station_id);
-	  iter_second_station=g_stations.find(second_station_id);
-
-	  if (  iter_first_station==iter_second_station ||
-	  		iter_first_station==g_stations.end() ||
-	  		iter_second_station==g_stations.end()
-	  		) 
-		  {
-		  return (false);
-		  } else  return(iter_first_station->second.get_order() < iter_second_station->second.get_order());
-		  
-	    }; //operator ()(int) defenition
-	} sort_stations_predicate;	
-
-	
 public:
 	typedef station_id_container::iterator iterator_stations_id;
-
+	typedef station_id_container::size_type size_of_stations_id;
+	typedef stl_string::size_type size_of_stl_string;
+	
 	enum {DEFAULT_COLOR=Pg_RED};
 	
 	metro_line (
 				int new_line_id,
-				string new_line_name,
+				stl_string new_line_name,
 				PgColor_t	new_line_color
 				) :
 		id (new_line_id),
@@ -57,11 +35,6 @@ public:
 			{
 			line=NULL;
 			}
-
-	metro_line::~metro_line()
-		{
-			if (line) {delete(line);}; //I don`t shure...
-		}
 
 /*
 get_ and set_  metods for private data members
@@ -72,10 +45,10 @@ get_ and set_  metods for private data members
 	PgColor_t get_color() {return(color);};
 	void set_color(PgColor_t new_color) {color=new_color;};
 
-	void set_stl_name_string(string new_line_name) {name=new_line_name;};
+	void set_stl_name_string(stl_string new_line_name) {name=new_line_name;};
 	const char* get_c_name_string() { return name.c_str(); }
-	int  get_c_name_string_size() { return name.size(); }
-	string get_stl_name_string() { return name; }
+	size_of_stl_string  get_c_name_string_size() { return name.size(); }
+	stl_string get_stl_name_string() { return name; }
 
 
 	void set_id (int new_line_id) 	 {id=new_line_id;};
@@ -90,10 +63,9 @@ wrappers of current STL stations`s id`s  container metods
 	void remove_stations_id(iterator_stations_id iter)  { stations_id.erase(iter);};
 	void remove_stations_id(iterator_stations_id beg_iter, iterator_stations_id end_iter)  {stations_id.erase(beg_iter, end_iter);};
 	
-	int size_stations_id() {return (stations_id.size());};
+	size_of_stations_id size_stations_id() {return (stations_id.size());};
 	bool empty_stations_id() {return (stations_id.empty());};
-	
-	void sort_stations_id() {sort(stations_id.begin(), stations_id.end(), sort_stations_predicate);}; 
+
 	iterator_stations_id find_stations_id(int station_id) {return (find(stations_id.begin(), stations_id.end(), station_id));};
 };
 

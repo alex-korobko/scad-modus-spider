@@ -40,23 +40,13 @@
 	*/
 
 
-int escalator_signal::create_led(PtWidget_t* parent, int column, int row)
+int escalator_signal::create_led(system_settings *sys_sett_obj, PtWidget_t* parent, int column, int row)
 {
 	vector<PtArg_t> args(7);
 	vector<PtCallback_t> callbacks(1);
 	PtCallback_t tmp_callback;
-	
-	if (led!=NULL) 
-		{
-				PtSetArg(&args[0], 
-							Pt_ARG_POINTER , 
-							NULL, 
-							0);
 
-			 PtSetResources( led,
-					                    1,
-                    						&args[0]);
- 		}
+	this->set_led(NULL);	
  	
 	tmp_callback.event_f=unrealized_led;
 	tmp_callback.data=NULL;
@@ -73,7 +63,7 @@ int escalator_signal::create_led(PtWidget_t* parent, int column, int row)
 	PtSetArg(&args[5], Pt_ARG_POINTER,	this, 0);
 	PtSetArg(&args[6],  Pt_CB_UNREALIZED,	&callbacks[0], callbacks.size());
 		
-	led = ApCreateWidget(g_system_settings.get_widgets_dbase(), "block_grey_led", 5+65*column, 4+24*row, args.size(), &args[0]);
+	led = ApCreateWidget(sys_sett_obj->get_widgets_dbase(), "block_grey_led", 5+65*column, 4+24*row, args.size(), &args[0]);
 
 		if (led!=NULL)
 			{	
@@ -83,52 +73,60 @@ int escalator_signal::create_led(PtWidget_t* parent, int column, int row)
 			};
 	return 0;
 }
-
-
-int escalator_block::create_panel(PtWidget_t* parent)
+	
+void metro_escalator_type::led_create::operator() (int  signal_id)
 {
-	vector<PtArg_t> args(5);
+	iterator_signals tmp_signal=	signals_of_type->find(signal_id);
+	if (tmp_signal!=signals_of_type->end()) return;
+			
+	tmp_signal->second.create_led(sys_set_obj, parent, row,column);
+	if (++row>=10) 
+		{
+			column++;	
+			row = 0;
+		};
+}
+
+void metro_escalator_type::panel_create::operator() (pair_blocks  block_pair) 
+{
+	vector<PtArg_t> args(4);
 	vector<PtCallback_t> callbacks;
 	PtCallback_t tmp_callback;
-	
-	if (panel!=NULL) 
-		{
-				PtSetArg(&args[0], 
-							Pt_ARG_POINTER , 
-							NULL, 
-							0);
+	PtWidget_t* panel;
 
-			 PtSetResources( panel,
-					                    1,
-                    						&args[0]);
- 		}
+	block_pair.second.set_panel(NULL);
 
 	tmp_callback.event_f=unrealized_panel;
 	tmp_callback.data=NULL;
 
 	callbacks.push_back(tmp_callback);
 
-
-	PtSetArg(&args[0], Pt_ARG_TITLE, name.c_str(), 0);
+	PtSetArg(&args[0], Pt_ARG_TITLE, block_pair.second.get_name().c_str(), 0);
 	PtSetArg(&args[1], Pt_ARG_FILL_COLOR, 0x00BBC1D9, 0);
 	PtSetArg(&args[2], Pt_ARG_OUTLINE_COLOR, 0x00A8A9D8, 0);
-	PtSetArg(&args[3], Pt_ARG_POINTER,	this, 0);
-	PtSetArg(&args[4],  Pt_CB_UNREALIZED,	&callbacks[0], callbacks.size());
+	PtSetArg(&args[3],  Pt_CB_UNREALIZED,	&callbacks[0], callbacks.size());
 	
 	panel = PtCreateWidget(PtPane, parent, args.size(), &args[0]);
 
 	if (panel!=NULL) 
-	{
-		
-		escalator_block::led_create  created_panel(panel);
-		for_each(this->signals_begin(), this->signals_end(), created_panel);
+		{
+			led_create  led_creater(panel, sys_set_obj, signals_of_type);
+			for_each(block_pair.second.signals_id_begin(), block_pair.second.signals_id_end(), led_creater);
+			block_pair.second.set_panel(panel);
+		};
+};
 
-		PtRealizeWidget(panel);
 
-		return (1);
-	} else {
-		return(0);
-	};
-	return(0);
-}
+bool metro_escalator_type::create_panels(PtWidget_t* parent,
+														system_settings *sys_set_obj)
+{
+	if (parent!=NULL) 
+		{
+		panel_create  panel_creater(parent, sys_set_obj, &type_signals);
+		for_each(this->type_blocks.begin(), this->type_blocks.end(), panel_creater);
+		return true;
+		} else return false;
+
+};
+
 
