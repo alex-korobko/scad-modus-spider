@@ -25,6 +25,7 @@ class Net
 	friend class Router;
 protected:
 	in_addr_t	ip;
+	in_addr_t	curr_gateway_ip;
 	int			broken;
 	Net*		next;
 	Net*		prev;
@@ -39,10 +40,8 @@ protected:
 	Net*			routeTable;
 	pthread_t		routerTID;
 	int				tableSize;
-	oid 				reqOid[MAX_OID_LEN];
-	int 				reqOidLen;
 	Net*			leftLine;
-	Net	*			rightLine;
+	Net*			rightLine;
 	Net*			leftLineTail;
 	Net*			rightLineTail;
 	in_addr			leftGate, rightGate;
@@ -59,6 +58,6 @@ public:
 	friend void* Routing(void* arg);
 };
 
-int SendRouteMsg(in_addr* host, in_addr* gate);
-
+int ConnectToServer(in_addr_t addr, int port);
+int Receive(int sock, byte* buffer, int size);
 #endif
