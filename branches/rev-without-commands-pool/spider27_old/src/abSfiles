@@ -1,0 +1,1 @@
+ABSRC = ../abmain.cc ../alert.cpp ../archive.cpp ../ctrl_widget.cpp ../draw.cpp ../escalator.cpp ../filter.cpp ../main.cpp 
