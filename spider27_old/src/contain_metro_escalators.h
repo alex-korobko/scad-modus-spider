@@ -29,6 +29,131 @@ iterator_metro_escalators current_escalator_in_directions;
 
 system_settings *sys_sett_obj;
 
+/*
+functor class for creating contain_morning_start from 
+metro_escalators_container
+*/	
+	class make_morning_start
+	{
+	private:
+		contain_morning_start *cont_morn_start;
+		metro_escalators_container *escalators;
+		system_settings *sys_sett_obj;
+		int day_now;
+
+		make_morning_start();
+	public:
+		make_morning_start(contain_morning_start *new_cont_morn_start, 
+										metro_escalators_container *new_escalators, 
+										system_settings *new_sys_sett_obj) :
+			cont_morn_start(new_cont_morn_start),
+			escalators(new_escalators),
+			sys_sett_obj(new_sys_sett_obj)
+		{
+			time_t time_now=time(NULL);
+			struct tm that_day_tm;
+			localtime_r(&time_now, &that_day_tm);
+
+			that_day_tm.tm_mday%2==0 ?
+			day_now=system_settings::START_DAY_MODE_EVEN :
+			day_now=system_settings::START_DAY_MODE_ODD;
+		}
+		
+		void operator() (int escalator_id)
+		{
+			bool start_enabled=true;
+			metro_escalators_container::iterator_metro_escalators	 iter_metro_escalator=
+															escalators->find(escalator_id);
+
+			if (iter_metro_escalator==escalators->end()) 
+					{
+						vector<char> temp_chars(10);
+						string message("make_morning_start::operator(): not found esc id ");
+						itoa(escalator_id, &temp_chars[0], 10);
+						message+=&temp_chars[0];
+						sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);		
+						return;
+					};
+								
+			if (iter_metro_escalator->second.get_enabled()==
+				system_settings::DISABLED) return;
+
+			int esc_start_day_mode=iter_metro_escalator->second.get_start_day_mode();
+
+			if (esc_start_day_mode==
+				system_settings::START_DAY_MODE_NEVER ||
+				(esc_start_day_mode!=
+				system_settings::START_DAY_MODE_EVERYDAY &&
+				esc_start_day_mode!=day_now) 
+				 ) start_enabled=false; 
+	
+			int  direction=iter_metro_escalator->second.get_pref_direction();
+			if (direction!=system_settings::DIRECTION_UP &&
+				direction!=system_settings::DIRECTION_DOWN)
+				{
+					direction=iter_metro_escalator->second.get_direction();
+					if (direction!=system_settings::DIRECTION_UP &&
+						direction!=system_settings::DIRECTION_DOWN)
+							start_enabled=false; // what can I do ??
+				};
+
+			cont_morn_start->insert(cont_morn_start->end(),
+												  escalator_start(iter_metro_escalator->second.get_id(),
+																		   iter_metro_escalator->second.get_pref_direction(),
+   																		   iter_metro_escalator->second.get_direction(),
+ 		                 												   iter_metro_escalator->second.get_start_hour(),
+																		   iter_metro_escalator->second.get_start_minute(),
+																		   esc_start_day_mode,
+																		   start_enabled
+																			)
+													);
+		};
+	};
+
+
+/*
+functor class for searching in contain_morning_start
+escalators, wich be started in current hour and minutes and start it.
+*/	
+
+	class find_morning_start
+	{
+		private:
+		metro_escalators_container *esc_container;
+		int start_hour, start_minute;
+		
+		find_morning_start();
+		public:
+		find_morning_start(metro_escalators_container *new_esc_container,
+									 int new_start_hour,
+									 int new_start_minute
+									) : start_hour(new_start_hour),
+										start_minute(new_start_minute)
+									{ esc_container=new_esc_container; };
+		
+		void operator() (escalator_start& morn_start)
+		{
+			if (morn_start.get_start_hour()!=start_hour ||
+				morn_start.get_start_minute()!=start_minute) return;
+		
+			metro_escalators_container::iterator_metro_escalators iter_esc=
+					esc_container->find(morn_start.get_escalator_id() );
+					
+			if (iter_esc!=esc_container->end())
+				{
+					int direction=morn_start.get_escalator_direction();
+
+					if (direction==system_settings::DIRECTION_UP)
+							iter_esc->second.send_command(system_settings::COMMAND_UP);
+
+					if (direction==system_settings::DIRECTION_DOWN)
+							iter_esc->second.send_command(system_settings::COMMAND_DOWN);
+					
+				};
+
+		};
+	};
+
 public :
 
 explicit metro_escalators_container (system_settings *new_sys_sett_obj): 
@@ -70,8 +195,175 @@ size_type_metro_escalators size() const {return (container_metro_escalators.size
 /*
 Other functions
 */
+bool 
+	save_escalator_parameters ()
+{
+enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER,
+			IP_ADDRESS, DIRECTION, START_DAY_MODE, START_HOUR, START_MINUTE, 
+			PREDEFINED_DIRECTION, ENTRIES_COUNT};
+
+string entry_name;
+
+vector<char> temp_str(512);
+vector<string> entries_names(ENTRIES_COUNT);
+
+int id_escalator=-1;
+
+system_settings::strings_container directions_strings_engl=sys_sett_obj->get_directions_engl_strings();
+system_settings::strings_container start_days_modes_strings_engl=sys_sett_obj->get_start_days_modes_engl_strings();
+
+entries_names[ID]="id";
+entries_names[STATION_ID]="stationID";
+entries_names[TYPE]="type";
+entries_names[ENABLED]="enabled";
+entries_names[NUMBER]="num";
+entries_names[IP_ADDRESS]="ip";
+entries_names[DIRECTION]="direction";
+entries_names[START_DAY_MODE]="start day mode";
+entries_names[START_HOUR]="start hour";
+entries_names[START_MINUTE]="start minute";
+entries_names[PREDEFINED_DIRECTION]="predef_direction";
+
+if (PxConfigReadInt( NULL, 
+			                     entries_names[ID].c_str(), 
+			                     -1, 
+			                     &id_escalator)!=Pt_TRUE)
+	{
+		sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+													"save_escalator_parameters: can`t read entry - id");
+		return false;
+	};
+
+	iterator_metro_escalators	 iter_esc=this->find(id_escalator);
+	if (iter_esc==this->end())
+		{
+			string mess("save_escalator_parameters: iter_esc==this->end() esc_id ");
+			vector<char> tmp_chars(10);
+			itoa(id_escalator, &tmp_chars[0], 10);
+			mess+=&tmp_chars[0];
+			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+															mess);		
+			return false;
+		};
+
+	if (PxConfigWriteInt( NULL, 
+			                    entries_names[START_HOUR].c_str(), 
+   				                PXCONFIG_FMT_INT_DECIMAL, 
+			                    iter_esc->second.get_start_hour())!=Pt_TRUE)
+			                    {
+			                    		vector<char> tmp_chars(10);
+									itoa(id_escalator, &tmp_chars[0], 10);
+									string mess("save_escalator_parameters: PxConfigWriteInt START_HOUR !=Pt_TRUE esc_id ");
+									mess+=&tmp_chars[0];
+		                    			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+																				mess);		
+
+			                    		return false;
+			                    };
+
+	if (PxConfigWriteInt( NULL, 
+			                    entries_names[START_MINUTE].c_str(), 
+   				                PXCONFIG_FMT_INT_DECIMAL, 
+			                    iter_esc->second.get_start_minute())!=Pt_TRUE)
+			                    {
+			                    		vector<char> tmp_chars(10);
+									itoa(id_escalator, &tmp_chars[0], 10);
+									string mess("save_escalator_parameters: PxConfigWriteInt START_MINUTE !=Pt_TRUE esc_id ");
+									mess+=&tmp_chars[0];
+		                    			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+																				mess);		
+			                    		return false;
+			                    };
+	
+	if (PxConfigWriteString( NULL, 
+			                    entries_names[START_DAY_MODE].c_str(), 
+   				                PXCONFIG_FMT_STRING, 
+			                    start_days_modes_strings_engl[iter_esc->second.get_start_day_mode()].c_str())!=Pt_TRUE)
+			                    {
+			                    		vector<char> tmp_chars(10);
+									itoa(id_escalator, &tmp_chars[0], 10);
+									string mess("save_escalator_parameters: PxConfigWriteString START_DAY_MODE !=Pt_TRUE esc_id ");
+									mess+=&tmp_chars[0];
+		                    			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+																				mess);		
+			                    		return false;
+			                    };
+
+	 if (PxConfigWriteString( NULL, 
+			                    entries_names[DIRECTION].c_str(), 
+   				                PXCONFIG_FMT_STRING, 
+			                    directions_strings_engl[iter_esc->second.get_direction()].c_str())!=Pt_TRUE)
+			                    {
+			                    		vector<char> tmp_chars(10);
+									itoa(id_escalator, &tmp_chars[0], 10);
+									string mess("save_escalator_parameters: PxConfigWriteString DIRECTION !=Pt_TRUE esc_id ");
+									mess+=&tmp_chars[0];
+		                    			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+																				mess);		
+			                    		return false;
+			                    };
+
+	 if (PxConfigWriteString( NULL, 
+			                    entries_names[PREDEFINED_DIRECTION].c_str(), 
+   				                PXCONFIG_FMT_STRING, 
+			                    directions_strings_engl[iter_esc->second.get_pref_direction()].c_str())!=Pt_TRUE)
+			                    {
+			                    		vector<char> tmp_chars(10);
+									itoa(id_escalator, &tmp_chars[0], 10);
+									string mess("save_escalator_parameters: PxConfigWriteString PREDEFINED_DIRECTION !=Pt_TRUE esc_id ");
+									mess+=&tmp_chars[0];
+		                    			sys_sett_obj->sys_message(system_settings::ERROR_MSG,
+																				mess);		
+			                    		return false;
+			                    };
+
+return true;
+}
+
 bool save (string file_name)
 {
+ 	enum {ESCALATOR=0, ENTRIES_COUNT};
+
+	string	section_name;
+	const char *section_name_c_str;
+	vector<string> sections_names(ENTRIES_COUNT);
+	sections_names[ESCALATOR]="escalator";
+
+	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ|PXCONFIG_WRITE)==Pt_FALSE )
+	{
+		string message("Can`t open config file ");
+		message+=file_name.c_str();
+		sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);
+
+		return false;
+	};
+
+	section_name_c_str=PxConfigNextSection();
+	while (section_name_c_str!=NULL) 
+	{
+
+	section_name=section_name_c_str;
+
+			if (section_name.compare(sections_names[ESCALATOR])==0) 
+			{
+				if (!save_escalator_parameters()) {return(false);};			
+			};
+			
+			section_name_c_str=PxConfigNextSection();
+	};	
+
+	if  (PxConfigClose()) 
+	{return (true);}
+	else
+	{
+		string message("Can`t close config file ");
+		message+=file_name.c_str();
+		sys_sett_obj->sys_message(system_settings::ERROR_MSG,  message);
+
+		return (false);
+	};
+	
+
 return (true);
 };
 
@@ -516,49 +808,45 @@ bool load (metro_stations_container *metro_stations_cont, string file_name)
 
 	}; 
 
+
 /*
-preparing escalators by line with id   line_id
-	prepare escalators across 
-	g_lines->stations_ids from current line->g_stations from current line->escalators ids from all stations of current lines
+preparing contain_morning_start from metro_escalators_container
 */
+void prepare_morning_start(contain_morning_start *cont_morn_start, 
+											metro_station::escalators_id_container *escalators_id_for_morning_start,
+											system_settings *sys_sett_obj)
+{
+	make_morning_start maker_of_morning_start(cont_morn_start,
+																			this,
+																			sys_sett_obj);
 
-metro_escalators_container get_escalators_by_line_id (metro_line::station_id_container stations_in_current_line,
-																					  metro_stations_container *cont_metro_stat)
-	{
-		metro_escalators_container escalators_from_line (sys_sett_obj);
-		if (!stations_in_current_line.empty())
-			{
-				metro_stations_container::iterator_metro_stations iter_metro_stations;
-				metro_station::iterator_escalators_id iter_metro_esc_id;
-				iterator_metro_escalators iter_metro_esc;
-								
-				metro_line::station_id_container::iterator iter_metro_stations_ids=stations_in_current_line.begin();
-				while(iter_metro_stations_ids!=
-							stations_in_current_line.end())
-					{
-						iter_metro_stations=cont_metro_stat->find(*iter_metro_stations_ids);
+	cont_morn_start->erase_all();
 
-						if (iter_metro_stations!=cont_metro_stat->end())
-							{
-								iter_metro_esc_id=iter_metro_stations->second.begin_escalators_id();
-								while(iter_metro_esc_id!=
-											iter_metro_stations->second.end_escalators_id())
-									{
-									iter_metro_esc=find(*iter_metro_esc_id);
-									if (iter_metro_esc!=end()) // if iter_metro_esc!=end() that id in station hold non-escalator device
-											escalators_from_line.insert(upper_bound(*iter_metro_esc_id),
-																						*iter_metro_esc);
-									iter_metro_esc_id++;
-									}
-							};
+	for_each(escalators_id_for_morning_start->begin(),
+				escalators_id_for_morning_start->end(),
+				maker_of_morning_start);
 
-						iter_metro_stations_ids++;
-					}; //while(iter_metro_stations_ids!
+	cont_morn_start->sort_all();				
+};
 
-			}; //if (!stations_in_current_line...
+/*
+executing  contain_morning_start by metro_escalators_container
+*/
+void execute_morning_start(contain_morning_start *cont_morn_start,
+											int start_hour,
+											int start_minute)
+{
+	find_morning_start finder_morning_start(this,
+																	start_hour,
+																	start_minute);
 
-		return escalators_from_line;
-	}
+	for_each(cont_morn_start->begin(),
+				   cont_morn_start->end(),
+				   finder_morning_start);
+
+};
+
+
 
 }; // class metro_escalators_container
 #endif

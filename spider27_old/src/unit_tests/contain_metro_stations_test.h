@@ -15,7 +15,8 @@ g_stations.insert(g_stations.end(), metro_stations_container::pair_metro_station
 																													2,
 																													100,
 																													100,
-																													string("third station")
+																													string("third station"),
+																													string("sounds/station3.wav")
 																													)
 																										)
 						);
@@ -27,7 +28,8 @@ g_stations.insert(g_stations.begin(), metro_stations_container::pair_metro_stati
 																													1,
 																													200,
 																													200,
-																													string("first station")
+																													string("first station"),
+																													string("sounds/station1.wav")
 																													)
 
 																										)
@@ -40,7 +42,8 @@ g_stations.insert(g_stations.upper_bound(2), metro_stations_container::pair_metr
 																													2,
 																													300,
 																													300,
-																													"second station"
+																													"second station",
+																													"sounds/station2.wav"
 																													)
 																										)
 						);
@@ -77,6 +80,7 @@ void test_load()
 [station]
 id=1
 name=first station
+wav file=sounds/station1.wav
 lineID=1
 x=13
 y=15
@@ -84,13 +88,15 @@ y=15
 [station]
 id=2
 name=second station
+wav file=sounds/station2.wav
 lineID=1
 x=21
 y=52
 
 [station]
 id=3
-description=third station
+name=third station
+wav file=sounds/station3.wav
 lineID=2
 x=150
 y=130
@@ -104,7 +110,8 @@ tmp_stations.insert(tmp_stations.end(), metro_stations_container::pair_metro_sta
 																													2,
 																													150,
 																													130,
-																													string("third station")
+																													string("third station"),
+																													string("sounds/station3.wav")
 																													)
 																										)
 						);
@@ -116,7 +123,8 @@ tmp_stations.insert(tmp_stations.begin(), metro_stations_container::pair_metro_s
 																													1,
 																													13,
 																													15,
-																													string("first station")
+																													string("first station"),
+																													string("sounds/station1.wav")
 																													)
 
 																										)
@@ -129,7 +137,8 @@ tmp_stations.insert(tmp_stations.upper_bound(2), metro_stations_container::pair_
 																													1,
 																													21,
 																													52,
-																													"second station"
+																													"second station",
+																													"sounds/station2.wav"
 																													)
 																										)
 						);
@@ -149,7 +158,8 @@ tmp_stations.insert(tmp_stations.upper_bound(2), metro_stations_container::pair_
 		CPPUNIT_ASSERT(tmp_iter2->second.get_x_coord()==tmp_iter1->second.get_x_coord());
 		CPPUNIT_ASSERT(tmp_iter2->second.get_y_coord()==tmp_iter1->second.get_y_coord());
 		CPPUNIT_ASSERT(tmp_iter2->second.get_stl_name_string()==tmp_iter1->second.get_stl_name_string());
-		
+		CPPUNIT_ASSERT(tmp_iter2->second.get_wav_file_name()==tmp_iter1->second.get_wav_file_name());
+
 		tmp_iter1++;
 	}
 
@@ -174,7 +184,6 @@ tmp_stations.insert(tmp_stations.upper_bound(2), metro_stations_container::pair_
 	CPPUNIT_ASSERT(iter_line!=g_lines.end());
 	CPPUNIT_ASSERT(iter_line->second.size_stations_id()==0);
 	CPPUNIT_ASSERT(iter_line->second.empty_stations_id());
-
 
 };
 

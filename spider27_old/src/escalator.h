@@ -333,8 +333,13 @@ get_ and set_  metods for private data members
    	void set_direction(int new_dir) { direction=new_dir; };   	
 
 	int get_start_day_mode() {return start_day_mode;};
+	void set_start_day_mode(int new_start_day_mode) {start_day_mode=new_start_day_mode;};
+	
 	int get_start_hour() {return start_hour;};
+	void set_start_hour(int new_start_hour) {start_hour=new_start_hour;};
+
 	int get_start_minute(){ return start_minute;}
+	void set_start_minute(int new_start_minute) {start_minute=new_start_minute;};
 
    	int get_last_message_remote_id() { return last_message_remote_id; };   	
    	void set_last_message_remote_id(int new_last_message_remote_id) { last_message_remote_id=new_last_message_remote_id; };   	

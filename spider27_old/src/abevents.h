@@ -13,7 +13,7 @@ ApEventLink_t AbInternalLinks[] = {
 	{ 11, 0, 0L, 0L, 0L, &interface, NULL, NULL, 0, NULL, 0, 0, 0, 0, },
 	{ 4, 0, 0L, 0L, 0L, &LogFilterDlg, NULL, NULL, 0, link_setup_LogFilterDlg, 1, 9, 0, 0, },
 	{ 5, 0, 0L, 0L, 0L, &EscalatorMenu, NULL, NULL, 0, NULL, 0, 3, 0, 0, },
-	{ 4, 0, 0L, 0L, 0L, &PrevCmdPoolDlg, NULL, NULL, 0, NULL, 0, 9, 0, 0, },
+	{ 4, 0, 0L, 0L, 0L, &PrevCmdPoolDlg, NULL, NULL, 0, link_setup_PrevCmdPullDlg, 1, 9, 0, 0, },
 	{ 4, 0, 0L, 0L, 0L, &EscConfig, NULL, NULL, 0, link_setup_EscConfig, 1, 9, 0, 0, },
 	{ 0 }
 	};
@@ -62,7 +62,7 @@ static const ApEventLink_t AbLinks_EscConfig[] = {
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "num_int_start_min", 53015, changed_num_int_start_time, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_escalator_pref_direction", 23010, item_selection_cb_escalator_pref_direction, 0, 0, 0, 0, },
 	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "esc_conf_cancel", 2009, NULL, 0, 0, 0, 0, },
-	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "esc_conf_save", 2009, NULL, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "esc_conf_save", 2009, activate_esc_conf_save, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_esc_config_list_mode", 23010, item_selection_cb_esc_config_list_mode, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "cb_lines", 23010, item_selection_cb_lines, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "rwlst_config_escalators", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_escalator_start_item, 0, 0, 0, 0, },
@@ -93,12 +93,11 @@ static const ApEventLink_t AbLinks_ArchiveLog[] = {
 	};
 
 static const ApEventLink_t AbLinks_PrevCmdPoolDlg[] = {
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "PrevCmdPullDlg", 1013, unrealized_PrevCmdPullDlg, 0, 0, 0, 0, },
 	{ 10, 0, 0L, 0L, 0L, NULL, NULL, "CmdPoolDlgBtnClose", 2009, NULL, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SendCommandButton", 2009, activate_SendCommandButton, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "DeleteCommandBtn", 2009, activate_DeleteCommandBtn, 0, 0, 0, 0, },
 	{ 8, 3, 0L, 0L, 0L, NULL, NULL, "CommandPoolRwLst", 68000, (int(*)(PtWidget_t*,ApInfo_t*,PtCallbackInfo_t*)) draw_command_pool_item, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "CommandPoolRwLst", 1012, realized_CommandPoolRwLst, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "CommandPoolRwLst", 1013, unrealized_CommandPoolRwLst, 0, 0, 0, 0, },
 	{ 0 }
 	};
 

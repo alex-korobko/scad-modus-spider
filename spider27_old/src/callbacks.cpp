@@ -319,48 +319,6 @@ static void redraw_devices_list_in_filter_dlg(
 
 };
 
-void re_calculate_command_items_count(PtWidget_t *cmd_pool_list)
-	{
-	PtGenListItem_t *first=NULL, *list_item=new(PtGenListItem_t), *last;
-
-	cmd_pool_container* cmd_pool_cont;
-	PtGetResource(cmd_pool_list, Pt_ARG_POINTER, &cmd_pool_cont, 0);				
-	
-	PtGenListRemoveItems(cmd_pool_list, NULL,NULL);
-	
-	if(cmd_pool_cont!=NULL && !cmd_pool_cont->empty())
-	{
-		first=list_item;
-		
-		first->prev=NULL;
-		first->next=NULL;
-		first->size.w=0;
-		first->size.h=system_settings::ROW_HEIGHT;
-		first->flags=0;
-		
-		int size=cmd_pool_cont->size();
-		for (int i=1; i<size; i++)
-			{
-				last=	new(PtGenListItem_t);
-				
-				last->prev=list_item;
-				last->next=NULL;
-				last->size.w=0;
-				last->size.h=system_settings::ROW_HEIGHT;
-				last->flags=0;
-				
-				list_item->next=last;
-				
-				list_item=last;
-			};
-
-		 PtGenListAddItems(cmd_pool_list, first, NULL);
-		 
-	}
-
-}
-
-
 static int CreateScheme()
 {
 	PhDim_t		*size;
@@ -435,34 +393,66 @@ Callbacks command pool window
 int
 activate_SendCommandButton( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	PtWidget_t *cmd_pool_list=NULL, *cmd_pool_wnd=NULL;
-	PtGenListItem_t *curr_item;
-
-	int count ;
-	cmd_pool_container::cmd_pool_iterator p_cmd_pool;	
-
-   cmd_pool_wnd = ApGetInstance(widget );
-   cmd_pool_list = ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
-
-	if (cmd_pool_list!=NULL)
-	{
-	curr_item = PtGenListFirstItem(cmd_pool_list);
-	count=g_command_pool.size();
-	p_cmd_pool=g_command_pool.begin();
-	
-	while(p_cmd_pool!=g_command_pool.end() && curr_item)
+    PtWidget_t *cmd_pool_wnd = ApGetInstance(widget );
+	if (cmd_pool_wnd==NULL)
 		{
-			if(curr_item->flags&Pt_LIST_ITEM_SELECTED>0)
-						{
-						(*p_cmd_pool).send();
-						g_command_pool.erase(p_cmd_pool);
-						re_calculate_command_items_count(cmd_pool_list);			
-						}
-		p_cmd_pool++;
-		curr_item=curr_item->next;
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_SendCommandButton: cmd_pool_wnd==NULL");
+			return( Pt_HALT );
+		};
+
+	PtWidget_t *cmd_pool_rw_list=ApGetWidgetPtr(cmd_pool_wnd,
+																			ABN_CommandPoolRwLst);
+	if (cmd_pool_rw_list==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_SendCommandButton: cmd_pool_rw_list==NULL");
+			return( Pt_HALT );
+		};
+
+	cmd_pool_container *ptr_to_cmd_pool;
+	PtGetResource(cmd_pool_wnd, 
+							Pt_ARG_POINTER,
+							&ptr_to_cmd_pool,
+							0);	
+	if (ptr_to_cmd_pool==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_SendCommandButton: ptr_to_cmd_pool==NULL");
+			return( Pt_HALT );
+		};
+
+	vector<PtArg_t> args(2);
+	const unsigned short  *internal_sel_count, *internal_top_item_pos;
+	unsigned short sel_item_count, top_item_pos;
+
+	PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+	PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+	PtGetResources (cmd_pool_rw_list, args.size(), &args[0]);	
+	sel_item_count=*internal_sel_count;
+	top_item_pos=*internal_top_item_pos;
+
+	if (sel_item_count>0) 
+	{
+		vector<unsigned short> sel_indexes(sel_item_count);
+		PtGenListGetSelIndexes( cmd_pool_rw_list, 
+							                   &sel_indexes[0]);
+
+		if (ptr_to_cmd_pool->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+		{
+			cmd_pool_container::cmd_pool_iterator iter_cmd_pool=ptr_to_cmd_pool->begin();
+			advance(iter_cmd_pool, 
+							sel_indexes[0]-1);			
+			iter_cmd_pool->send();
+			ptr_to_cmd_pool->erase(iter_cmd_pool);
+			ptr_to_cmd_pool->prepare_to_display();
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_SendCommandButton: ptr_to_cmd_pool->size()>static_cast<unsigned short>(sel_indexes[0]-1)");
+			return( Pt_HALT );
 		};
 	};
-
+	
 	return( Pt_CONTINUE );
 	}
 
@@ -470,92 +460,121 @@ activate_SendCommandButton( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 int
 activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	PtGenListItem_t *curr_item;
-
-	int count ;
-	cmd_pool_container::cmd_pool_iterator p_cmd_pool;	
-
-   PtWidget_t *cmd_pool_wnd = ApGetInstance(widget );
-
-	if (cmd_pool_wnd!=NULL) 
-	{
-	    PtWidget_t *cmd_pool_list = ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
-
-		if (cmd_pool_list!=NULL)
+    PtWidget_t *cmd_pool_wnd = ApGetInstance(widget );
+	if (cmd_pool_wnd==NULL)
 		{
-		    cmd_pool_list = ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
-			curr_item = PtGenListFirstItem(cmd_pool_list);
-			count=g_command_pool.size();
-			p_cmd_pool=g_command_pool.begin();
-	
-			while(p_cmd_pool!=g_command_pool.end() && curr_item)
-				{
-					if(curr_item->flags&Pt_LIST_ITEM_SELECTED>0)
-						{
-							g_command_pool.erase(p_cmd_pool);
-							re_calculate_command_items_count(cmd_pool_list);					
-						}
-					p_cmd_pool++;
-					curr_item=curr_item->next;
-				};
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_DeleteCommandBtn: cmd_pool_wnd==NULL");
+			return( Pt_HALT );
+		};
+
+	PtWidget_t *cmd_pool_rw_list=ApGetWidgetPtr(cmd_pool_wnd,
+																			ABN_CommandPoolRwLst);
+	if (cmd_pool_rw_list==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_DeleteCommandBtn: cmd_pool_rw_list==NULL");
+			return( Pt_HALT );
+		};
+
+	cmd_pool_container *ptr_to_cmd_pool;
+	PtGetResource(cmd_pool_wnd, 
+							Pt_ARG_POINTER,
+							&ptr_to_cmd_pool,
+							0);	
+	if (ptr_to_cmd_pool==NULL)
+		{
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_DeleteCommandBtn: ptr_to_cmd_pool==NULL");
+			return( Pt_HALT );
+		};
+
+	vector<PtArg_t> args(2);
+	const unsigned short  *internal_sel_count, *internal_top_item_pos;
+	unsigned short sel_item_count, top_item_pos;
+
+	PtSetArg( &args[0], Pt_ARG_LIST_SEL_COUNT, &internal_sel_count, 0 );
+	PtSetArg( &args[1], Pt_ARG_TOP_ITEM_POS, &internal_top_item_pos, 0 );
+	PtGetResources (cmd_pool_rw_list, args.size(), &args[0]);	
+	sel_item_count=*internal_sel_count;
+	top_item_pos=*internal_top_item_pos;
+
+	if (sel_item_count>0) 
+	{
+		vector<unsigned short> sel_indexes(sel_item_count);
+		PtGenListGetSelIndexes( cmd_pool_rw_list, 
+							                   &sel_indexes[0]);
+
+		if (ptr_to_cmd_pool->size()>static_cast<unsigned short>(sel_indexes[0]-1))
+		{
+			cmd_pool_container::cmd_pool_iterator iter_cmd_pool=ptr_to_cmd_pool->begin();
+			advance(iter_cmd_pool, 
+							sel_indexes[0]-1);			
+			ptr_to_cmd_pool->erase(iter_cmd_pool);
+			ptr_to_cmd_pool->prepare_to_display();
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"activate_DeleteCommandBtn: ptr_to_cmd_pool->size()>static_cast<unsigned short>(sel_indexes[0]-1)");
+			return( Pt_HALT );
 		};
 	};
-
+	
 	return( Pt_CONTINUE );
 	}
-
-
-int
-realized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-	re_calculate_command_items_count(widget);
-	return( Pt_CONTINUE );
-	}
-
-
-int
-unrealized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-	{
-	cmd_pool_container* cmd_pool_cont;
-	PtGetResource(widget, Pt_ARG_POINTER, &cmd_pool_cont, 0);				
-	if(cmd_pool_cont!=NULL)
-	{
-		cmd_pool_cont->set_widget(NULL);
-	}
-
-	return( Pt_CONTINUE );
-
-	}
-
 
 int
 activate_CmdPoolBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	
-	PtWidget_t *cmd_pool_wnd= ApCreateModule( ABM_PrevCmdPoolDlg, NULL, NULL);
-	
-	if (cmd_pool_wnd!=NULL)
+	PtCallbackInfo_t clbc_info;
+	clbc_info.cbdata=&g_command_pool;
+
+	ApCreateModule( ABM_PrevCmdPoolDlg, NULL, &clbc_info);
+	return( Pt_CONTINUE );
+	}
+
+int
+link_setup_PrevCmdPullDlg( PtWidget_t *link_instance, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+
+	cmd_pool_container *ptr_cmd_pool_cont=NULL;
+	ptr_cmd_pool_cont=static_cast<cmd_pool_container*>(cbinfo->cbdata);
+	if (ptr_cmd_pool_cont==NULL)
 		{
-			PtWidget_t *cmd_pool_list=ApGetWidgetPtr(cmd_pool_wnd, ABN_CommandPoolRwLst);
-			if( cmd_pool_list!=NULL) 
-				{
-						cmd_pool_container* cmd_pool_cont;
-						PtGetResource(cmd_pool_list, Pt_ARG_POINTER, &cmd_pool_cont, 0);				
-							if(cmd_pool_cont!=&g_command_pool)
-							{
-								g_command_pool.set_widget(cmd_pool_list);
-							}; 
-						PtRealizeWidget(cmd_pool_wnd);
-				}else {
-						PtDestroyWidget(cmd_pool_wnd);
-						string mess ="Can`t get RawList for command pool";
-						g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-				};
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"link_setup_PrevCmdPullDlg: ptr_cmd_pool_cont==NULL");
+			return( Pt_HALT );
 		}
-	
+	PtSetResource(link_instance, Pt_ARG_POINTER, &ptr_cmd_pool_cont, 0);
+	ptr_cmd_pool_cont->set_widget(link_instance);
+
+	ptr_cmd_pool_cont->prepare_to_display();
+
 	return( Pt_CONTINUE );
 
 	}
+
+
+int
+unrealized_PrevCmdPullDlg( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	cmd_pool_container *ptr_cmd_pool_cont=NULL;	
+	PtGetResource(widget, Pt_ARG_POINTER, &ptr_cmd_pool_cont, 0);
+	if (ptr_cmd_pool_cont!=NULL) 
+		{
+			ptr_cmd_pool_cont->set_widget(NULL);
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																"unrealized_PrevCmdPullDlg: ptr_cmd_pool_cont!=NULL");
+			return( Pt_HALT );
+		}
+
+	return( Pt_CONTINUE );
+
+	}
+
+
 
 /*
 Callbacks log filter window
@@ -2391,10 +2410,8 @@ tmp_widget=ApGetWidgetPtr(link_instance, ABN_cb_escalator_direction);
 
 	}
 
-
 int
 activate_esc_config_btn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
-
 	{
 					
 	metro_lines_container::iterator_metro_lines line_iter=g_lines.begin();
@@ -2405,10 +2422,32 @@ activate_esc_config_btn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 		} else {
 			metro_line::station_id_container stations_in_current_line(line_iter->second.begin_stations_id(),
 																									line_iter->second.end_stations_id());
-			metro_escalators_container tmp_esc_container=
-						g_escalators.get_escalators_by_line_id (stations_in_current_line,
-  																					  &g_stations);
-			tmp_morning_start.prepare_morning_start( tmp_esc_container);
+			metro_station::escalators_id_container escalators_id_for_morning_start;
+			metro_line::station_id_container::iterator iter_stations_id=stations_in_current_line.begin();
+			metro_stations_container::iterator_metro_stations iter_metro_stations;
+			while(iter_stations_id!=stations_in_current_line.end())
+			{
+				iter_metro_stations=g_stations.find(*iter_stations_id);
+				if (iter_metro_stations!=g_stations.end())
+					{
+						escalators_id_for_morning_start.insert(escalators_id_for_morning_start.end(),
+																					iter_metro_stations->second.begin_escalators_id(),
+																					iter_metro_stations->second.end_escalators_id());
+					} else {
+						string message("activate_esc_config_btn: not  found station ");
+						vector<char> tmp_chars(10);
+						itoa (*iter_stations_id, &tmp_chars[0], 10); 
+						message+=&tmp_chars[0];
+						g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																			message);
+					};
+				iter_stations_id++;
+			};
+
+			g_escalators.prepare_morning_start(&tmp_morning_start,
+																	&escalators_id_for_morning_start,	
+																	&g_system_settings);
+
 		};
 
 	PtCallbackInfo_t clbc_info;
@@ -2455,17 +2494,42 @@ item_selection_cb_lines( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 	metro_lines_container::iterator_metro_lines iter_lines=g_lines.begin();
 	advance(iter_lines, static_cast<int>(sel_item_index-1));
 
+	metro_lines_container::iterator_metro_lines line_iter=g_lines.begin();
+
 	if (line_iter->second.morning_start.get_was_created_in_this_day())
 		{
-			*ptr_morn_start_cont=line_iter->second.morning_start;
+			tmp_morning_start=line_iter->second.morning_start;
 		} else {
 			metro_line::station_id_container stations_in_current_line(line_iter->second.begin_stations_id(),
 																									line_iter->second.end_stations_id());
-			metro_escalators_container tmp_esc_container=
-						g_escalators.get_escalators_by_line_id (stations_in_current_line,
-  																					  &g_stations);
-			ptr_morn_start_cont->prepare_morning_start( tmp_esc_container);
+			metro_station::escalators_id_container escalators_id_for_morning_start;
+			metro_line::station_id_container::iterator iter_stations_id=stations_in_current_line.begin();
+			metro_stations_container::iterator_metro_stations iter_metro_stations;
+			while(iter_stations_id!=stations_in_current_line.end())
+			{
+				iter_metro_stations=g_stations.find(*iter_stations_id);
+				if (iter_metro_stations!=g_stations.end())
+					{
+						escalators_id_for_morning_start.insert(escalators_id_for_morning_start.end(),
+																					iter_metro_stations->second.begin_escalators_id(),
+																					iter_metro_stations->second.end_escalators_id());
+					} else {
+						string message("activate_esc_config_btn: not  found station ");
+						vector<char> tmp_chars(10);
+						itoa (*iter_stations_id, &tmp_chars[0], 10); 
+						message+=&tmp_chars[0];
+						g_system_settings.sys_message(system_settings::ERROR_MSG, 
+																			message);
+					};
+				iter_stations_id++;
+			};
+
+			g_escalators.prepare_morning_start(&tmp_morning_start,
+																	&escalators_id_for_morning_start,	
+																	&g_system_settings);
+
 		};
+
 
 	PtWidget_t *ptr_to_cb_esc_config_list_mode=ApGetWidgetPtr(ptr_to_EscConfig, 	
 																								ABN_cb_esc_config_list_mode);
@@ -3220,3 +3284,13 @@ changed_num_int_start_time( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 
 	}
 
+
+int
+activate_esc_conf_save( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+
+
+	return( Pt_CONTINUE );
+
+	}

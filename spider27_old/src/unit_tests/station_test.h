@@ -7,7 +7,7 @@ private:
 void test_simply_metods()
 {
 
-string station_name("test");
+string station_name("test"), wav_file_name("sounds/station1.wav");
 int station_id=1, station_x=10, station_y=11, line_id=3;
 	
 metro_station testing_station (
@@ -15,7 +15,8 @@ metro_station testing_station (
 						line_id,
 						station_x,
 						station_y,
-						station_name
+						station_name,
+						wav_file_name
   						  );
 
 CPPUNIT_ASSERT(testing_station.get_wnd()==NULL);
@@ -54,7 +55,7 @@ CPPUNIT_ASSERT(testing_station.get_stl_name_string().compare(station_name)==0);
 void test_stations_id_container_metods()
 {
 	metro_station::iterator_escalators_id esc_id_iter;
-	string station_name("test");
+	string station_name("test"), wav_file_name("sounds/station1.wav");
 	int station_id=1, station_x=10, station_y=11, line_id=3;
 	
 	metro_station testing_station (
@@ -62,7 +63,8 @@ void test_stations_id_container_metods()
 						line_id,
 						station_x,
 						station_y,
-						station_name
+						station_name,
+						wav_file_name
   						  );
 
 	vector<int> escalators_id_container(3);

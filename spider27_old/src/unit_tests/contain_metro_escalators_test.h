@@ -90,7 +90,7 @@ CPPUNIT_ASSERT(g_escalators.empty());
 CPPUNIT_ASSERT(g_escalators.size()==0);
 };
 
-void test_load()
+void test_save_load()
 {
 
 //ATTENTION  - all of that escalators must be in file_name !!!
@@ -278,40 +278,247 @@ tmp_esc_container.insert(tmp_esc_container.end(),
 	CPPUNIT_ASSERT(iter_stat!=g_stations.end());
 	CPPUNIT_ASSERT(iter_stat->second.size_escalators_id()==0);
 	CPPUNIT_ASSERT(iter_stat->second.empty_escalators_id());
+
+/*
+save metod testing 
+*/
+	int first_start_hour, second_start_hour, 
+		 first_start_minute, second_start_minute,
+		 first_start_day_mode, second_start_day_mode, 
+		 first_direction, second_direction,
+		 first_pref_direction, second_pref_direction;
+
+	tmp_iter1=g_escalators.begin();
+	CPPUNIT_ASSERT(tmp_iter1!=tmp_esc_container.end());
 	
+	first_start_hour=tmp_iter1->second.get_start_hour();
+	second_start_hour=first_start_hour+1;
+	tmp_iter1->second.set_start_hour(second_start_hour);
+
+	first_start_minute=tmp_iter1->second.get_start_minute();
+	second_start_minute=first_start_minute+1;
+	tmp_iter1->second.set_start_minute(second_start_minute);
+
+	first_start_day_mode=tmp_iter1->second.get_start_day_mode();
+	second_start_day_mode=system_settings::START_DAY_MODE_NEVER;
+	if (first_start_day_mode==second_start_day_mode) 
+				second_start_day_mode=system_settings::START_DAY_MODE_EVERYDAY;
+	tmp_iter1->second.set_start_day_mode(second_start_day_mode);
+
+	first_direction=tmp_iter1->second.get_direction();
+	second_direction=system_settings::DIRECTION_DOWN;
+	if (first_direction==second_direction) 
+				second_direction=system_settings::DIRECTION_UP;
+	tmp_iter1->second.set_direction(second_direction);
+
+	first_pref_direction=tmp_iter1->second.get_pref_direction();
+	second_pref_direction=system_settings::DIRECTION_DOWN;
+	if (first_pref_direction==second_pref_direction) 
+				second_pref_direction=system_settings::DIRECTION_UP;
+	tmp_iter1->second.set_pref_direction(second_pref_direction);
+	
+	CPPUNIT_ASSERT(g_escalators.save( file_name));
+	CPPUNIT_ASSERT(g_escalators.load(&g_stations, file_name));	
+	tmp_iter1=g_escalators.begin();	
+	CPPUNIT_ASSERT(tmp_iter1!=tmp_esc_container.end());
+
+	CPPUNIT_ASSERT(second_start_hour==tmp_iter1->second.get_start_hour());	
+	CPPUNIT_ASSERT(second_start_minute==tmp_iter1->second.get_start_minute());	
+	CPPUNIT_ASSERT(second_start_day_mode==tmp_iter1->second.get_start_day_mode());	
+	CPPUNIT_ASSERT(second_direction==tmp_iter1->second.get_direction());	
+	CPPUNIT_ASSERT(second_pref_direction==tmp_iter1->second.get_pref_direction());	
+
+	tmp_iter1->second.set_start_hour(first_start_hour);
+	tmp_iter1->second.set_start_minute(first_start_minute);
+	tmp_iter1->second.set_start_day_mode(first_start_day_mode);
+	tmp_iter1->second.set_direction(first_direction);
+	tmp_iter1->second.set_pref_direction(first_pref_direction);
+	CPPUNIT_ASSERT(g_escalators.save( file_name));		
 };
 
-
-void test_get_escalators_by_line_id()
+void test_creating_morning_start()
 {
-	int line_id=1;
-	metro_lines_container::iterator_metro_lines line_iter=g_lines.find(line_id);
+time_t time_t_now=time(NULL);
+struct tm time_tm_now;
 
-	CPPUNIT_ASSERT(line_iter!=g_lines.end()); 
+localtime_r(&time_t_now, &time_tm_now);
+										
+contain_morning_start tmp_morn_start;
+contain_morning_start::iterator_morining_start iter_morn_start;
 
-	metro_line::station_id_container stations_in_current_line(line_iter->second.begin_stations_id(),
-																							line_iter->second.end_stations_id());
+metro_escalators_container tmp_esc_container(&g_system_settings);
 
-	metro_escalators_container tmp_esc_container=g_escalators.get_escalators_by_line_id (stations_in_current_line,
-																																			  &g_stations);
+tmp_esc_container.insert(tmp_esc_container.end(), 
+							metro_escalators_container::pair_metro_escalators(3, 
+																					metro_escalator(
+																								&g_system_settings,
+																								3, 
+																								2,
+																								2,
+																								1,
+																								system_settings::DIRECTION_REVERSE,
+																								system_settings::DIRECTION_DOWN,
+																								system_settings::START_DAY_MODE_NEVER,
+																								time_tm_now.tm_hour,
+																								time_tm_now.tm_min,
+																								system_settings::ENABLED,
+																								inet_addr("192.168.40.3")
+																								)
 
-	CPPUNIT_ASSERT(tmp_esc_container.size()==4);
+																										)
+						);
 
-	line_id=2;
-	line_iter=g_lines.find(line_id);
+tmp_esc_container.insert(tmp_esc_container.begin(), metro_escalators_container::pair_metro_escalators(1, 
+																					metro_escalator(
+																								&g_system_settings,
+																								1, 
+																								1,
+																								1,
+																								1,
+																								system_settings::DIRECTION_UP,
+																								system_settings::DIRECTION_UP,
+																								system_settings::START_DAY_MODE_EVEN,
+																								time_tm_now.tm_hour,
+																								time_tm_now.tm_min,
+																								system_settings::DISABLED,
+																								inet_addr("192.168.40.1")
+																								)
 
-	CPPUNIT_ASSERT(line_iter!=g_lines.end()); 
+																										)
+						);
 
-	stations_in_current_line.erase(stations_in_current_line.begin(), stations_in_current_line.end());
+tmp_esc_container.insert(tmp_esc_container.upper_bound(2), metro_escalators_container::pair_metro_escalators(2, 
+																					metro_escalator(
+																								&g_system_settings,
+																								2, 
+																								1,
+																								3,
+																								2,
+																								system_settings::DIRECTION_DOWN,
+																								system_settings::DIRECTION_UP,
+																								system_settings::START_DAY_MODE_EVERYDAY,
+																								time_tm_now.tm_hour,
+																								time_tm_now.tm_min,
+																								system_settings::ENABLED,
+																								inet_addr("192.168.40.2")
+																								)
 
-	stations_in_current_line.insert(stations_in_current_line.end(),
-													line_iter->second.begin_stations_id(),
-													line_iter->second.end_stations_id());
+																										)
+						);
 
-	tmp_esc_container=g_escalators.get_escalators_by_line_id (stations_in_current_line,
-																																			  &g_stations);
+tmp_esc_container.insert(tmp_esc_container.end(), 
+							metro_escalators_container::pair_metro_escalators(4, 
+																					metro_escalator(
+																								&g_system_settings,
+																								4, 
+																								2,
+																								2,
+																								1,
+																								system_settings::DIRECTION_UP,
+																								system_settings::DIRECTION_DOWN,
+																								system_settings::START_DAY_MODE_ODD,
+																								time_tm_now.tm_hour,
+																								time_tm_now.tm_min,
+																								system_settings::ENABLED,
+																								inet_addr("192.168.40.4")
+																								)
 
-	CPPUNIT_ASSERT(tmp_esc_container.empty());
+																										)
+						);
+
+tmp_esc_container.insert(tmp_esc_container.end(), 
+							metro_escalators_container::pair_metro_escalators(5, 
+																					metro_escalator(
+																								&g_system_settings,
+																								5, 
+																								2,
+																								2,
+																								1,
+																								system_settings::DIRECTION_DOWN,
+																								system_settings::DIRECTION_DOWN,
+																								system_settings::START_DAY_MODE_EVERYDAY,
+																								time_tm_now.tm_hour,
+																								time_tm_now.tm_min,
+																								system_settings::ENABLED,
+																								inet_addr("192.168.40.5")
+																								)
+
+																										)
+						);
+
+
+metro_station::escalators_id_container escalators_for_morning_start(4);
+escalators_for_morning_start[0]=1;
+escalators_for_morning_start[1]=2;
+escalators_for_morning_start[2]=3;
+escalators_for_morning_start[3]=4;
+
+tmp_esc_container.prepare_morning_start(&tmp_morn_start,
+																	&escalators_for_morning_start,	
+																	&g_system_settings);
+
+CPPUNIT_ASSERT(tmp_morn_start.max_size()==3);
+CPPUNIT_ASSERT(tmp_morn_start.size()==3);
+
+iter_morn_start=tmp_morn_start.begin();
+
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_id()==2);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_direction()==system_settings::DIRECTION_UP);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_pref_direction()==system_settings::DIRECTION_DOWN);
+CPPUNIT_ASSERT(iter_morn_start->get_start_mode()==system_settings::START_DAY_MODE_EVERYDAY);
+CPPUNIT_ASSERT(iter_morn_start->get_start_hour()==time_tm_now.tm_hour);
+CPPUNIT_ASSERT(iter_morn_start->get_start_minute()==time_tm_now.tm_min);
+
+iter_morn_start++;
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_id()==3);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_direction()==system_settings::DIRECTION_DOWN);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_pref_direction()==system_settings::DIRECTION_REVERSE);
+CPPUNIT_ASSERT(iter_morn_start->get_start_mode()==system_settings::START_DAY_MODE_NEVER);
+CPPUNIT_ASSERT(iter_morn_start->get_start_hour()==time_tm_now.tm_hour);
+CPPUNIT_ASSERT(iter_morn_start->get_start_minute()==time_tm_now.tm_min);
+
+iter_morn_start++;
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_id()==4);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_direction()==system_settings::DIRECTION_DOWN);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_pref_direction()==system_settings::DIRECTION_UP);
+CPPUNIT_ASSERT(iter_morn_start->get_start_mode()==system_settings::START_DAY_MODE_ODD);
+CPPUNIT_ASSERT(iter_morn_start->get_start_hour()==time_tm_now.tm_hour);
+CPPUNIT_ASSERT(iter_morn_start->get_start_minute()==time_tm_now.tm_min);
+
+tmp_morn_start.only_starting();
+CPPUNIT_ASSERT(tmp_morn_start.max_size()==3);
+
+iter_morn_start=tmp_morn_start.begin();
+
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_id()==2);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_direction()==system_settings::DIRECTION_UP);
+CPPUNIT_ASSERT(iter_morn_start->get_escalator_pref_direction()==system_settings::DIRECTION_DOWN);
+CPPUNIT_ASSERT(iter_morn_start->get_start_mode()==system_settings::START_DAY_MODE_EVERYDAY);
+CPPUNIT_ASSERT(iter_morn_start->get_start_hour()==time_tm_now.tm_hour);
+CPPUNIT_ASSERT(iter_morn_start->get_start_minute()==time_tm_now.tm_min);
+
+if (time_tm_now.tm_mday%2==0)  //even day
+	{
+		CPPUNIT_ASSERT(tmp_morn_start.size()==1);
+	} else {	
+		CPPUNIT_ASSERT(tmp_morn_start.size()==2);
+		
+		iter_morn_start++;
+		CPPUNIT_ASSERT(iter_morn_start->get_escalator_id()==4);
+		CPPUNIT_ASSERT(iter_morn_start->get_escalator_direction()==system_settings::DIRECTION_DOWN);
+		CPPUNIT_ASSERT(iter_morn_start->get_escalator_pref_direction()==system_settings::DIRECTION_UP);
+		CPPUNIT_ASSERT(iter_morn_start->get_start_mode()==system_settings::START_DAY_MODE_ODD);
+		CPPUNIT_ASSERT(iter_morn_start->get_start_hour()==time_tm_now.tm_hour);
+		CPPUNIT_ASSERT(iter_morn_start->get_start_minute()==time_tm_now.tm_min);
+
+	};
+
+CPPUNIT_ASSERT(++iter_morn_start==tmp_morn_start.end());
+
+tmp_esc_container.execute_morning_start(&tmp_morn_start,
+															time_tm_now.tm_hour,
+															time_tm_now.tm_min);
+
 };
  
 public:
@@ -339,15 +546,15 @@ suite_of_tests->addTest(new CppUnit::TestCaller<metro_escalators_container_test>
 										);
 
 suite_of_tests->addTest(new CppUnit::TestCaller<metro_escalators_container_test> 
-												( "load metod test",
-													&metro_escalators_container_test::test_load)
+												( "save and load metod test",
+													&metro_escalators_container_test::test_save_load)
 										);
-
 
 suite_of_tests->addTest(new CppUnit::TestCaller<metro_escalators_container_test> 
-												( "get_escalators_by_line_id metod test",
-													&metro_escalators_container_test::test_get_escalators_by_line_id)
-										);
+												( "test of creating morning start list from escalators container and morning start",
+													&metro_escalators_container_test::test_creating_morning_start)
+											);
+
 
 return suite_of_tests;
 }
