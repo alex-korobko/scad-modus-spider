@@ -84,10 +84,10 @@ function write error message and return false.
 bool 
 	load_station_parameters (system_settings *sys_sett_obj, metro_lines_container* metro_lines_obj)
 {
-enum {ID=0, NAME, LINE_ID, X_COORD, Y_COORD, ENTRIES_COUNT};
+enum {ID=0, NAME, LINE_ID, X_COORD, Y_COORD, WAV_FILE, ENTRIES_COUNT};
 
 const char *entry_name_c_str;
-string entry_name, name_station;
+string entry_name, name_station, wave_file_name;
 vector<char> temp_str(512);
 vector<string> entries_names(ENTRIES_COUNT);
 int id_station(-1), id_line(-1), x_coord(-1), y_coord(-1);
@@ -97,6 +97,7 @@ entries_names[NAME]="name";
 entries_names[LINE_ID]="lineID";
 entries_names[X_COORD]="x";
 entries_names[Y_COORD]="y";
+entries_names[WAV_FILE]="wav file";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
 							                        temp_str.size()
@@ -130,6 +131,8 @@ if (entry_name.compare(entries_names[ID])==0)
 	
 	} else if (entry_name.compare(entries_names[NAME])==0) {
 			name_station=&temp_str[0];
+	} else if (entry_name.compare(entries_names[WAV_FILE])==0) {
+			wave_file_name=&temp_str[0];
 	}  else if (entry_name.compare(entries_names[LINE_ID])==0) {
 			int temp_int = atoi(&temp_str[0]);
 			if (temp_int>0)
@@ -220,7 +223,8 @@ if (id_station>0 &&
 																		 	id_line,
 																			x_coord,
 																			y_coord,											 
-																			name_station
+																			name_station,
+																			wave_file_name
 																		)
 														);
 

@@ -52,7 +52,7 @@ ApWindowLink_t ArchiveLog = {
 ApDialogLink_t PrevCmdPoolDlg = {
 	"PrevCmdPoolDlg.wgtd",
 	&AbContext,
-	AbLinks_PrevCmdPoolDlg, 124, 6
+	AbLinks_PrevCmdPoolDlg, 124, 5
 	};
 
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {

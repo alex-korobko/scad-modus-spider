@@ -18,7 +18,8 @@ private:
 	int			line_id;
 	int			xcoord, ycoord;
    	stl_string			name;
-   		  
+   	stl_string			wav_file_name;
+   	
 	escalators_id_container escalators_id;     
 public:
 	typedef escalators_id_container::iterator iterator_escalators_id;
@@ -29,13 +30,15 @@ public:
 						  int new_id_line,
 						  int new_x_coord,
 						  int new_y_coord,
-						  string new_name
+						  stl_string new_name,
+						  stl_string new_wav_file_name
   						  ):
 	id(new_id_station),
 	line_id(new_id_line),
 	xcoord(new_x_coord),
 	ycoord(new_y_coord),
-	name(new_name)
+	name(new_name),
+	wav_file_name(new_wav_file_name)
 	{
 		wnd = NULL;
 	}
@@ -60,6 +63,8 @@ get_ and set_  metods for private data members
 	const char* get_c_name_string() { return name.c_str(); }
 	stl_string get_stl_name_string() { return name; }
 	size_of_stl_string  get_c_name_string_size() { return name.size(); }
+
+	stl_string get_wav_file_name() { return wav_file_name; }
 
 	int get_line_id() {return(line_id);};
 	void set_line_id(int new_line_id) { line_id=new_line_id;};

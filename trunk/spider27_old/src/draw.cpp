@@ -193,7 +193,91 @@ void draw_command_pool_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where
         ) {
+    cmd_pool_container *cmd_pool_cont;
+    cmd_pool_container::cmd_pool_iterator iter_cmd_pool;
+    metro_stations_container::iterator_metro_stations iter_metro_stations;
+    string station_name, direction_string("ОШИБКА!");
+    system_settings::strings_container directions_strings=g_system_settings.get_directions_russ_strings();
+    vector<char> tmp_chars(10);
+    vector<PtArg_t> args(2);
+	unsigned count;
+	PhPoint_t draw_point;
+    PtListColumn_t *internal_column_pos=NULL;
+     
 	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
+
+	if (g_system_settings.small_font_prepared())
+		{
+			PgSetFont( (char*) g_system_settings.get_small_font() );
+		} else {
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+														"draw_command_pool_item: not found system_settings::small_font");
+		};
+
+	PtSetArg(&args[0], Pt_ARG_LIST_COLUMN_POS, &internal_column_pos, 0);
+	PtSetArg(&args[1], Pt_ARG_POINTER, &cmd_pool_cont, 0);	
+
+	PtGetResources(widget,
+							  args.size(),
+							  &args[0]);		
+	
+	if (cmd_pool_cont==NULL){
+			g_system_settings.sys_message(system_settings::ERROR_MSG,
+														"draw_command_pool_item: cmd_pool_cont==NULL");
+			return;
+		};
+
+	iter_cmd_pool=cmd_pool_cont->begin();
+	advance(iter_cmd_pool, index-1);
+
+	count=0;
+	draw_point.y=where->ul.y+system_settings::ROW_HEIGHT;
+	while (	count < nitems &&
+				iter_cmd_pool!=cmd_pool_cont->end())
+	{
+		PgSetTextColor(iter_cmd_pool->get_item_color());
+		iter_metro_stations=g_stations.find(iter_cmd_pool->get_station());
+		if (iter_metro_stations==g_stations.end())
+			{
+				g_system_settings.sys_message(system_settings::ERROR_MSG,
+																	"draw_command_pool_item: iter_metro_stations==g_stations.end()");
+				return;
+			};
+
+		station_name=iter_metro_stations->second.get_stl_name_string();
+		itoa( iter_cmd_pool->get_escalator_number(), 
+				&tmp_chars[0], 
+				10);
+		
+		// drawing
+		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings::COLUMN_LEFT_MARGIN;
+		PgDrawText(station_name.c_str(), station_name.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		draw_point.x = where->ul.x + internal_column_pos[1].from + system_settings::COLUMN_LEFT_MARGIN;				
+		PgDrawText(&tmp_chars[0], tmp_chars.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+		switch (iter_cmd_pool->get_command_code())
+		{
+		case system_settings::COMMAND_UP:
+			{
+				direction_string=directions_strings[system_settings::DIRECTION_UP];
+				break;
+			}; 
+		case system_settings::COMMAND_DOWN:
+			{
+				direction_string=directions_strings[system_settings::DIRECTION_DOWN];
+				break;
+			}; 
+		};
+
+		draw_point.x = where->ul.x + internal_column_pos[2].from + system_settings::COLUMN_LEFT_MARGIN;				
+		PgDrawText(direction_string.c_str(), direction_string.size(), &draw_point, Pg_TEXT_BOTTOM);
+
+
+		count++;
+		iter_cmd_pool++;
+		draw_point.y+=system_settings::ROW_HEIGHT;
+	}; //	while (	count < nitems &&
 	
 	}
 

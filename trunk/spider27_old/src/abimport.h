@@ -46,14 +46,13 @@ int OpenArchive( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int RealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int SetupPanel( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int link_setup_PrevCmdPullDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 void draw_command_pool_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where
         );
 int activate_SendCommandButton( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_DeleteCommandBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int realized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
-int unrealized_CommandPoolRwLst( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_CmdPoolBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_AllTimeRangeBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int activate_LoadArchiveBtn( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
@@ -86,4 +85,6 @@ void selection_escalator_start_item(
         );
 int activate_tglbtn_start_now( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 int changed_num_int_start_time( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int activate_esc_conf_save( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
+int unrealized_PrevCmdPullDlg( PtWidget_t *widget, ApInfo_t *data, PtCallbackInfo_t *cbinfo );
 #endif
