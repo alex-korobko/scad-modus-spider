@@ -1,5 +1,5 @@
-#ifndef __TEST_1__
-#define __TEST_1__
+#ifndef __1_TEST__
+#define __1_TEST__
 
 class test_1 : public test_interface {
 private:
@@ -11,20 +11,20 @@ private:
         string dbobject_description;
          int iteration_current_data_block;
          int iteration_current_buffer;
-         float summary_insertion_time;
-         float insertion_sample_mean;
-         float insertion_sample_variance;
-         float turncation_sample_mean;
-         float turncation_sample_variance;
+         double summary_insertion_time;
+         double insertion_sample_mean;
+         double insertion_sample_variance;
+         double turncation_sample_mean;
+         double turncation_sample_variance;
 
          test_iteration_result(string dbobject_description,
          								int iteration_current_data_block,
                                         int iteration_current_buffer,
-                                        float summary_insertion_time,
-                                        float insertion_sample_mean,
-                                        float insertion_sample_variance,
-                                        float turncation_sample_mean,
-                                        float turncation_sample_variance):
+                                        double summary_insertion_time,
+                                        double insertion_sample_mean,
+                                        double insertion_sample_variance,
+                                        double turncation_sample_mean,
+                                        double turncation_sample_variance):
                 dbobject_description(dbobject_description),
                 iteration_current_data_block(iteration_current_data_block),
                 iteration_current_buffer(iteration_current_buffer),
@@ -53,8 +53,7 @@ public:
 	    int max_data_block, //kbytes
 		int data_block_split_count,
 		int buffer_split_count,
-		int repeats_count
-	    );
+		int repeats_count );
 
 	int get_min_data_block() { return min_data_block;};
 	int get_max_data_block() { return max_data_block;};

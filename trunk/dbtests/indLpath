@@ -1,0 +1,5 @@
+LPATH = -L /usr/local/lib/ -L /usr/lib/gcc-lib/ntox86/2.95.2/exceptions -L /usr/ntox86/lib/exceptions 
+
+ifdef BERKELEY_DB_OBJECT
+LPATH += -L /usr/local/BerkeleyDB/lib
+endif
