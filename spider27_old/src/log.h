@@ -50,6 +50,7 @@ protected:
 	List<LogRecord>	records;
 	PtWidget_t*		wnd;
 	struct	tm		lastAccessTime;
+	struct	tm		lastSaveTime;
 public:
 	Log();
 	virtual ~Log();

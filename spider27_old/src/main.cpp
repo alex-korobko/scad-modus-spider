@@ -167,6 +167,8 @@ int LoadMap(const char* fileName)
 	int 	   	intTemp, i;
 	int		lineCount = -1, stationCount = -1, escalatorCount = -1;
 
+	
+
 	handle = fopen(fileName, "rt");
 	if (!handle)
 		return 0;
@@ -359,12 +361,12 @@ int LoadMap(const char* fileName)
 	fclose(handle);
 
 
-/*		ALL_ESCALATORS
+		ALL_ESCALATORS
 		{
 		if (g_escalators[i].enabled)
 		printf ("Escalator id %d , type %d\n",g_escalators[i].id,g_escalators[i].type);
 		}
-*/
+
 	
 	return 1;
 }
@@ -474,10 +476,11 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 		SysMessage(ERROR_MSG, "can't find current escalator");
 		return Pt_HALT;
 	}
-
-//	printf("Code %d, value %d ESCALATOR %p on %d\n", pulse->code, pulse->value.sival_int, escalator, escalator->online);
+	
+	printf("Code %d, value %d ESCALATOR %d on %d\n", pulse->code, pulse->value.sival_int, escalator->id, escalator->online);
+	
 	switch(pulse->code)
-	{
+		{
 		case 0:
 		case 1:
 		case 2:
@@ -660,8 +663,6 @@ int RealizeMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 
 int CloseMainWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
-
-	
 	mainLog.AddMessage(144, 0, 0); // Program closed
 
 	return( Pt_CONTINUE );
