@@ -60,8 +60,8 @@ static const ApEventLink_t AbLinks_EscConfig[] = {
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscConfig", 1012, FillEscConfList, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "EscDirectionList", 23010, SelectEscalatorDirection, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscReverseBtn", 2009, SetReverseEscalator, 0, 0, 0, 0, },
-	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscDownBtn", 2009, SetDownDirection, 0, 0, 0, 0, },
 	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscUpBtn", 2009, SetUpDirection, 0, 0, 0, 0, },
+	{ 8, 0, 0L, 0L, 0L, NULL, NULL, "SetEscDownBtn", 2009, SetDownDirection, 0, 0, 0, 0, },
 	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "EscConfCancel", 2009, OnChancelDirections, 0, 0, 0, 0, },
 	{ 9, 0, 0L, 0L, 0L, NULL, NULL, "EscConfDone", 2009, OnSaveDirections, 0, 0, 0, 0, },
 	{ 0 }

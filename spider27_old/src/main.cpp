@@ -32,6 +32,8 @@
 #include "alert.h"
 #include "dictionary.h"
 
+#include "signal.h"
+
 FILE* cfg_file;
 PtWidget_t *escal[256];
 int escal_count = 0;
@@ -42,25 +44,36 @@ char		g_rightGate[] = "192.168.0.2";
 
 pthread_t		pingTID, timerTID;
 
+sig_atomic_t SigpipeCount;
+
 enum {lineRead = 1, stationRead, escalatorRead};
 
 /* Application Options string */
 const char ApOptions[] =
 	AB_OPTIONS ""; /* Add your options in the "" */
+
+void SigpipeHandler (int SignalNumber)
+{
+++SigpipeCount;
+};
 	
 void* PingThread(void* arg)
 {
 SysMessage(INFO_MSG,"In PingThread");				 	
 	while(1)
 	{
-
+		if (SigpipeCount>0) {
+		SysMessage(ERROR_MSG,"Recived SIGPIPE");
+		--SigpipeCount;
+										};
 		ALL_ESCALATORS
 	 	{
 	 		if ((g_escalators[i].online ==1) && g_escalators[i].enabled)
 	 		{
 	 			if (g_escalators[i].sleepticks >= 1)
 	 			{
-	 				g_escalators[i].CheckStatus();	
+//	 				g_escalators[i].CheckStatus();	
+					g_escalators[i].GetData();	
 	 				g_escalators[i].sleepticks = 0;
 	 			}
 	 			else
@@ -70,7 +83,8 @@ SysMessage(INFO_MSG,"In PingThread");
 	 		{
 				if (g_escalators[i].sleepticks >= 5)
 	 			{
-	 				g_escalators[i].CheckStatus();	
+//	 				g_escalators[i].CheckStatus();	
+					g_escalators[i].GetData();	
 	 				g_escalators[i].sleepticks = 0;
 	 			}
 	 			else
@@ -439,7 +453,7 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 	metro_escalator*		escalator;
 
 	pulse = (struct _pulse*)message;	
-//	printf("Code %d, value %d\n", pulse->code, pulse->value.sival_int);
+	printf("Code %d, value %d\n", pulse->code, pulse->value.sival_int);
 //	escalator = g_escalators[pulse->value.sival_int];
 	for(int i=0; i<g_escalatorNum; i++)
 		if (g_escalators[i].id == pulse->value.sival_int)
@@ -450,12 +464,13 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 		return Pt_HALT;
 	}
 
-//	printf("Code %d, value %d ESCALATOR %p on %d\n", pulse->code, pulse->value.sival_int, escalator, escalator->online);
+	printf("Code %d, value %d ESCALATOR %p on %d\n", pulse->code, pulse->value.sival_int, escalator, escalator->online);
 	switch(pulse->code)
 	{
 		case 0:
 		case 1:
 		case 2:
+			printf("In PulseReceiver\n");
 			escalator->SetState(pulse->code);			
 			break;
 		case 3:
@@ -473,8 +488,12 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 int Initialize( int argc, char *argv[] )
 {
 	PtInputId_t *InputRes=NULL;
-    	/* eliminate 'unreferenced' warnings */
-    	argc = argc, argv = argv;
+	
+	struct sigaction sa;
+	memset (&sa, 0, sizeof(sa));
+	sa.sa_handler=&SigpipeHandler;
+	
+	sigaction(SIGPIPE,&sa,NULL);
    
     	g_debugFile = fopen("debug.log", "a+");
     	if (!g_debugFile)
@@ -533,7 +552,7 @@ int Initialize( int argc, char *argv[] )
     	}
 
 	// запускаем поток роутера
-	g_router.Start();
+	//g_router.Start();
 	
 	// канал для пульсов
 	g_chanID = PhChannelAttach(0, -1, NULL);

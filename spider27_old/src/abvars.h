@@ -115,8 +115,8 @@ const int ABN_LogFilterOK = 95;
 const int ABN_EscConfig = 96;
 const int ABN_EscDirectionList = 97;
 const int ABN_SetEscReverseBtn = 98;
-const int ABN_SetEscDownBtn = 99;
-const int ABN_SetEscUpBtn = 100;
+const int ABN_SetEscUpBtn = 99;
+const int ABN_SetEscDownBtn = 100;
 const int ABN_EscConfCancel = 101;
 const int ABN_EscConfDone = 102;
 

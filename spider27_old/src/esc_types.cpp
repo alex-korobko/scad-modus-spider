@@ -40,20 +40,13 @@ int Block::CreatePanel(PtWidget_t* parent)
 {
 	char	buffer[128];
 	PtArg_t args[3];
-	int column=0, row=0, flg;
+	int column=0, row=0;
 
 	name.Get(buffer, 128);
-	flg=PtEnter(0);
-	if (flg<0) {
-		SysMessage(ERROR_MSG, "In Block::CreatePanel: %s", strerror(-flg ));
-		return (Pt_CONTINUE);
-					};
-
 	PtSetArg(&args[0], Pt_ARG_TITLE, buffer, 0);
 	PtSetArg(&args[1], Pt_ARG_FILL_COLOR, 0x00BBC1D9, 0);
 	PtSetArg(&args[2], Pt_ARG_OUTLINE_COLOR, 0x00A8A9D8, 0);
 	panel = PtCreateWidget(PtPane, parent, 3, args);
-	PtLeave(flg);
 	
 	for(int i=0; i<size; i++)
 	{		
@@ -67,13 +60,7 @@ int Block::CreatePanel(PtWidget_t* parent)
 	}
 
 	if (panel) {
-		flg=PtEnter(0);
-		if (flg<0) {
-		SysMessage(ERROR_MSG, "In Block::CreatePanel: %s", strerror(-flg ));
-		return (Pt_CONTINUE);
-						};
 		PtRealizeWidget(panel);
-		PtLeave(flg);
 					};
 	return 1;
 }
@@ -99,18 +86,11 @@ int Signal::CreateLed(PtWidget_t* parent, int column, int row)
 	int flg;
 	
 	name.Get(buffer, 128);
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In Block::CreatePanel: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
-					
 	PtSetParentWidget(parent);
 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, buffer, 0);
 	PtSetArg(&args[1], Pt_ARG_LABEL_TYPE, Pt_TEXT_IMAGE, 0);
 	PtSetArg(&args[2], Pt_ARG_TEXT_IMAGE_SPACING,	 5, 0);
 	led = ApCreateWidget(widget_dbase, "block_grey_led", 5+65*column, 4+24*row, 3, args);
-	PtLeave(flg);
 	
 //	hint.Get(balloon, 128);		
 //	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "jhvjvhvjhhjvjh", 0);	
