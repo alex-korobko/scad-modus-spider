@@ -467,7 +467,7 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 //	printf("Code %d, value %d\n", pulse->code, pulse->value.sival_int);
 //	escalator = g_escalators[pulse->value.sival_int];
 	for(int i=0; i<g_escalatorNum; i++)
-		if (g_escalators[i].id == pulse->value.sival_int)
+		if (static_cast<int>(g_escalators[i].id) == pulse->value.sival_int)
 			escalator = &g_escalators[i];
 	if (!escalator)
 	{

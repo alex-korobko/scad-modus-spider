@@ -14,6 +14,14 @@
 class		DictEntry
 {
 public:
+	struct ltint
+	{
+		  bool operator() (const int i1, const int i2) const
+ 			 {
+   			 return (i1<i2) ;
+  			}
+	};
+
 	int			number;
 	char*	text;
 	dword	color;

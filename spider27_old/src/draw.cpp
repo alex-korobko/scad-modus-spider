@@ -19,6 +19,7 @@
 #include "proto.h"
 
 #include "log.h"
+#include "cmd_pool.h"
 
 char *blockingNames[] = {
  "",//  "Блок-контакт рабочего тормоза правый                    ",  //0
@@ -115,7 +116,8 @@ void draw_log_item(
 	LogRecord* record;
    	char  translate[256*MB_LEN_MAX];	
    	int		msgID, param;
-   	DictEntry*		curEntry = NULL;
+   	map<int, DictEntry, DictEntry::ltint>::iterator p_dict_entry;	
+//   	DictEntry*		curEntry = NULL;
   //for block circuts
   	char pblock_text[256];
 	int typeIndex;
@@ -146,8 +148,11 @@ void draw_log_item(
 
 		if (!(msgID & 0x8000))
 		{
-		curEntry = g_msgDictionary.GetByKey(msgID);
+		p_dict_entry=g_msgDictionary.find(msgID);
+/*		curEntry = g_msgDictionary.GetByKey(msgID);
 		if (!curEntry)
+*/
+		if(p_dict_entry==g_msgDictionary.end())
 			return;		
 
 		//point.x = where->ul.x + column_pos[0].from + (column_pos[0].to -  column_pos[0].from - 18)/2;
@@ -158,7 +163,8 @@ void draw_log_item(
 
 
 
-		PgSetTextColor(curEntry->color);
+//		PgSetTextColor(curEntry->color);
+		PgSetTextColor((*p_dict_entry)->color);
 		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
 		PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
 		
@@ -176,8 +182,6 @@ void draw_log_item(
 			strSize = g_stations[record->stationID].Name.Get(str, 128);
 			PgDrawText(str, strSize, &point, Pg_TEXT_BOTTOM);
 		}
-
-
 		
 		// Escalator
 		if (msgID <143)
@@ -196,13 +200,13 @@ void draw_log_item(
 			//{	
 				if (msgID == 119)
 				{
-					sprintf(buffer, "%s %d (мм)", curEntry->text, param);
+					sprintf(buffer, "%s %d (мм)", (*p_dict_entry).text, param);
 
 				PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);							
 				}
 				else
 					{
-					PgDrawText(curEntry->text, strlen(curEntry->text), &point, Pg_TEXT_BOTTOM);							
+					PgDrawText(curEntry->text, strlen((*p_dict_entry).text), &point, Pg_TEXT_BOTTOM);							
 					};
 			//}
 		}
@@ -253,44 +257,75 @@ void draw_command_pool_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
         unsigned nitems, PhRect_t *where)
 {
-	uchar_t Helvetica10[MAX_FONT_TAG];
+	uchar_t Helvetica12[MAX_FONT_TAG];
 	uchar_t font_name[] = { "Arial" };
 	PtGenListItem_t *cur_item;
 	PhPoint_t point;
-	PhRect_t extent;
-	int count, flg,strSize;
-	char buffer[256],	str[128];
+	int strSize;
+	unsigned int count;
+	char str[128];
 	int typeIndex;
-	Command *record;	
+	list<Command>::iterator p_cmd_pool;	
+
 
 	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
 	
-	if (PfGenerateFontName(font_name, 0, 10, Helvetica10) == NULL)
+	if (PfGenerateFontName(font_name, 0, 12, Helvetica12) == NULL)
 	{
 		perror("Unable to generate font name"); 
 	} else	
 	{    
-		PgSetFont((char*)Helvetica10);
+		PgSetFont((char*)Helvetica12);
 	}
-	PgSetTextColor(Pg_RED);
 	
 	PtListColumn_t* column_pos = (PtListColumn_t*)get_widget_scalar(widget,	Pt_ARG_LIST_COLUMN_POS);
 
 	printf ("index %d count %d\n", index, nitems);
-	count = index;
+	
 	cur_item = PtGenListFirstItem(widget);
+	p_cmd_pool=g_CommandPool.begin();
+	count=1;
+	//moving to item index - nothing do
+	while (count < index && cur_item &&p_cmd_pool!=g_CommandPool.end())
+	{
+	p_cmd_pool++;
+	cur_item=cur_item->next;
+	count++;
+	}
+	
 	point.x = where->ul.x;
 	point.y = where->ul.y + ROW_HEIGHT;
-	while(count<=static_cast<int>(nitems) && cur_item)
+	//moving from item index - draw nitems items
+	while(count<nitems & p_cmd_pool!=g_CommandPool.end() && cur_item)
 	{
-		record  = g_CommandPool[count-1];
-
+		PgSetTextColor((*p_cmd_pool).GetItemColor());
 		// Station
 		point.x = where->ul.x + column_pos[0].from + COLUMN_LEFT_MARGIN;		
-		strSize = g_stations[record->GetStation()].Name.Get(str, 128);
+		strSize = g_stations[(*p_cmd_pool).GetStation()].Name.Get(str, 128);
 		PgDrawText(str, strSize, &point, Pg_TEXT_BOTTOM);
+		// Escalator
+		sprintf(str, "%d", (*p_cmd_pool).GetEscNum());				
+		point.x = where->ul.x + column_pos[1].from + COLUMN_LEFT_MARGIN;		
+		PgDrawText(str, strlen(str), &point, Pg_TEXT_BOTTOM);
+		//Command text
+		if ((*p_cmd_pool).GetCmdCode()==CMD_UP) 
+			{
+		sprintf(str, "%s", "BBEPХ");				
+			} else
+			{
+				if ((*p_cmd_pool).GetCmdCode()==CMD_DOWN) 
+					{
+					sprintf(str, "%s", "ВНИЗ");				
+					} else
+					sprintf(str, "%s", "ОШИБКА!!");				 
+			}; 
+	
+		point.x = where->ul.x + column_pos[2].from + COLUMN_LEFT_MARGIN;		
+		PgDrawText(str, strlen(str), &point, Pg_TEXT_BOTTOM);
+		
 		point.y = point.y + ROW_HEIGHT;
 		cur_item = cur_item->next;		
+		p_cmd_pool++;
 		count++;
 	}
 	
