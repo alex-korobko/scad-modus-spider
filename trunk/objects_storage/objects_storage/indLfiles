@@ -1,0 +1,9 @@
+MYLIBS= -lm -lcpp -lang-c++ 
+
+ifdef UNIT_TESTING
+# MYLIBS+= -lcppunit
+endif
+
+ifdef LINTER_DBWRAPPER
+MYLIBS+= -llinapi
+endif

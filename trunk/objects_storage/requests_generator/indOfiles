@@ -1,0 +1,9 @@
+OBJECTS=generator_logger.o\
+  mock_generator.o
+
+ifdef UNIT_TESTING
+OBJECTS+= mock_generator_test.o
+endif
+
+OBJECTS+= main.o
+

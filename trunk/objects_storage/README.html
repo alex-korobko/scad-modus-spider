@@ -1,0 +1,104 @@
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<i><b>Изменения:</b></i>
+<ul>
+<li>Изменен объект-заглушка для базы данных. Теперь, собрав  objects_storage<br>
+<b># make mock all</b><br> можно получить ответы на запросы всех поддерживаемых типов.
+<li>Разработка обертки дазы данных для Линтера пошла двумя путями - сейчас
+linter_database_wrapper.[h|cpp] вместо выполнения одного большого запроса выполняет 
+серию одиночных запросов. В linter_database_wrapper_with_joins.[h|cpp] наоборот, использован 
+один большой запрос - для исключительного занятия канала можно использовать запрос через 
+inner join либо на вложеннх запросах.
+</ul>
+<br>
+<i><b>Глюки:</b></i>
+<br>
+На самом деле хрень одна - много одиночных запросов ли один большой с вложенными select
+ вызывает шквал сообщений Линтера :<br>
+E-0 (OPENTH) : Too many opened channels - channel queue overflow<br>
+при этом у меня открыто соединение только из программы  - ни inl ни другая программа к базе не подключена.
+В программе естественно пишет, что не удалось установить соединение с Линтером.
+<br><br>
+Еще одна особенность - не сохраняются значения
+кладу Линтер, запускаю gendb,
+устанавливаю<br><b>
+Gendb > set in-memory tables 10;<br>
+ DB location is '/projects/phone/linter_dbase/'. (ENVIRONMENT VARIABLE SY00)<br>
+<font color="red">Gendb > set in-memory files 20;</font><br>
+ DB location is '/projects/phone/linter_dbase/'. (ENVIRONMENT VARIABLE SY00)<br>
+Gendb > set in-memory columns 100;<br>
+ DB location is '/projects/phone/linter_dbase/'. (ENVIRONMENT VARIABLE SY00)<br>
+Gendb > exit;<br>
+<br>
+# /opt/linter/bin/linter /pool=2600 /inmempool=2400<br>
+Database creation time:      27.12.2004 13:23:36.00<br>
+Last database startup time:  27.12.2004 13:47:54.00<br>
+Last database shutdown time: 27.12.2004 13:50:00.02<br>
+Linter SQL v. 5.9.26.9 connected to data base  &quot;phone            &quot;<br>
+ POOL holds 2459 pages (2400 pages for in-memory tables)<br>
+ Table    queue size  : 100 (10)<br>
+ Column   queue size  : 500 (100)<br>
+ Channel  queue size  : 100<br>
+<font color="red"> File     queue size  : 30 (10)</font><br>
+ User     queue size  : 100<br></b>
+<br>
+Еще одна непонятная проблема  - с таблицей channels 
+(похоже на ошибку  в хранимой процедуре channels_filler):<br><b>
+SQL>select count(*) from channels<br>
+  1>where channel_right_side-channel_left_side=1;<br>
+ INL : start time : 16:00:49 end time :  16:00:49<br>
+<br>
+|      32768|<br>
+ INL : number of rows displayed: 1<br>
+SQL>select channel_right_side, channel_left_side from channels<br>
+  1>where channel_right_side-channel_left_side>2000;<br>
+ INL : start time : 16:01:54 end time :  16:01:54<br>
+ CHANNEL_RIGHT_SIDE CHANNEL_LEFT_SIDE<br>
+ ------------------ -----------------<br>
+|      16930       |          1      |<br>
+|      33860       |      16931      |<br>
+|      50790       |      33861      |<br>
+|      67720       |      50791      |<br>
+ INL : number of rows displayed: 4<br>
+<br>
+SQL>select count(*) from channels<br>
+  1>where channel_right_side<16390 and channel_left_side>1 and<br>
+  2>channel_right_side-channel_left_side=1;<br>
+ INL : start time : 16:03:41 end time :  16:03:41<br>
+|       7698|<br>
+ INL : number of rows displayed: 1<br>
+<br>
+SQL>select count(*) from channels<br>
+1>where channel_right_side<33860 and channel_left_side>16931 and<br>
+channel_right_side-channel_left_side=1;<br>
+ INL : start time : 16:06:02 end time :  16:06:02<br>
+|       8191|<br>
+ INL : number of rows displayed: 1<br>
+<br>
+SQL>select count(*) from channels<br>
+1>where channel_right_side<50790 and channel_left_side>33861 and<br>
+channel_right_side-channel_left_side=1;<br>
+ INL : start time : 16:07:37 end time :  16:07:37<br>
+|       8191|<br>
+ INL : number of rows displayed: 1<br>
+<br>
+SQL>select count(*) from channels<br>
+1>where channel_right_side<67720 and channel_left_side>50791 and<br>
+channel_right_side-channel_left_side=1;<br>
+ INL : start time : 16:10:42 end time :  16:10:42<br>
+|       8191|<br>
+ INL : number of rows displayed: 1<br></b>
+<br>
+Где еще 497 каналов?<br>
+ 32768-(7698+8191+8191+8191)=497<br>
+Вообще-то в одном УПО должно буть не 7698 или 8191, а 8192 канала.
+У меня из-за этого не получается аналитически высчитать номер канала В в таблице 
+channel_b_d в генераторе запросов.<br><br>
+Ну и постоянно возникающие ошибки в физической структуре файлов Линтера  - 
+стоит поработать с прогаммой и с большой степенью верятности после запуска возникнут ошибки.
+</body>
+</html>
+

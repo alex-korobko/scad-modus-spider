@@ -1,0 +1,2 @@
+./requests_generator 10000 objects_storage > result.html
+
