@@ -181,7 +181,7 @@ LOAD /x86/lib/crtn.o
                 0x08048928                ApModifyItemState
                 0x08048938                PQerrorMessage
 
-.text           0x08048948      0x480
+.text           0x08048948      0x4ac
                 0x08048948                _btext=.
  *(.text)
  .text          0x08048948       0x5f /x86/lib/crt1.o
@@ -192,71 +192,73 @@ LOAD /x86/lib/crtn.o
  .text          0x080489fc       0x4e abmain.o
                 0x080489fc                main
  *fill*         0x08048a4a        0x2 37008
- .text          0x08048a4c      0x320 main.o
+ .text          0x08048a4c      0x34b main.o
+                0x08048d94                read_messages
                 0x08048bf4                main_WndOpenFile
                 0x08048a4c                Move_Data
                 0x08048bc8                quit_app
-                0x08048c5c                switch_options
-                0x08048d08                releazed_app
- .text          0x08048d6c       0x5a /x86/lib/crtend.o
- *fill*         0x08048dc6        0x2 37008
+                0x08048c84                switch_options
+                0x08048d30                releazed_app
+ *fill*         0x08048d97        0x1 37008
+ .text          0x08048d98       0x5a /x86/lib/crtend.o
+ *fill*         0x08048df2        0x2 37008
  *(.text.*)
  *(.stub)
  *(.gnu.warning)
  *(.gnu.linkonce.t*)
-                0x08048dc8                _etext=.
-                0x08048dc8                PROVIDE (etext, .)
+                0x08048df4                _etext=.
+                0x08048df4                PROVIDE (etext, .)
 
-.fini           0x08048dc8        0x8
+.fini           0x08048df4        0x8
  *(.fini)
- .fini          0x08048dc8        0x5 /x86/lib/crtbegin.o
- .fini          0x08048dcd        0x3 /x86/lib/crtn.o
+ .fini          0x08048df4        0x5 /x86/lib/crtbegin.o
+ .fini          0x08048df9        0x3 /x86/lib/crtn.o
 
-.rodata         0x08048de0      0x69f
+.rodata         0x08048e00      0x69f
  *(.rodata)
- .rodata        0x08048de0      0x5ba abmain.o
-                0x080492dc                ABN_base
-                0x080492e8                ABN_help_base
-                0x08049310                ABN_block_names
-                0x080492f0                ABN_options_on
-                0x08049314                ABN_journal
-                0x08049300                ABN_file_exit
-                0x080492d8                ABI_options_menu
-                0x08049308                ABN_help_about
-                0x08049304                ABN_help_menu
-                0x080492e0                ABN_file_base
-                0x080492fc                ABN_file_open
-                0x0804922c                ApOptions
-                0x080492f4                ABN_options_off
-                0x0804930c                ABN_options_menu
-                0x080492d4                ABI_resources
-                0x080492ec                ABN_resources
-                0x080492f8                ABN_file_menu
-                0x080492e4                ABN_options_base
- *fill*         0x0804939a        0x6
- .rodata        0x080493a0       0xdf main.o
+ .rodata        0x08048e00      0x5ba abmain.o
+                0x080492fc                ABN_base
+                0x08049308                ABN_help_base
+                0x08049330                ABN_block_names
+                0x08049310                ABN_options_on
+                0x08049334                ABN_journal
+                0x08049320                ABN_file_exit
+                0x080492f8                ABI_options_menu
+                0x08049328                ABN_help_about
+                0x08049324                ABN_help_menu
+                0x08049300                ABN_file_base
+                0x0804931c                ABN_file_open
+                0x0804924c                ApOptions
+                0x08049314                ABN_options_off
+                0x0804932c                ABN_options_menu
+                0x080492f4                ABI_resources
+                0x0804930c                ABN_resources
+                0x08049318                ABN_file_menu
+                0x08049304                ABN_options_base
+ *fill*         0x080493ba        0x6
+ .rodata        0x080493c0       0xdf main.o
  *(.rodata.*)
  *(.gnu.linkonce.r*)
 
 .rodata1
  *(.rodata1)
-                0x0804a47f                .=(ALIGN(0x1000)+(.&0xfff))
+                0x0804a49f                .=(ALIGN(0x1000)+(.&0xfff))
 
-.data           0x0804a480      0x308
+.data           0x0804a4a0      0x308
  *(.data)
- .data          0x0804a480        0x4 /x86/lib/crtbegin.o
- *fill*         0x0804a484       0x1c
- .data          0x0804a4a0      0x2e0 abmain.o
-                0x0804a554                base
-                0x0804a600                file_menu
-                0x0804a4a0                AbInternalLinks
-                0x0804a568                resources
-                0x0804a760                AbContext
-                0x0804a720                options_menu
-                0x0804a680                help_menu
- .data          0x0804a780        0x4 main.o
-                0x0804a780                options_mode
- .data          0x0804a784        0x4 /x86/lib/crtend.o
+ .data          0x0804a4a0        0x4 /x86/lib/crtbegin.o
+ *fill*         0x0804a4a4       0x1c
+ .data          0x0804a4c0      0x2e0 abmain.o
+                0x0804a574                base
+                0x0804a620                file_menu
+                0x0804a4c0                AbInternalLinks
+                0x0804a588                resources
+                0x0804a780                AbContext
+                0x0804a740                options_menu
+                0x0804a6a0                help_menu
+ .data          0x0804a7a0        0x4 main.o
+                0x0804a7a0                options_mode
+ .data          0x0804a7a4        0x4 /x86/lib/crtend.o
  *(.data.*)
  *(.gnu.linkonce.d*)
 
@@ -269,40 +271,40 @@ LOAD /x86/lib/crtn.o
 .gcc_except_table
  *(.gcc_except_table)
 
-.ctors          0x0804a788        0x8
+.ctors          0x0804a7a8        0x8
  *crtbegin.o(.ctors)
- .ctors         0x0804a788        0x4 /x86/lib/crtbegin.o
+ .ctors         0x0804a7a8        0x4 /x86/lib/crtbegin.o
  EXCLUDE_FILE ( *crtend.o)*(.ctors)
  *(SORT(.ctors.*))
  *(.ctors)
- .ctors         0x0804a78c        0x4 /x86/lib/crtend.o
+ .ctors         0x0804a7ac        0x4 /x86/lib/crtend.o
 
-.dtors          0x0804a790        0x8
+.dtors          0x0804a7b0        0x8
  *crtbegin.o(.dtors)
- .dtors         0x0804a790        0x4 /x86/lib/crtbegin.o
+ .dtors         0x0804a7b0        0x4 /x86/lib/crtbegin.o
  EXCLUDE_FILE ( *crtend.o)*(.dtors)
  *(SORT(.dtors.*))
  *(.dtors)
- .dtors         0x0804a794        0x4 /x86/lib/crtend.o
+ .dtors         0x0804a7b4        0x4 /x86/lib/crtend.o
 
-.got            0x0804a798       0x60
+.got            0x0804a7b8       0x60
  *(.got.plt)
- .got.plt       0x0804a798       0x60 /x86/lib/crtbegin.o
-                0x0804a798                _GLOBAL_OFFSET_TABLE_
+ .got.plt       0x0804a7b8       0x60 /x86/lib/crtbegin.o
+                0x0804a7b8                _GLOBAL_OFFSET_TABLE_
  *(.got)
 
-.dynamic        0x0804a7f8       0xb8
+.dynamic        0x0804a818       0xb8
  *(.dynamic)
- .dynamic       0x0804a7f8       0xb8 /x86/lib/crtbegin.o
-                0x0804a7f8                _DYNAMIC
+ .dynamic       0x0804a818       0xb8 /x86/lib/crtbegin.o
+                0x0804a818                _DYNAMIC
 
 .sdata
  *(.sdata)
  *(.sdata.*)
  *(.gnu.linkonce.s.*)
-                0x0804a8b0                _edata=.
-                0x0804a8b0                PROVIDE (edata, .)
-                0x0804a8b0                __bss_start=.
+                0x0804a8d0                _edata=.
+                0x0804a8d0                PROVIDE (edata, .)
+                0x0804a8d0                __bss_start=.
 
 .sbss
  *(.dynsbss)
@@ -310,34 +312,34 @@ LOAD /x86/lib/crtn.o
  *(.sbss.*)
  *(.scommon)
 
-.bss            0x0804a8b0       0xe8
+.bss            0x0804a8d0       0xe8
  *(.dynbss)
- .dynbss        0x0804a8b0       0xc0 /x86/lib/crtbegin.o
-                0x0804a8b0                errno
-                0x0804a8b4                PtMenu
-                0x0804a8b8                PtMenuBar
-                0x0804a8bc                PtImageArea
-                0x0804a8c0                PtPane
-                0x0804a8c4                PtMenuButton
-                0x0804a8c8                PtLabel
-                0x0804a8d0                _Stderr
-                0x0804a920                PtWindow
-                0x0804a928                _Ap_
+ .dynbss        0x0804a8d0       0xc0 /x86/lib/crtbegin.o
+                0x0804a8d0                errno
+                0x0804a8d4                PtMenu
+                0x0804a8d8                PtMenuBar
+                0x0804a8dc                PtImageArea
+                0x0804a8e0                PtPane
+                0x0804a8e4                PtMenuButton
+                0x0804a8e8                PtLabel
+                0x0804a8f0                _Stderr
+                0x0804a940                PtWindow
+                0x0804a948                _Ap_
  *(.bss)
  *(.bss.*)
  *(COMMON)
- COMMON         0x0804a970       0x1c abmain.o
+ COMMON         0x0804a990       0x1c abmain.o
                                   0x0 (size before relaxing)
-                0x0804a970                AbWidgets
- COMMON         0x0804a98c        0xc main.o
+                0x0804a990                AbWidgets
+ COMMON         0x0804a9ac        0xc main.o
                                   0x0 (size before relaxing)
-                0x0804a98c                database
-                0x0804a990                image_on
-                0x0804a994                image_off
-                0x0804a998                .=ALIGN(0x4)
-                0x0804a998                .=ALIGN(0x4)
-                0x0804a998                _end=.
-                0x0804a998                PROVIDE (end, .)
+                0x0804a9ac                database
+                0x0804a9b0                image_on
+                0x0804a9b4                image_off
+                0x0804a9b8                .=ALIGN(0x4)
+                0x0804a9b8                .=ALIGN(0x4)
+                0x0804a9b8                _end=.
+                0x0804a9b8                PROVIDE (end, .)
 
 .stab
  *(.stab)
