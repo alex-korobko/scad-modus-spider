@@ -1,0 +1,226 @@
+typeNum=1
+
+[type]
+name=ЛТ-1
+blockNum=3
+
+[block]
+name=Блок-цепи
+signalNum=38
+
+[signal]
+num=0
+name=БТП
+description=Блок-контакт тормоза правый
+[signal]
+num=1
+name=БТЛ
+description=Блок-контакт тормоза левый
+[signal]
+num=2
+name=БСН
+description=Блок-контакт ступени нижний
+[signal]
+num=3
+name=БСВ
+description=Блок-контакт ступени верхний
+[signal]
+num=4
+name=БЗП
+description=Блок-контакт натяжных звездочек правый
+[signal]
+num=5
+name=БЗЛ
+description=Блок-контакт натяжных звездочек левый
+[signal]
+num=6
+name=БПП
+description=Блок-контакт натяжения поручня правый
+[signal]
+num=7
+name=БПЛ
+description=Блок-контакт натяжения поручня левый
+[signal]
+num=8
+name=БМ
+description=Блок-контакт малого привода
+[signal]
+num=9
+name=БОП
+description=Блок-контакт остановки тросом правый
+[signal]
+num=10
+name=БОЛ
+description=Блок-контакт остановки тросом левый
+[signal]
+num=11
+name=КЗН
+description=Кнопка СТОП и ключ запрета нижний
+[signal]
+num=12
+name=КЗВ
+description=Ключ СТОП и ключ запрета верхний
+[signal]
+num=13
+name=КАНК
+description=Ключ СТОП контролера нижний
+[signal]
+num=14
+name=КАНК
+description=Ключ СТОП контролера верхний
+[signal]
+num=15
+name=ТР
+description=Температурное реле
+[signal]
+num=16
+name=БГП
+description=Блок-контакт гайки АТ правый
+[signal]
+num=17
+name=БГЛ
+description=Блок-контакт гайки АТ левый
+[signal]
+num=18
+name=БАП
+description=Блок-контакт аварийного тормоза правый
+[signal]
+num=19
+name=БАЛ
+description=Блок-контакт аварийного томоза левый
+[signal]
+num=20
+name=БВВ
+description=Блок-контакт входной площадки верхней
+[signal]
+num=21
+name=БВН
+description=Блок-контакт входной площадки нижней
+[signal]
+num=22
+name=КСР
+description=Контроль разъёма стыковки датчика
+[signal]
+num=23
+name=РКН
+description=Промежуточное реле контактора низа
+[signal]
+num=24
+name=РКТ
+description=Промежуточное реле контактора тормоза
+[signal]
+num=25
+name=КЭАТ
+description=Контроль электромагнита АТ
+[signal]
+num=26
+name=ДПС
+description=Датчик пожарной сингнализации
+[signal]
+num=27
+name=КАНП
+description=Ключ СТОП на балюстраде нижний правый
+[signal]
+num=28
+name=КАНЛ
+description=Ключ СТОП на балюстраде нижний левый
+[signal]
+num=29
+name=КАВП
+description=Ключ СТОП на балюстраде верхний правый
+[signal]
+num=30
+name=КАВЛ
+description=Ключ СТОП на балюстраде верхний левый
+[signal]
+num=31
+name=БКП
+description=Блок-контакт проёма
+[signal]
+num=32
+name=БПН
+description=Блок-контакт подъёма поручня низа
+[signal]
+num=33
+name=БПВ
+description=Блок-контакт подъёма поручня верха
+[signal]
+num=34
+name=БХБП
+description=Блок-контакт холостого бегунка правый
+[signal]
+num=35
+name=БХБЛ
+description=Блок-контакт холостого бегунка левый
+[signal]
+num=36
+name=БВПП
+description=Блок-контакт выхода полуоси правый
+[signal]
+num=37
+name=БВПЛ
+description=Блок-контакт выхода полуоси левый
+
+[block]
+name=Контакторы
+signalNum=7
+
+[signal]
+num=72
+name=КД
+description=Контактор дублирующий
+[signal]
+num=73
+name=КВ
+description=Контактор верха
+[signal]
+num=74
+name=КН
+description=Контактор низа
+[signal]
+num=75
+name=КУ1
+description=Контактор ускорения первой ступени
+[signal]
+num=76
+name=КУ2
+description=Контактор ускорения второй ступени
+[signal]
+num=77
+name=КУ3
+description=Контактор ускорения третей ступени
+[signal]
+num=78
+name=КУ4
+description=Контактор ускорения четвёртой ступени
+
+[block]
+name=Автоматы
+signalNum=6
+
+[signal]
+num=80
+name=QS1
+description=Рубильник главного привода
+[signal]
+num=81
+name=QF2
+description=Блок-контакт автомата малого привода
+[signal]
+num=82
+name=QF3
+description=Блок-контакт автомата рабочего тормоза
+[signal]
+num=83
+name=+24V
+description=Сигнал наличия напряжения управления +24В
+[signal]
+num=84
+name=RU24V
+description=Реле утечки управляющего напряжения +24В
+[signal]
+num=85
+name=ДВЕРЬ
+description=Датчик открытия двери стойки
+
+
