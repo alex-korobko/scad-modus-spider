@@ -130,7 +130,6 @@ uint64_t dbobject_berkeley_db::test_1_insert_blob(vector<byte> buffer) throw (db
 int ret_val;
 if (buffer.empty()) throw dbobject_exception("Buffer to insertion is empty");
 uint64_t  begin_system_ticks;
-u_int32_t rec_size;
 int key_value;
 DBT key, data;
 
@@ -154,11 +153,6 @@ if (database_type==DB_HASH ||
 
       memset(&key, 0, sizeof(key));
       memset(&data, 0, sizeof(data));
-/*       
-      database_handler->get_re_len(database_handler, &rec_size);
-      cout<<"In insert rec_size "<<rec_size<<"<br>"<<endl;
-      buffer.assign(rec_size, 0);
-  */     
       data.data = &buffer[0];
       data.size = buffer.size();
 
