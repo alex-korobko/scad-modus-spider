@@ -39,7 +39,7 @@ int AlertQueue::AddAlert(const char* msg)
 	int		msgLength;
 	PtArg_t		arg;
 	char		buffer[20];
-	int			counter, flg;
+	int			counter;
 	
 	if (!msg)
 		return 0;
@@ -74,48 +74,24 @@ int AlertQueue::AddAlert(const char* msg)
 			break;			
 	}*/
 	
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In AlertQueue::AddAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, msg, strlen(msg), &attributes, Pt_MT_TEXT_COLOR);
-	PtLeave(flg);
 	lastMsgLength = msgLength;
 	
 	counter = alerts.GetSize();
 	itoa(counter, buffer, 10);
 	
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In AlertQueue::AddAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
 	PtSetResources(ABW_AlertCounter, 1, &arg);
-	PtLeave(flg);
 	
 	if (counter == 1)
 	{
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In AlertQueue::AddAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED | Pt_GHOST);
 		PtSetResources(ABW_AlertOK, 1, &arg); 
-		PtLeave(flg);
 	}
 	
 	strftime(buffer, 20, "%H:%M:%S", localtime(&record->time));
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In AlertQueue::AddAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
 	PtSetResources(ABW_AlertTime, 1, &arg);
-	PtLeave(flg);
 	
 //	g_sound.Play("test.wav");
 	
@@ -127,7 +103,7 @@ int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	AlertRecord		*curRecord;
 	PtMultiTextAttributes_t	attributes;
 	AlertRecord		*record;
-	int		msgLength, flg;
+	int		msgLength;
 	PtArg_t		arg;
 	char		buffer[20];
 	int			counter;
@@ -151,33 +127,15 @@ int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	attributes.background_color = Pt_DEFAULT_COLOR;
 	attributes.text_color = Pt_DEFAULT_COLOR;
 
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In NextAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, record->msg, strlen(record->msg), &attributes, Pt_MT_TEXT_COLOR);
-	PtLeave(flg);
 	counter = g_alertQueue.alerts.GetSize();
 	itoa(counter, buffer, 10);
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In NextAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
 	PtSetResources(ABW_AlertCounter, 1, &arg);
-	PtLeave(flg);
 	
 	strftime(buffer, 20, "%H:%M:%S", localtime(&record->time));
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In NextAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, buffer, 0);
 	PtSetResources(ABW_AlertTime, 1, &arg);
-	PtLeave(flg);
 	}
 	else
 	{
@@ -185,11 +143,6 @@ int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	attributes.background_color = Pt_DEFAULT_COLOR;
 	attributes.text_color = Pt_DEFAULT_COLOR;
 	
-	flg=PtEnter(0);
-	if (flg<0) {
-			SysMessage(ERROR_MSG, "In NextAlert: %s", strerror(-flg ));
-			return (Pt_CONTINUE);
-					};
 	PtMultiTextModifyText(ABW_AlertMsg, 0, lastMsgLength, -1, "", 0, &attributes, Pt_MT_TEXT_COLOR);
 
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, "0", 0);
@@ -197,7 +150,6 @@ int NextAlert( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		
 	PtSetArg(&arg, Pt_ARG_TEXT_STRING, "", 0);
 	PtSetResources(ABW_AlertTime, 1, &arg);	
-	PtLeave(flg);
 	}	
 	
 	return( Pt_CONTINUE );
@@ -209,19 +161,12 @@ ActivateAlertBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo
 
 	{
 	PtArg_t		arg;
-	int flg;
 	int 	counter = g_alertQueue.alerts.GetSize();
 	
 		if (!counter)
 		{
-		flg=PtEnter(0);
-		if (flg<0) {
-				SysMessage(ERROR_MSG, "In ActivateAlertBtn: %s", strerror(-flg ));
-				return (Pt_CONTINUE);
-					};
 		PtSetArg(&arg, Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED | Pt_GHOST);
 		PtSetResources(ABW_AlertOK, 1, &arg); 
-		PtLeave(flg);
 		}
 		
 	return( Pt_CONTINUE );

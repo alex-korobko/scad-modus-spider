@@ -217,10 +217,10 @@ extern const int ABN_EscDirectionList;
 #define ABW_EscDirectionList                 AbGetABW( ABN_EscDirectionList )
 extern const int ABN_SetEscReverseBtn;
 #define ABW_SetEscReverseBtn                 AbGetABW( ABN_SetEscReverseBtn )
-extern const int ABN_SetEscDownBtn;
-#define ABW_SetEscDownBtn                    AbGetABW( ABN_SetEscDownBtn )
 extern const int ABN_SetEscUpBtn;
 #define ABW_SetEscUpBtn                      AbGetABW( ABN_SetEscUpBtn )
+extern const int ABN_SetEscDownBtn;
+#define ABW_SetEscDownBtn                    AbGetABW( ABN_SetEscDownBtn )
 extern const int ABN_EscConfCancel;
 #define ABW_EscConfCancel                    AbGetABW( ABN_EscConfCancel )
 extern const int ABN_EscConfDone;
