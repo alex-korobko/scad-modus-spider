@@ -16,6 +16,7 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 #include <Pt.h>
 #include <stdarg.h>
 
+//  #define WORD_OF (data, i) (word)((data>>i*16) & 0xFFFF)
 #define LOBYTE(data)	(data & 0x00FF)
 #define HIBYTE(data)	(data & 0xFF00) >> 8
 word CRC(const byte* buffer, int size);

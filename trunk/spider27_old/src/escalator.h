@@ -33,6 +33,8 @@
 #define DIR_PARAM   4
 
 #define MODBUS_TCP_PORT 502
+//интервал (в циклах) через котрый отсылается временная поправка
+#define TIME_CORR_INTER 10000
 
 typedef struct tagData
 {
@@ -116,6 +118,7 @@ public:
 	dword GetID() { return id; }
    	int GetType() { return type; }
    	int SendCommand(byte cmd);   
+   	int SendTime();   
    	int CheckStatus();
    	int GetData();
    	int GetNumber() { return number; }
