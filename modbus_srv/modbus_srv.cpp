@@ -19,7 +19,7 @@ Copyright (C) 2000 - 2002 SCAD Ltd. (software development group)
 #include "modbus.h"
 #include "system.h"
 #include "lbuffer.h"
-#include "routeinfo.h"
+ #include "routeinfo.h"
 
 RouteInfo	g_routeInfo;
 ModBus_c	modbus;
@@ -99,7 +99,7 @@ void* Process(void* arg)
 			close(sock);
 			return 0;
 		}
-		// проверяем заголовок
+		// проверм заголовок
 		if (inBuffer[0] || inBuffer[1] || inBuffer[2] || inBuffer[3] || inBuffer[4])
 		{
 			close(sock);
@@ -120,23 +120,31 @@ void* Process(void* arg)
 				printf("0x%0x ", inBuffer[i]);
 			printf("\n\n");
 		}
-		
+		printf ("Calc CRC\n");		
 		// рассчитываем CRC
 		word crc  = CRC(&inBuffer[2], size);
 		inBuffer[size+2] = HIBYTE(crc);
 		inBuffer[size+3] = LOBYTE(crc);
 
+		printf ("Calc Socket\n");		
 		// передаем номер сокета для потока
 		inBuffer[0] = sock;
 		inBuffer[1] = 0; // кол-во перепосылок
-
+		
+		
 		// посылаем команду
 		if (!modbus.SendBuffer(inBuffer, size+4))
-			Log(ERROR, "Output buffer overflow on sending");
+			{
+			Log(ERROR,"Output buffer overflow on sending");
+			printf ("Output buffer overflow on sending\n");
+			} else {
+			printf ("Data sended\n");
+			};
 	} while(1);
 
 	return 0;
 }
+
 
 void* Router(void* arg)
 {
@@ -163,8 +171,7 @@ void* Router(void* arg)
 		{
 			if (curGate == &routeInfo->gate1)
 				curGate = &routeInfo->gate2;
-			else if (curGate == &routeInfo->gate2)
-				curGate = &routeInfo->gate1;
+			else 	curGate = &routeInfo->gate1;
 			Log(INFO, "Change routing");
 			ChangeRoute(&defaultNet, &defaultNet, 0, delRoute);
 			ChangeRoute(&defaultNet, curGate, 0, addRoute);
@@ -190,6 +197,7 @@ void* Router(void* arg)
 	return 0;
 }
 
+
 int main(int argc, const char *argv[])
 {
 	int		sock, curSock;
@@ -213,8 +221,8 @@ int main(int argc, const char *argv[])
 		return 0;
 	}
 
-//	if (pthread_create(NULL, NULL, &Router, &g_routeInfo) != EOK)
-//		Log(ERROR, "fail to create router thread [%s]", strerror(errno));
+	if (pthread_create(NULL, NULL, &Router, &g_routeInfo) != EOK)
+		Log(ERROR, "fail to create router thread [%s]", strerror(errno));
 
 	// инициализация порта
 	if (!modbus.InitPort(2, 115200))

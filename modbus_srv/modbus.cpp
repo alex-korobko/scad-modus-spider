@@ -31,6 +31,7 @@ const int requestPause = 50000; // мксек
 const int resendTimes = 2;
 
 extern int g_debugMode;
+int NoResponseCount=0;
 
 void* Receiver(void* arg);
 
@@ -70,7 +71,7 @@ int ModBus_c::SendBuffer(byte* buffer, int size)
 
 int ModBus_c::Run()
 {
-	// оздаем поток для чтения из СОМ-порт
+	// оздаем поток для чтени из СОМ-порт
 	if (pthread_create(&tid, NULL, &Receiver, this) != EOK)
 	{
 		Log(ERROR, "Fail to create thread");
@@ -146,12 +147,14 @@ void* Receiver(void* arg)
 	byte			input[MODBUS_BUFFER_SIZE];
 	int				size = 0;
 	int				noResponse = 0;
+	
 /* Начало переменные для учета времени */
-	uint64_t before=0,after=0, cps = SYSPAGE_ENTRY( qtime )->cycles_per_sec;
+	uint64_t before_all, after_all,before=0,after=0, cps = SYSPAGE_ENTRY( qtime )->cycles_per_sec;
 /* Конец переменные для учета времени */
 /*Начало - отладочная переменная */
 	int debug_cou;
 /*Конец - отладочная переменная */
+
 	// если не передан указатель на ModBus_c - до свиданья
 	if (!arg)
 	{
@@ -182,26 +185,29 @@ void* Receiver(void* arg)
 
 
 	// максимальный таймаут приема между двумя соседними байтами в посылке
-//	receiveTimeout.tv_sec = (int)(timeout*1.5);
-//	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000);
+	receiveTimeout.tv_sec = (int)(timeout*1.5);
+	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000);
 
-	receiveTimeout.tv_sec = (int)(timeout*1.5*5);
-	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000 *10);
+//	receiveTimeout.tv_sec = (int)(timeout*1.5*5);
+//	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000 *10);
 
 	
 	// максимальное время ожидания ответа от устройства
 //	responseTimeout.tv_sec = 1;
 //	responseTimeout.tv_usec = responseTime*1000;	
 	
-	responseTimeout.tv_sec = 8;
-	responseTimeout.tv_usec = responseTime*1000;	
+	responseTimeout.tv_sec = 0;
+	responseTimeout.tv_usec = responseTime*800;	
 
 	while(1)
 	{
 		if (noResponse)
 		{
 			noResponse = 0;
+			NoResponseCount++;
 			SendNoResponse(output[0], output[2], output[3]);
+			printf ("NoResponseCount  = %d\n",NoResponseCount);
+			if (NoResponseCount>NO_RESPONSE_TRYS) {execlp("shutdown","shutdown", "-S","r", NULL);};
 		}
 
 		// делаем паузу между запросами
@@ -216,8 +222,11 @@ void* Receiver(void* arg)
 			continue;
 
 		if (output[1] > resendTimes)
+			{
+			noResponse=1;
 			continue;
-
+			};
+				
 		if (g_debugMode)
 		{
 			printf("Send modbus packet (size %d): ", size);
@@ -236,7 +245,7 @@ void* Receiver(void* arg)
 			if (g_debugMode) {after=ClockCycles();};
 			
 			if (g_debugMode) {
-			printf("Time in select (pause brfore write)\t%f\n", (float) (after-before)/cps);			
+			printf("Time in select (pause before write)\t%f\n", (float) (after-before)/cps);			
 										};
 			
 			if (result < 0)
@@ -262,13 +271,20 @@ void* Receiver(void* arg)
 		// сбрасывае счетчик байт во ходящем бффере
 		// и заголовок
 		memset(input, 0, 6);
-
 		// посылаем пакет
+		if (g_debugMode) {before_all=ClockCycles();};
 		write(port, &output[2], size-2);
 	
-//		if (tcdrain(port)<0) {Log(ERROR,"In tcdrain [%s]",strerror(errno));};
+		if (tcdrain(port)<0) {Log(ERROR,"In tcdrain [%s]",strerror(errno));};
 		if (g_debugMode) {before=ClockCycles();};
-		usleep((int)((size-2)*timeout*1000000));
+//		usleep((int)((size+2)*timeout*1000000));
+
+		int usl=(int)((size-4)*timeout*1000000);
+		if (usl<5000) usl=5000;
+		
+		usleep(usl);
+
+
 		if (g_debugMode) {after=ClockCycles();};
 
 		if (g_debugMode) {
@@ -291,9 +307,11 @@ void* Receiver(void* arg)
 
 		
 		if (result && FD_ISSET(port, &readFd))
+		{
 //			read(port, &input[6], 1);	
 			readcond(port, &input[6], 1, 1, 5, 15);	
-			
+			NoResponseCount=0;			
+		}
 		else if (!result)
 		{
 			if (g_debugMode)	printf("Not response...\n");
@@ -318,13 +336,14 @@ void* Receiver(void* arg)
 		for(i=1; i<count; i++)
 		{
 			readFd = allFd;
-			if (g_debugMode) {before=ClockCycles();};
+//			if (g_debugMode) {before=ClockCycles();};
 			result = select(port + 1, &readFd, NULL, NULL, &receiveTimeout);
-			if (g_debugMode) {after=ClockCycles();};
+//			if (g_debugMode) {after=ClockCycles();};
 
-            if (g_debugMode) {
-			printf("Time in select reading %d byte\t%f\n", i,(float) (after-before)/cps);			
-										};
+//            if (g_debugMode) {
+//			printf("Time in select reading %d byte\t%f\n", i,(float) (after-before)/cps);			
+//										};
+
 			//Убрать!!!		
 			debug_cou=i;
 			if (result && FD_ISSET(port, &readFd))
@@ -334,7 +353,7 @@ void* Receiver(void* arg)
 				// если это третий байт, то это число байт в ответе
 				if (i == 2)
 				{
-					// опрдеяем размер остатка входящего пакета
+					// определяем размер остатка входящего пакета
 					// если установлен старший бит - вернули ошибку (пакет = 5 байт)
 						if (input[i+5] & 0x80)
 						count = 5;
@@ -392,6 +411,12 @@ void* Receiver(void* arg)
 				break;
 			}
 		}
+
+		if (g_debugMode) {after_all=ClockCycles();};
+        if (g_debugMode) {
+			printf("\n========\nTime of cicle\t%f\n",(float) (after_all-before_all)/cps);			
+										};
+
 
 		// если из цикла приема вышли с ошибкой - все с начала
 		if (result <= 0)

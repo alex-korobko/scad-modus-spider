@@ -20,6 +20,8 @@ Copyright (C) 2000 - 2002 SCAD Ltd. (software development group)
 
 #include "types.h"
 
+#define NO_RESPONSE_TRYS 4
+
 #define LOBYTE(data)	(data & 0x00FF)
 #define HIBYTE(data)	(data & 0xFF00) >> 8
 

@@ -192,7 +192,7 @@ int ConnectToServer(in_addr_t addr, int port)
 	writeFD = readFD;
 	exFD = readFD;
 
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 4;
 	timeout.tv_usec = 0;
 
 	result = select(sock + 1, &readFD, &writeFD, &exFD, &timeout);
