@@ -28,7 +28,7 @@ ApDialogLink_t LogFilterDlg = {
 ApDialogLink_t EscConfig = {
 	"EscConfig.wgtd",
 	&AbContext,
-	AbLinks_EscConfig, 96, 8
+	AbLinks_EscConfig, 96, 7
 	};
 
 ApDialogLink_t SignalDlg = {

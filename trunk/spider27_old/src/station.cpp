@@ -38,7 +38,7 @@ int metro_station::create_wnd(ApDBase_t* dbase, PtWidget_t* parent, int x, int y
 	int count = 0;
 	metro_escalator* cur_escalator;
 	char	str[128];
-	int		strSize;
+	int		strSize, i;
 	PhRect_t	extent;
 
 	width = 2 + 4;
@@ -59,7 +59,7 @@ int metro_station::create_wnd(ApDBase_t* dbase, PtWidget_t* parent, int x, int y
 		return 0;
 	
 	
-    for(int i=0; i<g_escalatorNum; i++)
+    for(i=0; i<g_escalatorNum; i++)
     {
     		if (g_escalators[i].stationID == id)
     		{
@@ -68,9 +68,13 @@ int metro_station::create_wnd(ApDBase_t* dbase, PtWidget_t* parent, int x, int y
     		}
     	}
     	
-    	if (!wnd || PtRealizeWidget(wnd) == -1)
-      		return 0;
- 
+    i=PtRealizeWidget(wnd);
+    	if (!wnd || i == -1)
+    	{
+          		return 0;
+ 	}
+   
+     
     return 1;
 }
 	

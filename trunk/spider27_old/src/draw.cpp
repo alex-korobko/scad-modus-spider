@@ -108,17 +108,16 @@ void draw_log_item(
 	PtGenListItem_t *cur_item;
 	PhPoint_t point;
 	PhRect_t extent;
-	int count;
+	int count, flg,strSize;
 	char	str[128];
-	int		strSize;
 	char buffer[256];
 	LogRecord* record;
    	char  translate[256*MB_LEN_MAX];	
    	int		msgID, param;
    	DictEntry*		curEntry = NULL;
-
+	
+	
 	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
-
 	if (PfGenerateFontName(font_name, 0, 10, Helvetica10) == NULL)
 	{
 		perror("Unable to generate font name"); 
@@ -126,8 +125,8 @@ void draw_log_item(
 	{    
 		PgSetFont((char*)Helvetica10);
 	}
-
 	PtListColumn_t* column_pos = (PtListColumn_t*)get_widget_scalar(widget,	Pt_ARG_LIST_COLUMN_POS);
+
 
 	count = 0;
 	cur_item = items;
@@ -147,22 +146,25 @@ void draw_log_item(
 		if (!curEntry)
 			return;		
 
-		PgSetTextColor(curEntry->color);
-		
 		//point.x = where->ul.x + column_pos[0].from + (column_pos[0].to -  column_pos[0].from - 18)/2;
 		
 		// Date
 		strftime(buffer, 256, "%d-%m-%Y", localtime(&record->saveTime));
-		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
 		point.x = where->ul.x + 8;		
+
+
+
+		PgSetTextColor(curEntry->color);
+		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
 		PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
 		
 		// Time
 		strftime(buffer, 256, "%H:%M:%S", localtime(&record->saveTime));
-		point.x = where->ul.x + column_pos[1].from + (column_pos[1].to - column_pos[1].from - extent.lr.x - extent.ul.x)/2;		
+		
 		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
+		point.x = where->ul.x + column_pos[1].from + (column_pos[1].to - column_pos[1].from - extent.lr.x - extent.ul.x)/2;		
 		PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
-
+		
 		// Station
 		point.x = where->ul.x + column_pos[2].from + COLUMN_LEFT_MARGIN;		
 		if (msgID <143)
@@ -170,11 +172,14 @@ void draw_log_item(
 			strSize = g_stations[record->stationID].Name.Get(str, 128);
 			PgDrawText(str, strSize, &point, Pg_TEXT_BOTTOM);
 		}
+
+
 		
 		// Escalator
 		if (msgID <143)
 		{
 			itoa(record->escalatorID, buffer, 10);
+
 			PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );		
 			point.x = where->ul.x + column_pos[3].from + (column_pos[3].to - column_pos[3].from - (extent.lr.x - extent.ul.x))/2;
 			
@@ -188,18 +193,22 @@ void draw_log_item(
 				if (msgID == 119)
 				{
 					sprintf(buffer, "%s %d (мм)", curEntry->text, param);
-					PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);							
+
+				PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);							
 				}
 				else
+					{
 					PgDrawText(curEntry->text, strlen(curEntry->text), &point, Pg_TEXT_BOTTOM);							
+					};
 			//}
 		}
 		else
 		{
-			PgSetTextColor(COLOR_GREEN);		
+
 				point.x = where->ul.x + column_pos[4].from + COLUMN_LEFT_MARGIN;
 				//if (translate_string(blockingNames[abs(short(msgID))], translate, translate_set))
 				//{				
+					PgSetTextColor(COLOR_GREEN);		
 					PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
 				//}
 		}

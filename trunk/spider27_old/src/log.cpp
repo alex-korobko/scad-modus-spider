@@ -39,7 +39,7 @@ Log::~Log()
 int Log::AddMessage(int msgID, int stationID, int escalatorID, time_t* saveTime, dword param)
 {
 	LogRecord *newRecord;
-
+	
 	newRecord = new LogRecord;
 	
 	if (!newRecord)
@@ -66,12 +66,13 @@ int Log::AddMessage(int msgID, int stationID, int escalatorID, time_t* saveTime,
 		newRecord->msgID |= (param << 16);
 		
 	if (wnd && CheckFilter(newRecord))
+		{
 		PtGenListAddItems(wnd, &newRecord->listItem, PtGenListLastItem(wnd));		
+		};
 
 	records.Push(newRecord);
 
 	ScrollDown();
-		
 	return 1;
 }
 
@@ -118,6 +119,8 @@ int Log::Load(const char* fileName)
 	time_t	curTime;
 	struct	stat fileStat;
 	int		justCreated = 0;
+
+	SysMessage(INFO_MSG, "In Log::Load");
 	
 	if ((logFile = open(fileName, O_RDONLY, O_BINARY)) < 0)
 	{
@@ -162,6 +165,7 @@ int Log::Load(const char* fileName)
 		}
 	}
 
+	SysMessage(INFO_MSG, "In Log::Load - leaved");
 	close(logFile);
 	
 	return 1;
@@ -182,22 +186,21 @@ void Log::ScrollDown()
 
 int RealizeLogWnd( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
+
+
 	PtSetResource(widget, Pt_ARG_TOP_ITEM_POS, 2, 0);
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
+	
 	return( Pt_CONTINUE );
 }
 
 void Log::FilterLogWnd()
 {
 	LogRecord* curRecord;
-
+	
 	if (wnd)
 	{
 		PtGenListRemoveItems(wnd, NULL, NULL);
-
+			
 		records.first();
 		while((curRecord = records.next()) != NULL)
 		{
@@ -217,14 +220,13 @@ void Log::FilterLogWnd()
 
 void Log::Clear()
 {
-	LogRecord* curRecord;
-
+	int flg;
 	if (wnd)
+		{
 		PtGenListRemoveItems(wnd, NULL, NULL);
-
-	records.first();
-	while((curRecord = records.Pop()) != NULL)
-		delete curRecord;
+		}
+		
+	delete &records;
 }
 
 int CheckFilter(const LogRecord* record)
@@ -300,7 +302,8 @@ int Log::Rotate()
 int Log::AttachWnd(PtWidget_t* wnd)
 {
 	LogRecord* curRecord;
-
+	int flg;
+	
 	if (!wnd)
 	{
 		SysMessage(ERROR_MSG, "Invalid log window pointer");
@@ -313,7 +316,9 @@ int Log::AttachWnd(PtWidget_t* wnd)
 	while((curRecord = records.next()) != NULL)
 	{
 		if (CheckFilter(curRecord))
-			PtGenListAddItems(wnd, &curRecord->listItem, PtGenListLastItem(wnd));		
+				{
+				PtGenListAddItems(wnd, &curRecord->listItem, PtGenListLastItem(wnd));		
+				};
 	}	
 	
 	return 1;

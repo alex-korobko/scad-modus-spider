@@ -102,13 +102,25 @@ int ConfirmDirection()
 {
 	char* btns[2];
 	unsigned long	*flags;
+	int RetVal;
+	int flg;
 	
 	char Helvetica14[MAX_FONT_TAG];
+	flg=PtEnter(0);
+	if (flg<0) {
+					SysMessage(ERROR_MSG, "In metro_escalator::CreateWnd: %s", strerror(-flg ));
+					return (Pt_END);
+					};
+
 	btns[0] = ApGetTextRes(widget_dbase, "@yes");
 	btns[1] = ApGetTextRes(widget_dbase, "@no");
 	
-	return PtAlert( ABW_main_wnd, NULL, ApGetTextRes(widget_dbase, "@warning"), NULL, ApGetTextRes(widget_dbase, "@changeDirection"),
+
+	RetVal=PtAlert( ABW_main_wnd, NULL, ApGetTextRes(widget_dbase, "@warning"), NULL, ApGetTextRes(widget_dbase, "@changeDirection"),
 	           (char*)PfGenerateFontName((uchar_t*)"TextFont", PF_STYLE_ANTIALIAS | PF_STYLE_BOLD, 11, (uchar_t*)Helvetica14), 2, (const char**)btns, NULL, 1, 2, Pt_BLOCK_ALL ) ;
+    	PtLeave(flg);
+    	
+	return (RetVal);
 }
 
 metro_escalator::~metro_escalator()
@@ -124,12 +136,11 @@ metro_escalator::~metro_escalator()
 	reference--;
 }
 
-int metro_escalator::CreateWnd(ApDBase_t* dbase, PtWidget_t* parent, int x,
-								int y)
+int metro_escalator::CreateWnd(ApDBase_t* dbase, PtWidget_t* parent, int x,	int y)
 {
-	PtArg_t args[1];
+	PtArg_t args[2];
 	char    label_buffer[4];
-
+	
 	if (!init_images)
 	{
 		images[0] = ApGetImageRes(dbase, "green_up");
@@ -150,36 +161,39 @@ int metro_escalator::CreateWnd(ApDBase_t* dbase, PtWidget_t* parent, int x,
 		images[15] = ApGetImageRes(dbase, "block_red_led");		
 		images[16] = ApGetImageRes(dbase, "block_yellow_led");		
 		images[17] = ApGetImageRes(dbase, "block_blue_led");								
-		
-		
-		init_images = 1;
-	}		
+  	};	
 	
     PtSetParentWidget(parent);
 	PtSetArg(&args[0], Pt_ARG_POINTER, this, 0);
     wnd = ApCreateWidget(dbase, "escalator_wnd", x, y, 1, args);
+    	
     if (!wnd)   		
 		return 0;
-
 	PtSetArg(&args[0], Pt_ARG_POINTER, this, 0);   
 	Arrow = ApCreateWidget(dbase, "Arrow", -1, -1, 1, args);
     if (!Arrow)
 		return 0;
 		
+	
 	ltoa(number, label_buffer, 10);
 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, label_buffer, 0);
 	numLabel = ApCreateWidget(dbase, "escalator_num", -1, -1, 1, args);
+
+
     if (!numLabel)
 		return 0;
-
+	
+					
 	PtSetArg(&args[0], Pt_ARG_COLOR, NO_BLOCK_COLOR, 0);
 	PtSetArg(&args[1], Pt_ARG_POINTER, this, 0);	
+
+
 	blockLabel = ApCreateWidget(dbase, "blocking", -1, -1, 2, args);
     if (!blockLabel)
 		return 0;
-    
-	UpdateEscalator();
 	
+	UpdateEscalator();
+
 	return 1;
 }
 
@@ -196,25 +210,32 @@ void metro_escalator::UpdateEscalator()
 				switch(dataBlock.status)
 				{		
 					case 2:
-					case 4:		
+					case 4:
 						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[green_up], 0);
 						break;
 					case 6:
 						if (prefDirection == 1)
+							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_up], 0);
+						    	}
 						else if (prefDirection == 2)
+							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);					
+						    	}
 						else if (prefDirection == 3)
 						{
 							if (direction == DIRECTION_UP)
+								{
 								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_up], 0);
+								}
 							else if (direction == DIRECTION_DOWN)
+								{
 								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);							
+								}
 						}
 						break;
 					case 3:
 					case 5:
-
 						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[green_down], 0);
 						break;
 					default:
@@ -232,15 +253,23 @@ void metro_escalator::UpdateEscalator()
 						break;
 					case 6:		
 						if (prefDirection == 1)
+							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+							}
 						else if (prefDirection == 2)
+							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);						
+							}
 						else if (prefDirection == 3)
 						{
 							if (direction == DIRECTION_UP)
+								{
 								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+								}
 							else if (direction == DIRECTION_DOWN)
+								{
 								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);							
+								}
 						}
 						break;
 					case 3:
@@ -257,6 +286,7 @@ void metro_escalator::UpdateEscalator()
 		}
 		else
 		{
+
 				PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[grey_stop], 0);
 				PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_TRUE, Pt_BLOCKED);
 				PtSetResources(Arrow, 2, args);		
@@ -330,41 +360,68 @@ void SetIndicator(PtWidget_t* widget, const char *text, int enable)
 {
 	PtArg_t args[3];
 	char buffer[128];
-
+	int flg;
+	
 	if (enable)
 	{		
 		//translate_string(text, buffer, translate_set);
+		flg=PtEnter(0);
+		if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetIndicator: %s", strerror(-flg ));
+					return ;
+					};
+
 		PtSetArg(&args[0], Pt_ARG_FILL_COLOR, 0x00747E92, 0);
 		PtSetArg(&args[1], Pt_ARG_COLOR, 0x0000FF00, 0);
 		PtSetArg(&args[2], Pt_ARG_TEXT_STRING, text, 0);
 		PtSetResources(widget, 3, args);
+		PtLeave(flg);
 	}
 	else
 	{		
+		flg=PtEnter(0);
+		if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetIndicator: %s", strerror(-flg ));
+					return ;
+					};
 		PtSetArg(&args[0], Pt_ARG_FILL_COLOR, 0x00BEBEBE, 0);
 		PtSetArg(&args[1], Pt_ARG_COLOR, 0x00646464, 0);
 		PtSetArg(&args[2], Pt_ARG_TEXT_STRING, "", 0);
 		PtSetResources(widget, 3, args);		
+		PtLeave(flg);
 	}	
 }
 
 void enable_header(PtWidget_t* widget, int enable)
 {
 	PtArg_t args[3];
-	
+	int flg;
+		
 	if (enable)
 	{		
+		flg=PtEnter(0);
+		if (flg<0) {
+					SysMessage(ERROR_MSG, "In enable_header: %s", strerror(-flg ));
+					return ;
+					};
 		PtSetArg(&args[0], Pt_ARG_FILL_COLOR, 0x00B1B8D1, 0);
 		PtSetArg(&args[1], Pt_ARG_COLOR, 0x001D284A, 0);
 		PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
 		PtSetResources(widget, 3, args);
+		PtLeave(flg);
 	}
 	else
-	{		
+	{
+		flg=PtEnter(0);
+		if (flg<0) {
+					SysMessage(ERROR_MSG, "In enable_header: %s", strerror(-flg ));
+					return ;
+					};
 		PtSetArg(&args[0], Pt_ARG_FILL_COLOR, 0x00BEBEBE, 0);
 		PtSetArg(&args[1], Pt_ARG_COLOR, 0x00646464, 0);
-		PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);		
+		PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_GHOST);
 		PtSetResources(widget, 3, args);		
+		PtLeave(flg);
 	}	
 }
 
@@ -383,7 +440,7 @@ PtWidget_t *InflateBalloon(PtWidget_t *window,
 int metro_escalator::SetData()
 {
 	byte		buffer[128];
-	int 		result;
+	int 		result, flg;
 	word		msg;	
 	PtArg_t	args[1];
 
@@ -424,8 +481,15 @@ int metro_escalator::SetData()
 		{
 	//		printf("Receive block message\n");
 			mainLog.AddMessage((int)msg, stationID, this->number);
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In metro_escalator::SetData: %s", strerror(-flg ));
+					return (Pt_END);
+							};
+
 			PtSetArg(&args[0], Pt_ARG_COLOR, BLOCK_COLOR, 0);
 			PtSetResources(blockLabel, 1, args);
+			PtLeave(flg);
 		}
 	}
 		// RELEASE
@@ -490,13 +554,17 @@ int SetUpDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 	char			**strList = NULL;
 	char	name[128];
 	const char *directionStr[] = { "подъем"};
+	int flg;
 
-
+	flg=PtEnter(0);
+	if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetUpDirection: %s", strerror(-flg ));
+					return (Pt_END);
+					};
 	PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-	
 	PtSetResources(ABW_SetEscDownBtn, 1, &arg_other);
 	PtSetResources(ABW_SetEscReverseBtn, 1, &arg_other);
-
+	PtLeave(flg);
 
 	if ((g_selectDirection >= 0) && (g_selectDirection < g_escalatorNum))
 	{
@@ -507,14 +575,17 @@ int SetUpDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbin
 		{
 			g_stations[g_escalators[g_selectDirection].stationID].Name.Get(name, 128);
 			sprintf(strList[0], "%s\t%d\t%s", name, g_escalators[g_selectDirection].GetNumber(), directionStr[0]);
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetUpDirection: %s", strerror(-flg ));
+					return (Pt_END);
+					};
+
 			PtListReplaceItemPos(ABW_EscDirectionList, (const char**)strList, 1, g_selectDirection + 1);	
+			PtLeave(flg);
 			delete[] strList;
 		}			
 	}
-	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;	
-
 	return( Pt_CONTINUE );
 }
 
@@ -525,11 +596,17 @@ int SetDownDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 	char			**strList = NULL;
 	char	name[128];
 	const char *directionStr[] = { "спуск"};
+	int flg;
 	
+	flg=PtEnter(0);
+	if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetDownDirection: %s", strerror(-flg ));
+					return (Pt_END);
+					};
 	PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-	
 	PtSetResources(ABW_SetEscUpBtn, 1, &arg_other);
 	PtSetResources(ABW_SetEscReverseBtn, 1, &arg_other);
+	PtLeave(flg);
 
 	
 	if ((g_selectDirection >= 0) && (g_selectDirection < g_escalatorNum))
@@ -541,13 +618,18 @@ int SetDownDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		{
 			g_stations[g_escalators[g_selectDirection].stationID].Name.Get(name, 128);
 			sprintf(strList[0], "%s\t%d\t%s", name, g_escalators[g_selectDirection].GetNumber(), directionStr[0]);
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetDownDirection: %s", strerror(-flg ));
+					return (Pt_END);
+							};
+
 			PtListReplaceItemPos(ABW_EscDirectionList, (const char**)strList, 1, g_selectDirection + 1);
+			PtLeave(flg);
 			delete[] strList;
 		}
 	}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -560,7 +642,9 @@ int SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackIn
 
 	if (cbinfo->reason == Pt_CB_SELECTION && (cbinfo->reason_subtype == Pt_LIST_SELECTION_BROWSE))
 	{
+
 		direction = g_escalators[((PtListCallback_t*)cbinfo->cbdata)->item_pos-1].prefDirection;
+
 		switch(direction)
 		{
 			case 0:
@@ -586,17 +670,13 @@ int SelectEscalatorDirection( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackIn
 			default:
 				break;
 		}		
-	}	
-	
+
+	}
 	PtSetResources(ABW_SetEscUpBtn, 1, &args[0]);
 	PtSetResources(ABW_SetEscDownBtn, 1, &args[1]);
 	PtSetResources(ABW_SetEscReverseBtn, 1, &args[2]);
 	
 	g_selectDirection = ((PtListCallback_t*)cbinfo->cbdata)->item_pos-1;
-	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -630,7 +710,7 @@ void* Run(void* arg)
 		if (!sock)
 		{
 			// sleep before reconnect
-			sleep(1);
+			sleep(5);
 			continue;
 		}
 		
@@ -690,7 +770,7 @@ void* Run(void* arg)
 						}
 						break;
 					case 4:
-						// пришел блок
+						// пришел б~~ок
 					//	printf("In block %d esc %d\n", input[0], curEscalator->GetNumber());
 						if ((input[0] == curEscalator->GetNumber()) && input[2] == 76)
 						{
@@ -1037,7 +1117,7 @@ int metro_escalator::UpdateLeds()
 {
 	int 	signal;
 	word	temp;
-	int		index = 0;
+	int		flg, index = 0;
 	PtArg_t		args[1];
 
 	if (panel && (paneled == id))
@@ -1055,20 +1135,55 @@ int metro_escalator::UpdateLeds()
 					switch(signal)
 					{	
 						case 0:
+						flg=PtEnter(0);
+						if (flg<0) {
+							SysMessage(ERROR_MSG, "In metro_escalator::UpdateLeds: %s", strerror(-flg ));
+							return (Pt_END);
+										};
+
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[block_green_led], 0);
+							PtLeave(flg);							
 							break;
 						case 1:
+							flg=PtEnter(0);
+							if (flg<0) {
+									SysMessage(ERROR_MSG, "In metro_escalator::UpdateLeds: %s", strerror(-flg ));
+									return (Pt_END);
+											};
+
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[block_blue_led], 0);
+							PtLeave(flg);							
 							break;
 						case 2:
+							flg=PtEnter(0);
+							if (flg<0) {
+										SysMessage(ERROR_MSG, "In metro_escalator::UpdateLeds: %s", strerror(-flg ));
+										return (Pt_END);
+											};
+
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[block_red_led], 0);
+							PtLeave(flg);							
 							break;
 						case 4:
 						default:			
+							flg=PtEnter(0);
+							if (flg<0) {
+									SysMessage(ERROR_MSG, "In metro_escalator::UpdateLeds: %s", strerror(-flg ));
+									return (Pt_END);
+											};
+
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[block_grey_led], 0);
+							PtLeave(flg);							
 						break;
 					}			
+					flg=PtEnter(0);
+					if (flg<0) {
+							SysMessage(ERROR_MSG, "In metro_escalator::UpdateLeds: %s", strerror(-flg ));
+							return (Pt_END);
+									};
+
 					PtSetResources(g_escTypes[typeIndex].blocks[j].signals[k].led, 1, args);	
+					PtLeave(flg);							
 				}
 			}
 		}
@@ -1080,8 +1195,16 @@ int metro_escalator::UpdateLeds()
 int PopupControlMenu( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	metro_escalator*	curEscalator;
+	int flg;
 	
+	flg=PtEnter(0);
+	if (flg<0) {
+			SysMessage(ERROR_MSG, "In PopupControlMenu: %s", strerror(-flg ));
+			return (Pt_END);
+				};
 	PtGetResource(widget, Pt_ARG_POINTER, &curEscalator, 0);
+	PtLeave(flg);							
+		
 	if (curEscalator->enabled && (curEscalator->online == 1) && (curEscalator->dataBlock.mode == 3))
 	{
 		if (curEscalator->blocked)
@@ -1089,12 +1212,16 @@ int PopupControlMenu( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 		else
 		{
 			g_selectedEscalator = curEscalator;		
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In PopupControlMenu: %s", strerror(-flg ));
+					return (Pt_END);
+							};
+
 			ApCreateModule(ABM_EscalatorMenu, widget, cbinfo);
+			PtLeave(flg);								
 		}
 	}
-			
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -1119,9 +1246,6 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		else		
 			g_selectedEscalator->SendCommand(0xE0);
 	}
-	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -1148,9 +1272,6 @@ int MoveDown( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 			g_selectedEscalator->SendCommand(0xE1);
 	}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -1161,19 +1282,12 @@ int MoveStop( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
 			g_selectedEscalator->SendCommand(0xE2);
 	}
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
 int OnSaveDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 	SaveDirections("directions.dat");
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -1184,9 +1298,6 @@ int UnrealizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInf
 	metro_escalator::paneled = 0;
 	metro_escalator::panel = NULL;
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -1194,9 +1305,14 @@ int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 {
 	char	buffer[256];
 	char	number[4];
-	int		trapped = -1;
-
+	int		flg, trapped = -1;
+	flg=PtEnter(0);
+	if (flg<0) {
+					SysMessage(ERROR_MSG, "In RelizeEscalatorPanel: %s", strerror(-flg ));
+					return (Pt_END);
+					};
 	PtWidget_t* panelTabs = ApGetWidgetPtr(widget, ABN_SignalPanel);
+	PtLeave(flg);
 	ALL_ESCALATORS
 	{
 		if (g_escalators[i].id == metro_escalator::paneled)
@@ -1213,7 +1329,14 @@ int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 			strcat(buffer, " / Эскалатор ");
 			itoa(g_escalators[i].number, number, 10);
 			strcat(buffer, number);
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In RelizeEscalatorPanel: %s", strerror(-flg ));
+					return (Pt_END);
+							};
+
 			PtSetResource(ApGetWidgetPtr(widget, ABN_PanelTitle), Pt_ARG_TEXT_STRING, buffer, 0);
+			PtLeave(flg);								
 			trapped = i;
 		}
 	}
@@ -1225,9 +1348,6 @@ int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 		g_escalators[trapped].	UpdatePanel();
 	}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 }
 
@@ -1236,7 +1356,7 @@ int SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	metro_escalator*	escalator;
 	char	buffer[256];
 	char	number[4];
-
+	int flg;
    	escalator = (metro_escalator*)get_widget_scalar(widget, Pt_ARG_POINTER);
 	metro_escalator::paneled = escalator->id;
 
@@ -1246,12 +1366,17 @@ int SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		strcat(buffer, " / Эскалатор ");
 		itoa(escalator->number, number, 10);
 		strcat(buffer, number);
+		flg=PtEnter(0);
+		if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetupPanel: %s", strerror(-flg ));
+					return (Pt_END);
+						};
+
 		PtSetResource(ApGetWidgetPtr(metro_escalator::panel, ABN_PanelTitle), Pt_ARG_TEXT_STRING, buffer, 0);
+		PtLeave(flg);								
 		escalator->UpdateLeds();
 		escalator->UpdatePanel();
 	}
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -1263,16 +1388,22 @@ int DiscardBlocking( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbi
 	char	buffer[256];
 	char	number[4];
 	PtArg_t		args[1];
+	int flg;
 	
    	escalator = (metro_escalator*)get_widget_scalar(widget, Pt_ARG_POINTER);
    	if (escalator)
    	{
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In DiscardBlocking: %s", strerror(-flg ));
+					return (Pt_END);
+					};
+
 			PtSetArg(&args[0], Pt_ARG_COLOR, NO_BLOCK_COLOR, 0);
 			PtSetResources(escalator->blockLabel, 1, args);   		
+			PtLeave(flg);								
    	}
 
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
 
 	return( Pt_CONTINUE );
 }
@@ -1285,12 +1416,17 @@ int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 	char			**strList = NULL;
 	char	name[128];
 	const char *directionStr[] = { "реверсивный"};
+	int flg;
 	
+	flg=PtEnter(0);
+	if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetReverseEscalator: %s", strerror(-flg ));
+					return (Pt_END);
+					};
 	PtSetArg(&arg_other, Pt_ARG_FLAGS, Pt_FALSE, Pt_SET);
-	
 	PtSetResources(ABW_SetEscUpBtn, 1, &arg_other);
 	PtSetResources(ABW_SetEscDownBtn, 1, &arg_other);
-
+	PtLeave(flg);									
 	
 	if ((g_selectDirection >= 0) && (g_selectDirection < g_escalatorNum))
 	{
@@ -1302,17 +1438,19 @@ int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 		{
 			g_stations[g_escalators[g_selectDirection].stationID].Name.Get(name, 128);
 			sprintf(strList[0], "%s\t%d\t%s", name, g_escalators[g_selectDirection].GetNumber(), directionStr[0]);
+			flg=PtEnter(0);
+			if (flg<0) {
+					SysMessage(ERROR_MSG, "In SetReverseEscalator: %s", strerror(-flg ));
+					return (Pt_END);
+						};
+
 			PtListReplaceItemPos(ABW_EscDirectionList, (const char**)strList, 1, g_selectDirection + 1);
+			PtLeave(flg);									
 			delete[] strList;
 		}
 	}
-
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
-	return( Pt_CONTINUE );
-
-	}
+	return (Pt_CONTINUE);
+}
 
 
 int OnChancelDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
@@ -1320,9 +1458,6 @@ int OnChancelDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 	{
 	LoadDirections ("directions.dat");
 	
-	/* eliminate 'unreferenced' warnings */
-	widget = widget, apinfo = apinfo, cbinfo = cbinfo;
-
 	return( Pt_CONTINUE );
 
 	}

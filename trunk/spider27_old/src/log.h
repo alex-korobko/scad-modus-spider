@@ -40,6 +40,7 @@ public:
 	int stationID;
 	int escalatorID;
 	time_t saveTime;   
+	explicit LogRecord () : ID(0), msgID(0), stationID(0), escalatorID(0), saveTime(time(NULL)) {};
 };
 
 class Log
