@@ -51,6 +51,10 @@ word CRC(const byte* buffer, int size);
 #define		COLUMN_LEFT_MARGIN  5
 #define		ROW_HEIGHT		18
 
+//escalator command comdes
+#define CMD_UP  0xE0
+#define CMD_DOWN  0xE1
+#define CMD_STOP   0xE2
 
 // Widget helpers
 unsigned long get_widget_scalar(PtWidget_t *widget, long type);

@@ -21,7 +21,7 @@
 
 #include <sys/socket.h>
 
-#include "map.h"
+// #include "map.h"
 #include "list.h"
 #include "log.h"
 #include "router.h"
@@ -39,7 +39,12 @@
 #include "escalator.h"
 #include "cmd_pool.h"
 
+#include <list>
+#include <map>
+
 //void SlidePanel();
+
+using namespace std;
 
 GLOBAL ApDBase_t*  widget_dbase;
 GLOBAL struct PxTransCtrl* translate_set; 
@@ -52,10 +57,10 @@ GLOBAL metro_escalator*		g_escalators INIT(NULL);
 GLOBAL int						g_lineNum INIT(0);
 GLOBAL int						g_stationNum  INIT(0);
 GLOBAL int						g_escalatorNum  INIT(0);
-GLOBAL Map<DictEntry>	g_msgDictionary;
+GLOBAL map<int, DictEntry, DictEntry::ltint>	g_msgDictionary;
 GLOBAL Sound					g_sound;
 GLOBAL	 Router					g_router;
-GLOBAL	 Map<Command>		g_CommandPool;
+GLOBAL	 list<Command>		g_CommandPool;
 
 // pre-release
 GLOBAL Type 	*g_escTypes INIT(0);

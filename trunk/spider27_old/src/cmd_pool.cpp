@@ -7,14 +7,34 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 *******************************************************************************/
 
 #include <photon/PxProto.h>
-
+#include <string.h>
 #include "cmd_pool.h"
 
 #include "map.h"
 #include "global.h"
 #include "abvars.h"
 
-#define		SEL_BUFFER_LEN		4
+
+int Command::GetCmdCode(void)
+{
+return command_code;
+}
+
+int Command::GetEscNum(void)
+{
+return esc_number;
+}
+
+void 	Command::SetItemColor(const PgColor_t& color_of_item)
+{
+item_color=color_of_item;
+}
+
+PgColor_t& Command::GetItemColor(void)
+{
+return  item_color;
+}
+
 
 int Command::Send()
 {	
@@ -40,29 +60,32 @@ int Command::GetStation()
 int
 OnClickSendCommandBtn( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	{
-	PtWidget_t *cmd_pool_list=NULL;
-	unsigned short buffer[SEL_BUFFER_LEN];
-	Command *tmp_cmd;
+	PtWidget_t *cmd_pool_list=NULL, *cmd_pool_wnd;
+	PtGenListItem_t *curr_item;
+//	Command tmp_cmd;
+	int i=0, count ;
+	list<Command>::iterator p_cmd_pool;	
 
-	ApGetWidgetPtr(cmd_pool_list, ABN_CommandPoolRwLst);
+   cmd_pool_wnd = ApGetInstance( widget );
+   cmd_pool_list = ApGetWidgetPtr( cmd_pool_wnd, ABN_CommandPoolRwLst);
 
 	if (cmd_pool_list!=NULL)
 	{
-	printf ("\nIn OnClickSendCommandBtn\n");
-		if (PtGenListGetSelIndexes(cmd_pool_list, buffer)!=NULL) 
-			{
-			for (int i=0; i<SEL_BUFFER_LEN; i++)
-				{
-				printf ("\nsel index  %d\n", buffer[i]);
-				if (buffer[i]!=0)
-					if (g_CommandPool.GetSize()>static_cast<unsigned int>(buffer[i]-1))
-					{
-					tmp_cmd=g_CommandPool[buffer[i]-1];
-					if (tmp_cmd!=NULL) 	tmp_cmd->Send();			
-					}; //if (g_CommandPo
-				};// for (int i=0; i<SEL_BU
-			};  // if (PtGenListGetSelIndexes(c
-	}; // if (ApGetWidgetPtr(cmd_pool_lis
+	curr_item = PtGenListFirstItem(cmd_pool_list);
+	count=g_CommandPool.size();
+	p_cmd_pool=g_CommandPool.begin();
+	
+	while(p_cmd_pool!=g_CommandPool.end() && curr_item)
+		{
+			if(curr_item->flags&Pt_LIST_ITEM_SELECTED>0)
+						{
+						(*p_cmd_pool).Send();
+						g_CommandPool.erase(p_cmd_pool);
+						}
+		p_cmd_pool++;
+		curr_item=curr_item->next;
+		};
+	};
 	return( Pt_CONTINUE );
 	}
 
@@ -71,7 +94,7 @@ int ReleazeCmdPoolList( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *
 {
 	PtGenListItem_t  *prev_item, *next_item, *list_item=new(PtGenListItem_t) , *first_item;	
 	
-	int size=g_CommandPool.GetSize();
+	int size=g_CommandPool.size();
 //	printf("Size of Command  Pool %d\n", size);
 
 	PtGenListRemoveItems(widget, NULL, NULL);	

@@ -354,7 +354,7 @@ void metro_escalator::UpdatePanel(int force)
 {
 	PtArg_t args[1];
 	
-	if (metro_escalator::paneled && this->id == metro_escalator::paneled)
+	if (metro_escalator::paneled && static_cast<int>(this->id)== metro_escalator::paneled)
 	{
 		if (online)
 		{			
@@ -400,7 +400,7 @@ void metro_escalator::SetParam(int param, int value)
 		break;
 	case IP_PARAM:
 		ip = inet_addr((char*)value);
-		printf("Load %s\n", ip);
+//		printf("Load %s\n", ip);
 		break;
 	default:
 		break;
@@ -1225,7 +1225,7 @@ int metro_escalator::UpdateLeds()
 	int		 index = 0;
 	PtArg_t		args[1];
 
-	if (panel && (metro_escalator::paneled == this->id))
+	if (panel && (metro_escalator::paneled == static_cast<int>(this->id)))
 	{
 		if (g_escTypes)
 		{
@@ -1298,6 +1298,15 @@ int PopupControlMenu( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cb
 
 int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
+//(const byte escalator_id, const byte command, const int id_station, const int escalator_number) 
+Command *cmd=new Command(g_selectedEscalator->id, CMD_UP, g_selectedEscalator->stationID, g_selectedEscalator->number);
+
+//begin: Remove it!!!
+cmd->SetItemColor(Pg_PURPLE);
+g_CommandPool.Push(cmd);
+//end: Remove it!!!
+
+
 	if (g_selectedEscalator && g_selectedEscalator->enabled && g_selectedEscalator->online
 		&& (g_selectedEscalator->dataBlock.mode == 3))
 	{
@@ -1306,16 +1315,32 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		if (g_selectedEscalator->prefDirection == DIRECTION_DOWN)
 		{
 			if (ConfirmDirection() == 1)
-				g_selectedEscalator->SendCommand(0xE0);
+				{
+				cmd->SetItemColor(Pg_RED);
+				g_CommandPool.Push(cmd);
+				
+//				g_selectedEscalator->SendCommand(0xE0); // commented for command pool
+				}
 		}
 //		else if ((g_selectedEscalator->prefDirection == DIRECTION_REVERSE) && (g_selectedEscalator->direction == DIRECTION_DOWN))
 		else if (g_selectedEscalator->prefDirection == DIRECTION_REVERSE)
 		{		
-			if (ConfirmDirection() == 1)
-				g_selectedEscalator->SendCommand(0xE0);
+			if (ConfirmDirection() == 1) 
+				{
+				cmd->SetItemColor(Pg_RED);
+				g_CommandPool.Push(cmd);
+
+
+//				g_selectedEscalator->SendCommand(0xE0); // commented for command pool
+				}
 		}
-		else		
-			g_selectedEscalator->SendCommand(0xE0);
+		else	
+			{
+				cmd->SetItemColor(Pg_PURPLE);
+				g_CommandPool.Push(cmd);
+
+//			g_selectedEscalator->SendCommand(0xE0); // commented for command pool
+			};
 	}
 
 	return( Pt_CONTINUE );
@@ -1325,9 +1350,10 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 int MoveDown( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 {
 //(const byte escalator_id, const byte command, const int id_station, const int escalator_number) 
-Command *cmd=new Command(g_selectedEscalator->id, 0xE1, g_selectedEscalator->stationID, g_selectedEscalator->number);
+Command *cmd=new Command(g_selectedEscalator->id, CMD_DOWN, g_selectedEscalator->stationID, g_selectedEscalator->number);
 
 //begin: Remove it!!!
+cmd->SetItemColor(Pg_DGREEN);
 g_CommandPool.Push(cmd);
 //end: Remove it!!!
 
@@ -1340,6 +1366,7 @@ g_CommandPool.Push(cmd);
 		{
 			if (ConfirmDirection() == 1)
 				{
+				cmd->SetItemColor(Pg_RED);
 				g_CommandPool.Push(cmd);
 //				g_selectedEscalator->SendCommand(0xE1); // commented for command pool
 				};
@@ -1349,11 +1376,13 @@ g_CommandPool.Push(cmd);
 		{		
 			if (ConfirmDirection() == 1)
 				{
+				cmd->SetItemColor(Pg_RED);
 				g_CommandPool.Push(cmd);
 //				g_selectedEscalator->SendCommand(0xE1);  // commented for command pool
 				}
 		}		
 		else	{
+				cmd->SetItemColor(Pg_DGREEN);
 				g_CommandPool.Push(cmd);
 //				g_selectedEscalator->SendCommand(0xE1);  // commented for command pool
 				};
@@ -1367,7 +1396,7 @@ int MoveStop( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	if (g_selectedEscalator && g_selectedEscalator->enabled && g_selectedEscalator->online
 		&& (g_selectedEscalator->dataBlock.mode == 3))
 	{
-			g_selectedEscalator->SendCommand(0xE2);
+			g_selectedEscalator->SendCommand(CMD_STOP);
 	}
 	return( Pt_CONTINUE );
 }
@@ -1396,7 +1425,7 @@ int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 	
 	ALL_ESCALATORS
 	{
-		if (g_escalators[i].id == metro_escalator::paneled)
+		if (static_cast<int>(g_escalators[i].id) == metro_escalator::paneled)
 		{
 			if (g_escTypes)
 			{
@@ -1432,7 +1461,7 @@ int SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	char	buffer[256];
 	char	number[4];
 
-	if (metro_escalator::panel&& metro_escalator::paneled != escalator->id)
+	if (metro_escalator::panel&& metro_escalator::paneled != static_cast<int>(escalator->id))
 	{
 		PtDestroyWidget(metro_escalator::panel);
 	};
