@@ -1,0 +1,5 @@
+IPATH= -I. -I /usr/local/include/
+
+ifdef BERKELEY_DB_OBJECT
+IPATH += -I /usr/local/BerkeleyDB/include
+endif

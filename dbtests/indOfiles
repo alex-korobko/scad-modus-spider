@@ -1,24 +1,36 @@
 OBJS =  test_interface.o
 
+ifdef UNIT_TESTING
+
+#always must be present to tests unit testing
+OBJS +=  dbobject_mock.o test_dbobject_mock.o
+
+ifdef BERKELEY_DB_OBJECT
+OBJS += dbobject_berkeley_db.o
+OBJS +=  test_dbobject_berkeley_db.o
+endif
+
+ifdef TEST_1
+OBJS +=  test_1.o
+OBJS += test_test_1.o
+endif
+
+OBJS += all_tests.o
+
+else
+
 ifdef MOCK_OBJECT
 OBJS += dbobject_mock.o
+endif
+
+ifdef BERKELEY_DB_OBJECT
+OBJS += dbobject_berkeley_db.o
 endif
 
 ifdef TEST_1
 OBJS +=  test_1.o
 endif
 
-ifdef UNIT_TESTING
-
-ifdef MOCK_OBJECT
-OBJS +=  test_dbobject_mock.o
-endif
-
-ifdef TEST_1
-OBJS += test_test_1.o
-endif
-
-OBJS += all_tests.o
 endif
 
 OBJS += main.o

@@ -19,9 +19,12 @@ using namespace std;
 #include "../src/tests/test_interface.h"
 #include "../src/tests/test_1.h"
 
-#ifdef __MOCK_OBJECT__
 #include "test_dbobject_mock.h"
+
+#ifdef __BERKELEY_DB_OBJECT__
+#include "test_dbobject_berkeley_db.h"
 #endif
+
 
 #ifdef __TEST_1__
 #include "test_test_1.h"
@@ -31,9 +34,12 @@ using namespace std;
 
 all_tests::all_tests()
  {
-#ifdef __MOCK_OBJECT__
     runner.addTest(test_dbobject_mock::suite());
+
+#ifdef __BERKELEY_DB_OBJECT__
+    runner.addTest(test_dbobject_berkeley_db::suite());
 #endif
+
 
 #ifdef __TEST_1__
     runner.addTest(test_test_1::suite());
