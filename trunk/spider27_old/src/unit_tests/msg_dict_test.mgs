@@ -1,0 +1,25 @@
+[message]
+id=1
+type=1
+text=Сообщение номер 1
+
+[message]
+id=2
+type=1
+text=Сообщение номер 2
+
+[message]
+id=3
+type=1
+text=Сообщение номер 3
+
+[message]
+id=143
+type=2
+text=Диспетчерский пульт запущен
+
+[message]
+id=144
+type=1
+text=Диспетчерский пульт закрыт
+
