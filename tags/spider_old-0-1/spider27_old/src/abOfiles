@@ -1,0 +1,1 @@
+ABOBJ = abmain.o alert.o archive.o ctrl_widget.o draw.o escalator.o filter.o main.o 
