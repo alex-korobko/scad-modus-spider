@@ -70,7 +70,7 @@ ApMenuLink_t EscalatorMenu = {
 	ApItems_EscalatorMenu,
 	& AbContext,
 	AbLinks_EscalatorMenu,
-	126, 3, 3
+	122, 3, 3
 	};
 
 

@@ -11,6 +11,7 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 
 #include <Pt.h>
 #include "list.h"
+#include "system.h"
 
 #define		OK     0
 #define		ALERT  1
@@ -21,14 +22,11 @@ Copyright (C) 2000, 2001 SCAD Ltd. (software development group)
 #define		COLOR_RED		0x00EE0000
 #define		COLOR_GREEN		0x0000AA00
 
-#define		COLUMN_LEFT_MARGIN  5
-#define		LOG_ROW_HEIGHT		18
-
 struct LogMessage
 {
-	char* text; // òåêñò
-	int   color; // öâåò
-	int   image; // êàðòèíêà (not supported now)
+	char* text; // text of message
+	int   color; // color of message
+	int   image; // image in list (not supported now)
 };
 
 class LogRecord
@@ -46,7 +44,7 @@ public:
 class Log
 {   
 protected:
-	enum { rowHeight = LOG_ROW_HEIGHT };
+	enum { rowHeight = ROW_HEIGHT };
 	List<LogRecord>	records;
 	PtWidget_t*		wnd;
 	struct	tm		lastAccessTime;

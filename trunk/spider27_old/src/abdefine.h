@@ -265,22 +265,14 @@ extern const int ABN_ArchiveLogOpenBtn;
 #define ABW_ArchiveLogOpenBtn                AbGetABW( ABN_ArchiveLogOpenBtn )
 
 /* 'PrevCmdPoolDlg' Dialog link */
-extern const int ABN_PrevCmdPoolDlg;
-#define ABW_PrevCmdPoolDlg                   AbGetABW( ABN_PrevCmdPoolDlg )
+extern const int ABN_PrevCmdPullDlg;
+#define ABW_PrevCmdPullDlg                   AbGetABW( ABN_PrevCmdPullDlg )
 extern const int ABN_CmdPoolDlgBtnClose;
 #define ABW_CmdPoolDlgBtnClose               AbGetABW( ABN_CmdPoolDlgBtnClose )
-extern const int ABN_SendCommandBtn;
-#define ABW_SendCommandBtn                   AbGetABW( ABN_SendCommandBtn )
-extern const int ABN_ChancelCommandBtn;
-#define ABW_ChancelCommandBtn                AbGetABW( ABN_ChancelCommandBtn )
+extern const int ABN_SendCommandButton;
+#define ABW_SendCommandButton                AbGetABW( ABN_SendCommandButton )
 extern const int ABN_CommandPoolRwLst;
 #define ABW_CommandPoolRwLst                 AbGetABW( ABN_CommandPoolRwLst )
-extern const int ABN_CmdPoolRwListStation;
-#define ABW_CmdPoolRwListStation             AbGetABW( ABN_CmdPoolRwListStation )
-extern const int ABN_CmdPoolRwListEscal;
-#define ABW_CmdPoolRwListEscal               AbGetABW( ABN_CmdPoolRwListEscal )
-extern const int ABN_CmdPoolRwListBtn;
-#define ABW_CmdPoolRwListBtn                 AbGetABW( ABN_CmdPoolRwListBtn )
 
 #define AbGetABW( n ) ( AbWidgets[ n ].wgt )
 
