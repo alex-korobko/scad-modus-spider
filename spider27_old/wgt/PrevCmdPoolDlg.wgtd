@@ -95,7 +95,7 @@ lock
 0
 PtButton
 3
-PtButton
+DeleteCommandBtn
 3011
 multi
 29
@@ -105,6 +105,9 @@ pos
 1005
 dim
 123,27
+1004
+data
+3
 10004000
 lock
 0
@@ -136,7 +139,7 @@ pos
 0,0
 1004
 data
-3
+4
 10001
 flag
 1440,8191
@@ -167,7 +170,7 @@ flag
 0x1200000,0x3f00000
 1007
 pos
--1,-1
+-2,-6
 10001
 flag
 3360,8191
