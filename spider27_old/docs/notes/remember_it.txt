@@ -1,0 +1,10 @@
+Add sound to alert.
+Sort by escalator number escalators_id before realize escalators widgets in station panel.
+refactoring LogFilterOK
+refactoring draw functions for log records and command pool
+slogger codes for ERROR_MSG etc
+broadcast messages if station id=0 than method send_broadcast in broadcast devices 
+container (in metod that message sends to all broadcast devices, otherwise, 
+get_broadcast give message from first device - selectec only once message - what??). 
+after load all escalators and other devices from configs for each station
+calculates count of enabled devices - if > 0 added broadcast device.
