@@ -49,6 +49,12 @@ ApWindowLink_t ArchiveLog = {
 	AbLinks_ArchiveLog, 114, 5
 	};
 
+ApDialogLink_t PrevCmdPullDlg = {
+	"PrevCmdPullDlg.wgtd",
+	&AbContext,
+	NULL, 118, 0
+	};
+
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {
 	{ 1, 1, 0, NULL, 0, "MoveUp", "\xD0\x92\xD0\xB2\xD0\xB5\xD1\x80\xD1\x85", NULL },
 	{ 1, 1, 0, NULL, 0, "MoveStop", "\xD0\x9E\xD1\x81\xD1\x82\xD0\xB0\xD0\xBD\xD0\xBE\xD0\xB2\xD0\xB8\xD1\x82\xD1\x8C", NULL },
@@ -64,7 +70,7 @@ ApMenuLink_t EscalatorMenu = {
 	ApItems_EscalatorMenu,
 	& AbContext,
 	AbLinks_EscalatorMenu,
-	118, 3, 3
+	119, 3, 3
 	};
 
 

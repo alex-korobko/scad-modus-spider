@@ -263,7 +263,7 @@ int LoadMap(const char* fileName)
 					g_stations[stationCount].ycoord = atoi(val_data);
 				}
 				else if (!strcmp("type", val_name))
-				{					
+				{		
 					g_escalators[escalatorCount].type = atoi(val_data);
 				}
 				else if (!strcmp("id", val_name))
@@ -357,6 +357,14 @@ int LoadMap(const char* fileName)
 	
 	delete[] indexes;
 	fclose(handle);
+
+
+/*		ALL_ESCALATORS
+		{
+		if (g_escalators[i].enabled)
+		printf ("Escalator id %d , type %d\n",g_escalators[i].id,g_escalators[i].type);
+		}
+*/
 	
 	return 1;
 }
@@ -456,7 +464,7 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 	metro_escalator*		escalator;
 
 	pulse = (struct _pulse*)message;	
-	printf("Code %d, value %d\n", pulse->code, pulse->value.sival_int);
+//	printf("Code %d, value %d\n", pulse->code, pulse->value.sival_int);
 //	escalator = g_escalators[pulse->value.sival_int];
 	for(int i=0; i<g_escalatorNum; i++)
 		if (g_escalators[i].id == pulse->value.sival_int)
@@ -467,13 +475,13 @@ int PulseReceiver(void *data, int rcvid, void *message, size_t mbsize )
 		return Pt_HALT;
 	}
 
-	printf("Code %d, value %d ESCALATOR %p on %d\n", pulse->code, pulse->value.sival_int, escalator, escalator->online);
+//	printf("Code %d, value %d ESCALATOR %p on %d\n", pulse->code, pulse->value.sival_int, escalator, escalator->online);
 	switch(pulse->code)
 	{
 		case 0:
 		case 1:
 		case 2:
-			printf("In PulseReceiver\n");
+//			printf("In PulseReceiver\n");
 			escalator->SetState(pulse->code);			
 			break;
 		case 3:
@@ -498,9 +506,9 @@ int Initialize( int argc, char *argv[] )
 	
 	sigaction(SIGPIPE,&sa,NULL);
    
-    	g_debugFile = fopen("debug.log", "a+");
-    	if (!g_debugFile)
-    		PtExit(EXIT_FAILURE);
+   // 	g_debugFile = fopen("debug.log", "a+");
+   // 	if (!g_debugFile)
+    //		PtExit(EXIT_FAILURE);
 
 	// загружаем библиотеку виджетов
 
@@ -527,7 +535,7 @@ int Initialize( int argc, char *argv[] )
 		PtExit(EXIT_FAILURE);
 	}
 
-	// загрузка файла схемы
+	// загузка файла схемы
 	if (!LoadMap("config.ini"))
     	{
 		ERROR_BOX("Файл схем метрополина не найден или поврежден");
@@ -555,7 +563,7 @@ int Initialize( int argc, char *argv[] )
     	}
 
 	// запускаем поток роутера
-//	g_router.Start();
+	g_router.Start();
 	
 	// канал для пульсов
 	g_chanID = PhChannelAttach(0, -1, NULL);

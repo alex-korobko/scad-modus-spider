@@ -14,8 +14,8 @@
 #include "system.h"
 #include "log.h"
 
-#define	NO_BLOCK_COLOR		0x606060
-#define	BLOCK_COLOR		0xFFC000
+#define	NO_BLOCK_COLOR		Pg_WHITE	
+#define	BLOCK_COLOR		Pg_RED
 #define	RECEIVE_TIMEOUT		1
 
 #define CHECK_ADDRESS(addr) if (addr > 247) { SysMessage(ERROR_MSG, "Incorrect device address (%d)", addr); return 0; }
@@ -33,6 +33,7 @@ int metro_escalator::init_images = 0;
 //int metro_escalator::reference = 0;
 
 #define	STATUS_WORK			7
+#define  NOT_READY			5
 
 char *mode_text[] = { "ГП со щита",
 	"ГП с пульта",
@@ -133,7 +134,7 @@ metro_escalator::~metro_escalator()
 
 int metro_escalator::CreateWnd(ApDBase_t* dbase, PtWidget_t* parent, int x,	int y)
 {
-	PtArg_t args[2];
+	PtArg_t args[3];
 	char    label_buffer[4];
 	
 	if (!init_images)
@@ -179,9 +180,8 @@ int metro_escalator::CreateWnd(ApDBase_t* dbase, PtWidget_t* parent, int x,	int 
 		return 0;
 	
 					
-	PtSetArg(&args[0], Pt_ARG_COLOR, NO_BLOCK_COLOR, 0);
-	PtSetArg(&args[1], Pt_ARG_POINTER, this, 0);	
-
+ 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "\0", 1);			
+ 	PtSetArg(&args[1], Pt_ARG_INLINE_COLOR, NO_BLOCK_COLOR, 0);			
 
 	blockLabel = ApCreateWidget(dbase, "blocking", -1, -1, 2, args);
     if (!blockLabel)
@@ -198,10 +198,10 @@ void metro_escalator::UpdateEscalator()
 
 	if (enabled)
 	{
-		printf("Enabled\n");
+//		printf("Enabled\n");
 		if (online == 1)
 		{
-			printf("Online mode %d %d\n", dataBlock.mode, dataBlock.status);
+//			printf("Online mode %d %d\n", dataBlock.mode, dataBlock.status);
 			if (dataBlock.mode == 3)
 			{
 				switch(dataBlock.status)
@@ -211,15 +211,17 @@ void metro_escalator::UpdateEscalator()
 						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[green_up], 0);
 						break;
 					case 6:
-						if (prefDirection == 1)
+/*
+//without Ready State
+						if (prefDirection == DIRECTION_UP)
 							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_up], 0);
 						    	}
-						else if (prefDirection == 2)
+						else if (prefDirection == DIRECTION_DOWN)
 							{
 							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);					
 						    	}
-						else if (prefDirection == 3)
+						else if (prefDirection == DIRECTION_REVERSE)
 						{
 							if (direction == DIRECTION_UP)
 								{
@@ -228,6 +230,45 @@ void metro_escalator::UpdateEscalator()
 							else if (direction == DIRECTION_DOWN)
 								{
 								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);							
+								}
+						}
+*/
+
+//with Ready State
+						if (prefDirection == DIRECTION_UP)
+							{
+								if (dataBlock.ready!=NOT_READY) {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_up], 0);
+								} else {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_up], 0);
+								};
+						    	}
+						else if (prefDirection == DIRECTION_DOWN)
+							{
+								if (dataBlock.ready!=NOT_READY) {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);
+								} else {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_down], 0);
+								};
+						    	}
+						else if (prefDirection == DIRECTION_REVERSE)
+						{
+							if (direction == DIRECTION_UP)
+								{
+									if (dataBlock.ready!=NOT_READY) {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_up], 0);
+									} else {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_up], 0);
+									};
+								}
+							else if (direction == DIRECTION_DOWN)
+								{
+									if (dataBlock.ready!=NOT_READY) {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_down], 0);
+									} else {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_down], 0);
+								};
+			
 								}
 						}
 						break;
@@ -249,23 +290,39 @@ void metro_escalator::UpdateEscalator()
 						PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[green_s_up], 0);
 						break;
 					case 6:		
-						if (prefDirection == 1)
-							{
-							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+						if (prefDirection == DIRECTION_UP)
+							{					
+								if (dataBlock.ready!=NOT_READY) {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+								} else {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_s_up], 0);
+								};
 							}
-						else if (prefDirection == 2)
+						else if (prefDirection == DIRECTION_DOWN)
 							{
-							PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);						
+								if (dataBlock.ready!=NOT_READY) {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);
+								} else {
+								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_s_down], 0);
+								};
 							}
-						else if (prefDirection == 3)
+						else if (prefDirection == DIRECTION_REVERSE)
 						{
 							if (direction == DIRECTION_UP)
 								{
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+									if (dataBlock.ready!=NOT_READY) {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_up], 0);
+									} else {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_s_up], 0);
+									};
 								}
 							else if (direction == DIRECTION_DOWN)
 								{
-								PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);							
+									if (dataBlock.ready!=NOT_READY) {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[yellow_s_down], 0);
+									} else {
+									PtSetArg(&args[0], Pt_ARG_LABEL_IMAGE, images[red_s_down], 0);
+									};
 								}
 						}
 						break;
@@ -301,7 +358,7 @@ void metro_escalator::UpdatePanel(int force)
 {
 	PtArg_t args[1];
 	
-	if (paneled)
+	if (metro_escalator::paneled && this->id == metro_escalator::paneled)
 	{
 		if (online)
 		{			
@@ -309,6 +366,7 @@ void metro_escalator::UpdatePanel(int force)
 			{
 				SetIndicator(ABW_ModeIndicator, mode_text[dataBlock.mode - 1], 1);
 			}
+			
 			if ((dataBlock.ready >= 0) && (dataBlock.ready <8))
 			{	
 				switch(dataBlock.status)
@@ -412,15 +470,16 @@ int metro_escalator::SetData()
 	byte		buffer[128];
 	int 		result;
 	word		msg;	
-	PtArg_t	args[1];
+	PtArg_t	args[2];
 
 //	printf("Set esc data\n");
 	
 	pthread_mutex_lock(&dataMutex);
 	result = inBuffer.Get(buffer);
 	pthread_mutex_unlock(&dataMutex);
-	if (!result)
-		return 0;
+	
+	if (!result)	return 0;
+	
 
 	dataBlock.status = ntohs(*((word*)&buffer[0]));
 	dataBlock.mode = ntohs(*((word*)&buffer[2]));
@@ -431,6 +490,9 @@ int metro_escalator::SetData()
 	dataBlock.msgCount = ntohs(*((word*)&buffer[14]));
 	dataBlock.breakingPath = ntohl(*((dword*)&buffer[18]));
 	dataBlock.odometr = ntohl(*((dword*)&buffer[22]));
+
+//	printf ("dataBlock.status = %d ready %d\n", dataBlock.status, dataBlock.ready);
+	
 	for(int i=0; i<12; i++)
 		dataBlock.signals[i] = ntohs(*((word*)&buffer[30+i*2]));
 
@@ -442,25 +504,25 @@ int metro_escalator::SetData()
 		msg = dataBlock.msg[i];
 		if (msg > 0 && msg < 140)
 		{
+
 			if (msg == 119)
 				mainLog.AddMessage((int)msg, stationID, this->number, NULL, dataBlock.breakingPath);
 			else
 				mainLog.AddMessage((int)msg, stationID, this->number);
 		}
+
 		if (msg & 0x8000)
 		{
-	//		printf("Receive block message\n");
 			mainLog.AddMessage((int)msg, stationID, this->number);
-			PtSetArg(&args[0], Pt_ARG_COLOR, BLOCK_COLOR, 0);
-			PtSetResources(blockLabel, 1, args);
 		}
+
 	}
 		// RELEASE
 		if (dataBlock.status == STATE_STOP && !direction)
 		// TEST ONLY
 		//if ((data.state.direction == STATE_STOP || data.state.direction == 0) && !direction)
 		{
-			if (prefDirection != 3)
+			if (prefDirection != DIRECTION_REVERSE)
 				direction = prefDirection;
 			else
 			 	direction = DIRECTION_UP;			
@@ -470,6 +532,32 @@ int metro_escalator::SetData()
 			direction = DIRECTION_UP;
 		else if (dataBlock.status == STATE_DOWN_PE || dataBlock.status == STATE_DOWN_SE)
 			direction = DIRECTION_DOWN;
+
+	 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "\0", 1);			
+	 	PtSetArg(&args[1], Pt_ARG_INLINE_COLOR, NO_BLOCK_COLOR, 0);			
+
+
+		if (g_escTypes)
+		{
+			int typeIndex = this->type-1;
+			for(int k=2; k<g_escTypes[typeIndex].blocks[0].size; k++) //Beginning with 2 becouse first block circut  BTP ant second blockcircut BTL - not more mean for dispetchers
+				{
+					int temp = g_escTypes[typeIndex].blocks[0].signals[k].index / 8;
+					int shift = 16 - ((g_escTypes[typeIndex].blocks[0].signals[k].index % 8) + 1)*2;
+					int signal = (dataBlock.signals[temp] >> shift) & 0x3;
+					 if (signal >0) {
+						 	char block_circut[255];
+						 	g_escTypes[typeIndex].blocks[0].signals[k].name.Get(block_circut,250);
+						 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, block_circut, strlen(block_circut));			
+						 	PtSetArg(&args[1], Pt_ARG_INLINE_COLOR, BLOCK_COLOR, 0);			
+					 				break;
+					 					}
+
+				}
+
+		}
+
+ 		PtSetResources(blockLabel, 2, args);	
 
 		UpdateEscalator();
 		UpdatePanel();
@@ -486,7 +574,7 @@ void metro_escalator::SetState(dword state)
 	char		message[] =  "Потеряна cвязь с эскалатором %d на станции \"%s\"";
 	char		name[128];
 
-	printf("Set state %d\n", id);
+//	printf("Set state %d\n", id);
 
 	switch (state)
 	{
@@ -675,7 +763,7 @@ void* Run(void* arg)
 */			
 			readNum = SendBuffer(sock, output, size, input);			
 						 			
- 			printf ("Readnum %d\n", readNum);
+// 			printf ("Readnum %d\n", readNum);
  			
 			if (!readNum)
 			{
@@ -694,14 +782,17 @@ void* Run(void* arg)
 					// после коннекта - запрос данных
 					curEscalator->GetData();
 				}
-			
+/*
+			if (curEscalator->type==2)
+				{
 				// DEBUG dump modbus packet
-//				fprintf(g_debugFile, "Packet [%d] tid %d socket %d:\n", curEscalator->id, pthread_self(), sock);
-//				for(int i=0; i<readNum; i++)
-//					fprintf(g_debugFile, "%0x ", input[i]);
-//				fprintf(g_debugFile, "\n\n"); 
+				printf("Packet [%d] tid %d socket %d:\n", curEscalator->id, pthread_self(), sock);
+				for(int i=0; i<readNum; i++)
+					printf( "%0x ", input[i]);
+				printf("\n\n"); 
 				// DEBUG
-
+				};
+*/		
 				// проверяем команду
 				switch(input[1])
 				{
@@ -715,7 +806,7 @@ void* Run(void* arg)
 						break;
 					case 4:
 						// пришел б~~ок
-						printf("In block %d esc %d\n", input[0], curEscalator->GetNumber());
+//						printf("In block %d esc %d\n", input[0], curEscalator->GetNumber());
 						if ((input[0] == curEscalator->GetNumber()) && input[2] == 76)
 						{
 							pthread_mutex_lock(&curEscalator->dataMutex);
@@ -848,7 +939,7 @@ int IsConnected(int sock, fd_set* rd, fd_set* wr, fd_set* ex)
 	return err == 0;
 }
 
-int SendBuffer(int sock, byte* output, int size, byte* input)
+int SendBuffer (int sock, byte* output, int size, byte* input)
 {
 	int		writeNum;
 	int		readNum, dataSize;
@@ -861,7 +952,7 @@ int SendBuffer(int sock, byte* output, int size, byte* input)
     
     	send(sock, output, size, 0);    	
     	total++;
-    	printf("Send [%d] uid=%d cmd=%d -> ... ", total, output[6], output[7]);
+//    	printf("Send [%d] uid=%d cmd=%d -> ... ", total, output[6], output[7]);
 	clock1 = ClockCycles();
 	FD_ZERO(&allFd);
 	FD_SET(sock, &allFd);
@@ -881,7 +972,7 @@ int SendBuffer(int sock, byte* output, int size, byte* input)
 		lost++;
 		clock2 = ClockCycles();
 		diffTime = (clock2-clock1)*1.0/SYSPAGE_ENTRY(qtime)->cycles_per_sec;
-		printf("Response - failed (%f sec)\n", diffTime);
+//		printf("Response - failed (%f sec)\n", diffTime);
 		return 0;
 	}
 
@@ -922,7 +1013,7 @@ int SendBuffer(int sock, byte* output, int size, byte* input)
 
 	clock2 = ClockCycles();
 	diffTime = (clock2-clock1)*1.0/SYSPAGE_ENTRY(qtime)->cycles_per_sec;
-	printf("Response - OK (%f sec)\n", diffTime);
+//	printf("Response - OK (%f sec)\n", diffTime);
 	
 	return readNum;
 }
@@ -1012,7 +1103,7 @@ int metro_escalator::SendTime()
 	buffer[13] = HIBYTE(reg_time_t);
 	buffer[14] = LOBYTE(reg_time_t);
 	
-	// получение младшего слова	
+	// получение младшео слова	
 	reg_time_t=(word)((time_now>>0*16) & 0xFFFF);
 	buffer[15] = HIBYTE(reg_time_t);
 	buffer[16] = LOBYTE(reg_time_t);
@@ -1050,9 +1141,9 @@ int metro_escalator::CheckStatus()
 	buffer[9] = 0;
 	buffer[10] = 0;
 	buffer[11] = 1;
-//	crc = CRC(&buffer[6], 6);
-//	buffer[12] = HIBYTE(crc);
-//	buffer[13] = LOBYTE(crc);
+	crc = CRC(&buffer[6], 6);
+	buffer[12] = HIBYTE(crc);
+	buffer[13] = LOBYTE(crc);
 	
 	if (pthread_mutex_trylock(&mutex) != EOK)
 		return 0;
@@ -1138,7 +1229,7 @@ int metro_escalator::UpdateLeds()
 	int		 index = 0;
 	PtArg_t		args[1];
 
-	if (panel && (paneled == id))
+	if (panel && (metro_escalator::paneled == this->id))
 	{
 		if (g_escTypes)
 		{
@@ -1211,7 +1302,8 @@ int MoveUp( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 			if (ConfirmDirection() == 1)
 				g_selectedEscalator->SendCommand(0xE0);
 		}
-		else if ((g_selectedEscalator->prefDirection == 3) && (g_selectedEscalator->direction == DIRECTION_DOWN))
+//		else if ((g_selectedEscalator->prefDirection == DIRECTION_REVERSE) && (g_selectedEscalator->direction == DIRECTION_DOWN))
+		else if (g_selectedEscalator->prefDirection == DIRECTION_REVERSE)
 		{		
 			if (ConfirmDirection() == 1)
 				g_selectedEscalator->SendCommand(0xE0);
@@ -1236,7 +1328,8 @@ int MoveDown( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 			if (ConfirmDirection() == 1)
 				g_selectedEscalator->SendCommand(0xE1);
 		}
-		else if ((g_selectedEscalator->prefDirection == 3) && (g_selectedEscalator->direction == DIRECTION_UP))
+//		else if ((g_selectedEscalator->prefDirection == DIRECTION_REVERSE) && (g_selectedEscalator->direction == DIRECTION_UP))
+		else if (g_selectedEscalator->prefDirection == DIRECTION_REVERSE)
 		{		
 			if (ConfirmDirection() == 1)
 				g_selectedEscalator->SendCommand(0xE1);
@@ -1279,6 +1372,7 @@ int RelizeEscalatorPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t
 	char	number[4];
 	int		flg, trapped = -1;
 	PtWidget_t* panelTabs = ApGetWidgetPtr(widget, ABN_SignalPanel);
+	
 	ALL_ESCALATORS
 	{
 		if (g_escalators[i].id == metro_escalator::paneled)
@@ -1316,7 +1410,14 @@ int SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 	metro_escalator*	escalator;
 	char	buffer[256];
 	char	number[4];
+
+	if (metro_escalator::panel&& metro_escalator::paneled != escalator->id)
+	{
+		PtDestroyWidget(metro_escalator::panel);
+	};
+
    	escalator = (metro_escalator*)get_widget_scalar(widget, Pt_ARG_POINTER);
+
 	metro_escalator::paneled = escalator->id;
 
 	if (metro_escalator::panel)
@@ -1327,30 +1428,17 @@ int SetupPanel( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 		strcat(buffer, number);
 
 		PtSetResource(ApGetWidgetPtr(metro_escalator::panel, ABN_PanelTitle), Pt_ARG_TEXT_STRING, buffer, 0);
-		escalator->UpdateLeds();
 		escalator->UpdatePanel();
+		escalator->UpdateLeds();
 	}
 
 	return( Pt_CONTINUE );
 }
 
 
-int DiscardBlocking( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+int metro_escalator::Discard_Blocking( PtWidget_t *widget)
 {
-	metro_escalator*	escalator;
-	char	buffer[256];
-	char	number[4];
-	PtArg_t		args[1];
-	
-   	escalator = (metro_escalator*)get_widget_scalar(widget, Pt_ARG_POINTER);
-   	if (escalator)
-   	{
-
-			PtSetArg(&args[0], Pt_ARG_COLOR, NO_BLOCK_COLOR, 0);
-			PtSetResources(escalator->blockLabel, 1, args);   		
-   	}
-
-
+	DiscardBlocking(widget, NULL, NULL);
 	return( Pt_CONTINUE );
 }
 
@@ -1389,9 +1477,31 @@ int SetReverseEscalator( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t 
 int OnChancelDirections( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
 
 	{
+
 	LoadDirections ("directions.dat");
 	
 	return( Pt_CONTINUE );
 
+	}
+
+
+int
+DiscardBlocking( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo )
+
+	{
+	metro_escalator*	escalator;
+	char	buffer[256];
+	char	number[4];
+	PtArg_t		args[2];
+	
+   	escalator = (metro_escalator*)get_widget_scalar(widget, Pt_ARG_POINTER);
+   	if (escalator)
+   	{
+
+	 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "\0", 1);			
+	 	PtSetArg(&args[1], Pt_ARG_INLINE_COLOR, NO_BLOCK_COLOR, 0);			
+ 		PtSetResources(escalator->blockLabel, 2, args);	 	
+   	}
+	return( Pt_CONTINUE );
 	}
 

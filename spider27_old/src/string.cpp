@@ -51,9 +51,9 @@ int String::Set(const char* string)
 
 int String::Get(char* string, int size)
 {
-	if (size < (length + 1))
+	if (size <(length+1))
 	{
-		string[0] = 0;
+		string = NULL;
 		return 0;
 	}
 	strcpy(string, str);

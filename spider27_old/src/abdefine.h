@@ -262,6 +262,10 @@ extern const int ABN_ArchiveLogOpenBtn;
 extern const int ABN_ArchiveLogCancelBtn;
 #define ABW_ArchiveLogCancelBtn              AbGetABW( ABN_ArchiveLogCancelBtn )
 
+/* 'PrevCmdPullDlg' Dialog link */
+extern const int ABN_PrevCmdPullDlg;
+#define ABW_PrevCmdPullDlg                   AbGetABW( ABN_PrevCmdPullDlg )
+
 #define AbGetABW( n ) ( AbWidgets[ n ].wgt )
 
 /* 'EscalatorMenu' Menu link */

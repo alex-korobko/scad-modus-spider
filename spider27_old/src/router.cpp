@@ -10,6 +10,7 @@
 #include "router.h"
 #include "system.h"
 
+
 typedef struct {
 	struct rt_msghdr		header;
 	sockaddr					dest;
@@ -25,8 +26,22 @@ Net::Net()
 	ip = 0;
 	curr_gateway_ip=0;
 	broken = 0;
+	skip_count = 0;	//if net broken, it not testing SKIP_TEST_COUNT loops
 	next = NULL;
 	prev = NULL;
+}
+
+Net* Net::first_Net()
+{
+Net* tmp;
+tmp=this;
+while (tmp->prev!=NULL) {tmp=tmp->prev;}
+return tmp;
+}
+
+Net* Net::next_Net()
+{
+return next;
 }
 
 Net::~Net()
@@ -36,8 +51,8 @@ Net::~Net()
 Router::Router()
 {
 	routeTable = NULL;
-	leftLineTail = leftLine = new Net;
-	rightLineTail = rightLine = new Net;
+	leftLine = NULL;
+	rightLine = NULL;
 }
 
 void Router::AddLeftLeafGate(char* gate)
@@ -74,7 +89,7 @@ int Router::LoadLeft(const char* filename)
 	char	addr[16];
 	Net* 	net = NULL;
 	struct in_addr tmp_IP1,tmp_IP2;
-	printf("Load left leaf net\n");
+//	printf("Load left leaf net\n");
 	fd = fopen(filename, "r");
 	if (fd)
 	{
@@ -84,7 +99,7 @@ int Router::LoadLeft(const char* filename)
 			for(int i=0; i<tableSize; i++)
 			{	
 				fscanf(fd, "%s\n", addr);
-				printf("Load net %s\n", addr);
+//				printf("Load net %s\n", addr);
 				net = new Net;
 				net->ip = inet_addr(addr);
 				net->curr_gateway_ip=leftGate.s_addr;
@@ -94,9 +109,14 @@ int Router::LoadLeft(const char* filename)
 
 				if (net)
 				{
-					leftLineTail->next = net;
-					net->prev = leftLineTail;
-					leftLineTail = net;
+					if (leftLine)   //if not first element
+					{
+					leftLine->next = net;
+					net->prev = leftLine;
+					};
+					
+					leftLine = net;
+
 					if (i > 0)
 					{
 						in_addr netAddr;
@@ -125,7 +145,7 @@ int Router::LoadRight(const char* filename)
 	char	addr[16];
 	Net* 	net = NULL;
 	
-	printf("Load right leaf net\n");
+//	printf("Load right leaf net\n");
 	
 	fd = fopen(filename, "r");
 	if (fd)
@@ -136,15 +156,20 @@ int Router::LoadRight(const char* filename)
 			for(int i=0; i<tableSize; i++)
 			{
 				fscanf(fd, "%s\n", addr);
-				printf("Load net %s\n", addr);
+//				printf("Load net %s\n", addr);
 				net = new Net;
 				net->ip = inet_addr(addr);
 				net->curr_gateway_ip=rightGate.s_addr;
 				if (net)
 				{
-					rightLineTail->next = net;
-					net->prev = rightLineTail;
-					rightLineTail = net;
+
+					if (rightLine) //if not fist element
+					{
+					rightLine->next = net;
+					net->prev = rightLine;
+					};
+					rightLine = net;
+					
 					if (i > 0)
 					{
 						in_addr netAddr;
@@ -205,8 +230,6 @@ int ConnectToServer(in_addr_t addr, int port)
 	int		flags;
 	int		result;
 
-	printf("\nIn connect to server\n");
-
 	address.sin_addr.s_addr = addr;
 	address.sin_port = htons(port);
 	address.sin_family = AF_INET;
@@ -258,7 +281,7 @@ int ConnectToServer(in_addr_t addr, int port)
 	writeFD = readFD;
 	exFD = readFD;
 
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 2;
 	timeout.tv_usec = 0;
 
 	result = select(sock + 1, &readFD, &writeFD, &exFD, &timeout);
@@ -323,88 +346,127 @@ void Router::Loop()
 {
 	Net*	curNet;
 	char	buffer[8];
-	int sock;
+	int sock, tmp;
 	in_addr_t host_addr;
 	struct in_addr tmp_IP1, tmp_IP2;
 	
  //  startup all hosts
-	curNet = leftLine->next;
-	printf("\nScan left\n");
+	curNet = leftLine->first_Net();
+//	printf("\nScan left\n");
+	
 	while(curNet!=NULL)
 	{
-		host_addr = (3 << 24) | curNet->ip;		
+	
+	if (curNet->broken == 1 &&curNet->skip_count<=SKIP_TEST_COUNT) 
+		{
+		curNet->skip_count++;
+		continue;
+		}
+	else if (curNet->broken == 1 &&curNet->skip_count>SKIP_TEST_COUNT) 
+		{
+		curNet->skip_count=0;
+		};
+		
+	host_addr = (3 << 24) | curNet->ip;		
 
 	 tmp_IP2.s_addr=host_addr;
+
 // Begin: Printing 	current routing state
-	printf("\n Change routing to host %s\n", inet_ntoa(tmp_IP2));
+//	printf("\n Testing routing to host %s\n", inet_ntoa(tmp_IP2));
 // End: Printing 	current routing state
 
-		sleep(10);
+		sleep(2);
 
-		printf("\nScan left\n");
-		
 		if (!(sock = ConnectToServer(host_addr, 7)))
 		{
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
-// Begin: Printing 	current routing state
-			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-			printf(" trougth gateway %s (old left)\n",inet_ntoa(tmp_IP2));
-// End: Printing 	current routing state
-			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
+			 
+			// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (old left)\n",inet_ntoa(tmp_IP2));
+			// End: Printing 	current routing state
+			
+			tmp=ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
+//			printf("\n ->->->delete route %s  == %d\n", inet_ntoa(tmp_IP1), tmp);		
 	
 			if (curNet->curr_gateway_ip == leftGate.s_addr)
 			   {
 				curNet->curr_gateway_ip = rightGate.s_addr;
 				}
-			else { 
+			else
+				{ 
 				curNet->curr_gateway_ip = leftGate.s_addr;
-					};
+				};
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
-// Begin: Printing 	current routing state
-			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-			printf(" trougth gateway %s (new left)\n",inet_ntoa(tmp_IP2));
-// End: Printing 	current routing state
+			// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (new left)\n",inet_ntoa(tmp_IP2));
+			// End: Printing 	current routing state
 
-			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
-			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; } ;
-		} ;
+			tmp=ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute); 
+//			printf("\n ->->->add route %s  == %d\n", inet_ntoa(tmp_IP1), tmp);		
+//			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; curNet->curr_gateway_ip =leftGate.s_addr;} ;
+			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1;} ;
+			curNet = curNet->next_Net();
+			continue;
+		};
+
 		send(sock, "REQUEST", 7, 0);
 	
-		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;}  else { curNet->broken = 0;};
+//		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;  curNet->curr_gateway_ip =leftGate.s_addr;}  else { curNet->broken = 0;};
+		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1; }  else { curNet->broken = 0;};
 		
 		buffer[7] = 0;
 		close(sock);
 		
 		
-		curNet = curNet->next;
+		curNet = curNet->next_Net();
 	};
 
 
-	curNet = rightLine->next;
+	curNet = rightLine->first_Net();
 
-	printf("\nScan right\n");
+//	printf("\nScan right\n");
 	while(curNet)
 	{
-		host_addr = (3 << 24) | curNet->ip;		
+
+	if (curNet->broken == 1 &&curNet->skip_count<=SKIP_TEST_COUNT) 
+		{
+		curNet->skip_count++;
+		continue;
+		}
+	else if (curNet->broken == 1 &&curNet->skip_count>SKIP_TEST_COUNT) 
+		{
+		curNet->skip_count=0;
+		};
+
+	
+	host_addr = (3 << 24) | curNet->ip;		
+
+	 tmp_IP2.s_addr=host_addr;
+	// Begin: Printing 	current routing state
+//	printf("\n Testing routing to host %s\n", inet_ntoa(tmp_IP2));
+	// End: Printing 	current routing state
 		
-		sleep(10);
+		sleep(2);
 
 		if (!(sock = ConnectToServer(host_addr, 7)))
 		{
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
-// Begin: Printing 	current routing state
-			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-			printf(" trougth gateway %s (old right)\n",inet_ntoa(tmp_IP2));
-// End: Printing 	current routing state
+		// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (old right)\n",inet_ntoa(tmp_IP2));
+		// End: Printing 	current routing state
 
 			 
-			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
-	
+			tmp=ChangeRoute(&tmp_IP1, &tmp_IP2, 0, delRoute);
+			printf("\n ->->->delete route %s  == %d\n", inet_ntoa(tmp_IP1), tmp);		
+			
 			if (curNet->curr_gateway_ip == leftGate.s_addr)
 			   {
 				curNet->curr_gateway_ip = rightGate.s_addr;
@@ -415,24 +477,33 @@ void Router::Loop()
 			 tmp_IP1.s_addr=curNet->ip;
 			 tmp_IP2.s_addr=curNet->curr_gateway_ip;
 
-// Begin: Printing 	current routing state
-			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
-			printf(" trougth gateway %s (new right)\n",inet_ntoa(tmp_IP2));
-// End: Printing 	current routing state
+			// Begin: Printing 	current routing state
+//			printf("\n Change routing to net %s ", inet_ntoa(tmp_IP1));
+//			printf(" trougth gateway %s (new right)\n",inet_ntoa(tmp_IP2));
+			// End: Printing 	current routing state
 
 
-			ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
+			tmp=ChangeRoute(&tmp_IP1, &tmp_IP2, 0, addRoute);
+//			printf("\n ->->->add route %s  == %d\n", inet_ntoa(tmp_IP1), tmp);		
+			
+//			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; curNet->curr_gateway_ip = rightGate.s_addr;} ;
 			if (!(sock = ConnectToServer(host_addr, 7))) { curNet->broken = 1; } ;
-		} ;
+			
+			curNet = curNet->next_Net();
+			continue;
+
+		};
+
 		send(sock, "REQUEST", 7, 0);
 	
-		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;}  else { curNet->broken = 0;};
+//		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1; curNet->curr_gateway_ip = rightGate.s_addr;}  else { curNet->broken = 0;};
+		if (!Receive(sock, (byte*)buffer, 7)) { curNet->broken = 1;}  else { curNet->broken = 0;};		
 		
 		buffer[7] = 0;
 		close(sock);
 		
 		
-		curNet = curNet->next;
+		curNet = curNet->next_Net();
 	};
 
 }
