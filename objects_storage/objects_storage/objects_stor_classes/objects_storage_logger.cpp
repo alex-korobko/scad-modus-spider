@@ -1,13 +1,16 @@
-using namespace std;
-
 #include <string>
 
 #include <sys/slog.h>
 #include <sys/slogcodes.h>
 
+using namespace std;
 #include "objects_storage_logger.h"
 
-objects_storage_logger* objects_storage_logger::logger_instance=NULL;
+objects_storage_logger& 
+           objects_storage_logger::get_instance(){
+      static objects_storage_logger logger_instance;
+      return logger_instance;
+ };
 
 void 
     objects_storage_logger::log_message
@@ -40,13 +43,4 @@ buffer.reserve(message.size()+12);
 			break;
   };
 }
-
-objects_storage_logger* 
-           objects_storage_logger::get_instance(){
-        if (logger_instance==NULL) {
-                  logger_instance=new objects_storage_logger();
-          };
-
-      return logger_instance;
- };
 

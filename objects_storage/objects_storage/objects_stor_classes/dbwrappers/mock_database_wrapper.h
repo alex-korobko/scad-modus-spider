@@ -2,9 +2,14 @@
 #define _MOCK_DATABASE_WRAPPER_
 
 class database_wrapper {
+  friend class friend_class_of_database_wrapper_only_for_compiler_happening;
    private:
-       database_wrapper() throw (objects_storage_exception);
-       static database_wrapper* dbwrapper_instance;
+      database_wrapper() throw (objects_storage_exception);
+      database_wrapper(const database_wrapper&){};
+      database_wrapper& operator=(const database_wrapper& dbase_inst){ return const_cast<database_wrapper&>(dbase_inst);};
+      ~database_wrapper() {};
+
+     int counter;
 
     public:
 
@@ -31,7 +36,7 @@ bool pri_free_channel(byte upo_number,
                                      pthread_t  pthread_id);
   
 //static metods
-       static database_wrapper* get_instance();
+       static database_wrapper& get_instance() throw (objects_storage_exception);
 };
 
 #endif

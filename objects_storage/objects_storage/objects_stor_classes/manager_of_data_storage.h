@@ -1,11 +1,16 @@
+#ifndef _MANAGER_OF_DATA_STORAGE_
+#define  _MANAGER_OF_DATA_STORAGE_
+
 class manager_of_data_storage {
+  friend class friend_class_of_manager_of_data_storage_only_for_compiler_happening;
   private :
-       jobs_data_managers_container jobs_data_managers;
-
+//disable external using for singleton
       manager_of_data_storage () {};
+      manager_of_data_storage (const manager_of_data_storage&) {};
+      manager_of_data_storage& operator=(const manager_of_data_storage& mgr) { return const_cast<manager_of_data_storage&>(mgr);};
+      ~manager_of_data_storage(){};
 
-        static manager_of_data_storage* mngr_instance;
-        static manager_of_data_storage* get_instance();
+      static manager_of_data_storage& get_instance();
 
   public  :
        static uint32_t node_id;
@@ -24,3 +29,5 @@ class manager_of_data_storage {
        static void initialize() throw (objects_storage_exception);
        static void run() throw (objects_storage_exception);
 };
+
+#endif
