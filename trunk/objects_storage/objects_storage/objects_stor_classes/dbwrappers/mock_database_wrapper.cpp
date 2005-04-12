@@ -1,11 +1,11 @@
-using namespace std;
-
 #include <functional>
 #include <vector>
 #include <sstream>
 
 #include <pthread.h>
 #include <inttypes.h>
+
+using namespace std;
 
 #include "storage_common.h"
 #include "objects_storage_exception.h"
@@ -14,35 +14,15 @@ using namespace std;
 
 #include "mock_database_wrapper.h"
 
-database_wrapper* database_wrapper::dbwrapper_instance=NULL;
-
-database_wrapper* 
-          database_wrapper::get_instance(){
-     if (dbwrapper_instance==NULL) {
-           try {
-                dbwrapper_instance=new database_wrapper();
-            } catch (objects_storage_exception obj_stor_exc) {
-                   string message("In database_wrapper::get_instance() raised exception :");
-                   objects_storage_logger* logger_inst=
-                                  objects_storage_logger::get_instance();
-                  message+=obj_stor_exc.get_description();
-                  logger_inst->log_message
-                                   (objects_storage_logger::ERROR_MSG,
-                                     message);
-            };
-        };
- 
+database_wrapper& 
+          database_wrapper::get_instance() throw (objects_storage_exception){
+    static database_wrapper dbwrapper_instance;
     return dbwrapper_instance;
 };
 
 database_wrapper::
-              database_wrapper() throw (objects_storage_exception){
-vector<char> random_state(32);
-initstate( time(NULL), 
-               &random_state[0],
-              random_state.size());
-setstate(&random_state[0]);
-};
+              database_wrapper() throw (objects_storage_exception) :
+          counter(0){};
 
 // PRI SUPPORT METODS
 vector<byte>
@@ -53,8 +33,7 @@ vector<byte>
                                                 word channelb_number,
                                                 pthread_t pthread_id) {
 vector<byte> return_buffer(0);
- if (random()%2==0) {
-
+ if (counter%2==0) {
     vector<byte> type_bytes;
 
     type_bytes=bytes_of_type<pthread_t>(pthread_id);
@@ -73,7 +52,10 @@ vector<byte> return_buffer(0);
                                       type_bytes.rbegin(),
                                       type_bytes.rend() );
 
-}; // if (random()%2==0) {
+}; // if (counter%2==0)
+    counter++;
+    if (counter>100)  counter=0;
+
 return return_buffer;
 
 };
@@ -88,7 +70,7 @@ vector<byte>
 vector<byte> return_buffer(0);
 word new_channelb_number;
 
-if (random()%2==0) {
+ if (counter%2==0) {
 
     vector<byte> type_bytes;
 
@@ -110,7 +92,10 @@ if (random()%2==0) {
                                       type_bytes.rbegin(),
                                       type_bytes.rend() );
 
-}; // if (random()%2==0) {
+}; //  if (counter%2==0)
+
+    counter++;
+    if (counter>100)  counter=0;
 
 return return_buffer;
 };
@@ -124,40 +109,41 @@ bool
                                      pthread_t  pthread_id){
 
 //================delete it==========================
-/*
-                    objects_storage_logger* logger_inst=
-                                                   objects_storage_logger::get_instance();
-                    vector<char> tmp_chars(32);
-                    ostringstream message;
-
-                   message<<"Free: ";
-
-                    itoa(pthread_id, &tmp_chars[0], 16);
-                     message<<" tid 0x"<<&tmp_chars[0];
-
-                    itoa(upo_number, &tmp_chars[0], 16);
-                     message<<" upo 0x"<<&tmp_chars[0];
-
-                    itoa(ie1_number, &tmp_chars[0], 16);
-                     message<<" ie1 0x"<<&tmp_chars[0];
-
-                    itoa(e1_number, &tmp_chars[0], 16);
-                     message<<" e1 0x"<<&tmp_chars[0];
-
-                    itoa(channel_interval, &tmp_chars[0], 16);
-                     message<<" interv 0x"<<&tmp_chars[0];
-
-                    itoa(channelb_number, &tmp_chars[0], 16);
-                     message<<" ch_num 0x"<<&tmp_chars[0];
-
-                    logger_inst->log_message
-                                               (objects_storage_logger::INFO_MSG,
-                                                 message.str());
-*/
+//                    objects_storage_logger& logger_inst=
+//                                                   objects_storage_logger::get_instance();
+//                    vector<char> tmp_chars(32);
+//                    ostringstream message;
+//
+//                   message<<"Free: ";
+//
+//                    itoa(pthread_id, &tmp_chars[0], 16);
+//                     message<<" tid 0x"<<&tmp_chars[0];
+//
+//                    itoa(upo_number, &tmp_chars[0], 16);
+//                     message<<" upo 0x"<<&tmp_chars[0];
+//
+//                    itoa(ie1_number, &tmp_chars[0], 16);
+//                     message<<" ie1 0x"<<&tmp_chars[0];
+//
+//                    itoa(e1_number, &tmp_chars[0], 16);
+//                     message<<" e1 0x"<<&tmp_chars[0];
+//
+//                    itoa(channel_interval, &tmp_chars[0], 16);
+//                     message<<" interv 0x"<<&tmp_chars[0];
+//
+//                    itoa(channelb_number, &tmp_chars[0], 16);
+//                     message<<" ch_num 0x"<<&tmp_chars[0];
+//
+//                    logger_inst.log_message
+//                                             (objects_storage_logger::INFO_MSG,
+//                                                 message.str());
 //=================================================
 
+if (counter%2==0) { return true; } else {return false; };
 
-if (random()%2==0) { return true; } else {return false; };
+    counter++;
+    if (counter>100)  counter=0;
+
 };
 
 

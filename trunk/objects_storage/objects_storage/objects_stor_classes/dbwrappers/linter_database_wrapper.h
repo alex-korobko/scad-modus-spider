@@ -3,12 +3,13 @@
 
 class database_wrapper {
    private:
-       database_wrapper() throw (objects_storage_exception);
+      database_wrapper() throw (objects_storage_exception);
+      database_wrapper(const database_wrapper&){};
+      database_wrapper& operator=(const database_wrapper& dbase_inst){ return dbase_inst;};
+      ~database_wrapper() {};
 
        WORD linter_connection_id;
-
        WORD linter_cursor_id;
-
        WORD pri_channel_occupation_statement_1;
        WORD pri_channel_occupation_statement_2;
        WORD pri_channel_occupation_statement_3;
@@ -39,8 +40,6 @@ class database_wrapper {
                   left_side_param,
                   right_side_param,
                   size_of_param;
-
-       static database_wrapper* dbwrapper_instance;
 
        static vector<byte> prepare_channel_attributes_by_right_side(LONG channel_right_side,
                                                                                                                 word channel_number,
@@ -74,7 +73,7 @@ bool pri_free_channel(byte upo_number,
                                      pthread_t  pthread_id);
   
 //static metods
-       static database_wrapper* get_instance();
+       static database_wrapper& get_instance() throw (objects_storage_exception);
 };
 
 #endif

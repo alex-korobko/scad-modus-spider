@@ -15,26 +15,12 @@ using namespace std;
 
 #include "linter_database_wrapper.h"
 
-database_wrapper* database_wrapper::dbwrapper_instance=NULL;
-
-database_wrapper* 
-          database_wrapper::get_instance(){
-     if (dbwrapper_instance==NULL) {
-           try {
-                dbwrapper_instance=new database_wrapper();
-            } catch (objects_storage_exception obj_stor_exc) {
-                   string message("In database_wrapper::get_instance() raised exception :");
-                   objects_storage_logger* logger_inst=
-                                  objects_storage_logger::get_instance();
-                  message+=obj_stor_exc.get_description();
-                  logger_inst->log_message
-                                   (objects_storage_logger::ERROR_MSG,
-                                     message);
-            };
-        };
- 
+database_wrapper& 
+          database_wrapper::get_instance() throw (objects_storage_exception){
+    static database_wrapper dbwrapper_instance;
     return dbwrapper_instance;
 };
+
 
 string
        database_wrapper::linter_error_decoding (LONG return_code,
