@@ -3,8 +3,6 @@ HEADERS=test_cond.h \
         storage_common.h\
 	objects_storage_logger.h\
 	manager_of_data_storage.h\
-	abstract_job_data_manager.h\
-	jobs_data_managers_container.h\
 	pri_data_manager.h\
 	
 ifdef LINTER_DBWRAPPER

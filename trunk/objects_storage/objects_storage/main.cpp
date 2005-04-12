@@ -28,9 +28,7 @@ using namespace std;
 #endif  //#ifdef _LINTER_DBWRAPPER_
 #endif  //#ifdef _MOCK_DBWRAPPER_
 
-#include "abstract_job_data_manager.h"
 #include "pri_data_manager.h"
-#include "jobs_data_managers_container.h"
 #include "manager_of_data_storage.h"
 
 #ifdef __UNIT_TESTING__
@@ -64,9 +62,9 @@ int main (int argc, char* argv[]) {
 		switch( opt ) {
 		case 'n' :
 			if( sscanf( optarg, "%i", &manager_of_data_storage::node_id ) != 1 ) {
-                   objects_storage_logger* logger_inst=
+                   objects_storage_logger& logger_inst=
                               objects_storage_logger::get_instance();
-                   logger_inst->log_message
+                   logger_inst.log_message
                             (objects_storage_logger::ERROR_MSG,
                              "In main(...) n argument  isn`t node id");
                     return EXIT_FAILURE;
@@ -74,9 +72,9 @@ int main (int argc, char* argv[]) {
             break;
         case 'p' :
             if( sscanf( optarg, "%i", &manager_of_data_storage::process_id ) != 1 ) {
-                   objects_storage_logger* logger_inst=
+                   objects_storage_logger& logger_inst=
                               objects_storage_logger::get_instance();
-                   logger_inst->log_message
+                   logger_inst.log_message
                             (objects_storage_logger::ERROR_MSG,
                              "In main(...) p argument  isn`t process id");
                    return EXIT_FAILURE;
@@ -84,18 +82,18 @@ int main (int argc, char* argv[]) {
             break;
         case 'c' :
             if( sscanf( optarg, "%i", &manager_of_data_storage::channel_id ) != 1 ) {
-                   objects_storage_logger* logger_inst=
+                   objects_storage_logger& logger_inst=
                               objects_storage_logger::get_instance();
-                   logger_inst->log_message
+                   logger_inst.log_message
                             (objects_storage_logger::ERROR_MSG,
                              "In main(...) c argument  isn`t process id");
                    return EXIT_FAILURE;
                  };
             break;
         default :
-                   objects_storage_logger* logger_inst=
+                   objects_storage_logger& logger_inst=
                               objects_storage_logger::get_instance();
-                   logger_inst->log_message
+                   logger_inst.log_message
                             (objects_storage_logger::ERROR_MSG,
                              "In main(...) unrecognized argument ");
                    return EXIT_FAILURE;
@@ -104,16 +102,13 @@ int main (int argc, char* argv[]) {
 	};
 
 try {
-manager_of_data_storage::initialize();
 manager_of_data_storage::run();
  } catch (objects_storage_exception obj_stor_exc) {
-        string message("In main(...) catched exception : ");
-        objects_storage_logger* logger_inst=
+        objects_storage_logger& logger_inst=
                       objects_storage_logger::get_instance();
-        message+=obj_stor_exc.get_description();
-         logger_inst->log_message
+         logger_inst.log_message
                     (objects_storage_logger::ERROR_MSG,
-                     message);
+                     "In main(...) catched exception : "+obj_stor_exc.get_description());
  };
 
 return 0;
