@@ -1,6 +1,5 @@
 OBJECTS=objects_storage_logger.o\
         manager_of_data_storage.o\
-        jobs_data_managers_container.o\
         pri_data_manager.o
 	
 ifdef LINTER_DBWRAPPER
