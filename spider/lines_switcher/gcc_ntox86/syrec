@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "Syrec activated"
+
+# A usefull function
+function waitfor {
+typeset -i i=0
+while test $i -lt 60 -a ! $1 -ef $1 ; do
+    sleep 1;
+    let i=i+1;
+done
+unset i
+}
+
+waitfor /dev/socket
+
+## Starting networking
+if test -d /dev/socket; then
+   ifconfig en0 192.168.50.5
+   route add default 192.168.50.2
+   cd /spider_release/syrec/
+   ./spider
+fi
+			
+
