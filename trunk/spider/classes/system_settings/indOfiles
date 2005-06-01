@@ -1,0 +1,10 @@
+MYOBJ=system_settings.o\
+ system_settings_spider.o
+
+ifdef UNIT_TESTING
+MYOBJ+=system_settings_test.o\
+ system_settings_spider_test.o\
+ all_system_settings_classes_tests.o
+endif
+
+MYOBJ+=main.o

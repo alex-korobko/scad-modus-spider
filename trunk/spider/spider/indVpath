@@ -1,0 +1,7 @@
+VPATH = ../metro_devices_classes\
+     :../unit_tests\
+     :../unit_tests/metro_devices_classes_unit_tests\
+     :../\
+     :../system_settings_classes\
+     :../socket_classes\
+     :../containers_classes

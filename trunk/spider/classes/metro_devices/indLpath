@@ -1,0 +1,4 @@
+MYLPATH=-L.\
+        -L/usr/local/lib/\
+	-L/usr/lib/gcc-lib/ntox86/2.95.3/exceptions\
+        -L/usr/ntox86/lib/exceptions	

@@ -1,0 +1,489 @@
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<h1><center>Таблица соответствия данных MODBUS пакета ответа от стойки и структуры escalator_data_block (далее структура)</center></h1>
+<table width = "95%" align="center" border="1" cellpadding  = "4" cellspacing="0">
+   <tr>
+      <td>Индекс MODBUS</td>
+      <td>Адрес регистра MODBUS</td>
+      <td>Название MODBUS</td>
+      <td>Индекс<br>структуры</td>
+      <td>Тип данных<br>структуры</td>
+      <td>Описание</td>
+      <td>Примечание</td>
+   </tr>
+
+   <tr>
+      <td>0</td>
+      <td>30001</td>
+      <td>STATE</td>
+      <td>0</td>
+      <td>parameter</td>
+      <td>Состояние эскалатора<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>2</td>
+                 <td>Up</td>
+             </tr>
+
+             <tr>
+                 <td>3</td>
+                 <td>Down</td>
+             </tr>
+
+             <tr>
+                 <td>4</td>
+                 <td>Upl</td>
+             </tr>
+
+             <tr>
+                 <td>5</td>
+                 <td>Downl</td>
+             </tr>
+
+             <tr>
+                 <td>6</td>
+                 <td>Stop</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>escalator_data_block::<br>INDEX_PARAM_STATE_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>1</td>
+      <td>30002</td>
+      <td>MODE</td>
+      <td>1</td>
+      <td>parameter</td>
+      <td>Режим эскалатора<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>1</td>
+                 <td>ГПщ</td>
+             </tr>
+
+             <tr>
+                 <td>2</td>
+                 <td>ГПП</td>
+             </tr>
+
+             <tr>
+                 <td>3</td>
+                 <td>ГПДу</td>
+             </tr>
+
+             <tr>
+                 <td>4</td>
+                 <td>МПщ</td>
+             </tr>
+
+             <tr>
+                 <td>5</td>
+                 <td>МПп</td>
+             </tr>
+
+             <tr>
+                 <td>6</td>
+                 <td>Тест</td>
+             </tr>
+
+             <tr>
+                 <td>7</td>
+                 <td>Расторм</td>
+             </tr>
+
+             <tr>
+                 <td>8</td>
+                 <td>Выбег</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>escalator_data_block::<br>INDEX_PARAM_MODE_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>2</td>
+      <td>30003</td>
+      <td>READY</td>
+      <td>2</td>
+      <td>parameter</td>
+      <td>Готовность эскалатора<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>ГП готов</td>
+             </tr>
+
+             <tr>
+                 <td>1</td>
+                 <td>МП готов</td>
+             </tr>
+
+             <tr>
+                 <td>2</td>
+                 <td>Тест готов</td>
+             </tr>
+
+             <tr>
+                 <td>3</td>
+                 <td>Раст готов</td>
+             </tr>
+
+             <tr>
+                 <td>4</td>
+                 <td>Выбег готов</td>
+             </tr>
+
+             <tr>
+                 <td>5</td>
+                 <td>Нет готовности</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>escalator_data_block::<br>INDEX_PARAM_READY_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>3</td>
+      <td>30004</td>
+      <td>BlockCircut</td>
+      <td>0</td>
+      <td>signal</td>
+      <td>Норма блокцепей<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Не норма</td>
+             </tr>
+
+             <tr>
+                 <td>1</td>
+                 <td>Норма</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>escalator_data_block::<br>INDEX_SIGNAL_BLOCK_CIRCUT_STATUS</td>
+   </tr>
+
+   <tr>
+      <td>4</td>
+      <td>30005</td>
+      <td>BreakingPath</td>
+      <td>1</td>
+      <td>signal</td>
+      <td>Норма тормозного пути<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Не норма</td>
+             </tr>
+
+             <tr>
+                 <td>1</td>
+                 <td>Норма</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>escalator_data_block::<br>INDEX_SIGNAL_BREAKING_PATH_STATUS</td>
+   </tr>
+
+   <tr>
+      <td>5</td>
+      <td>30006</td>
+      <td>BlockUpr</td>
+      <td>2,3,4</td>
+      <td>signal</td>
+      <td>Состояние каналов управления<br>
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0xXXX0</td>
+                 <td>BU1=0<br>(синий)</td>
+             </tr>
+             <tr>
+                 <td>0xXXX1</td>
+                 <td>BU1=1<br>(зеленый)</td>
+             </tr>
+             <tr>
+                 <td>0xXXX2</td>
+                 <td>BU1=2<br>(серый)</td>
+             </tr>
+
+             <tr>
+                 <td>0xXX0X</td>
+                 <td>BU2=0<br>(синий)</td>
+             </tr>
+             <tr>
+                 <td>0xXX1X</td>
+                 <td>BU2=1<br>(зеленый)</td>
+             </tr>
+             <tr>
+                 <td>0xXX2X</td>
+                 <td>BU2=2<br>(серый)</td>
+             </tr>
+
+             <tr>
+                 <td>0xX0XX</td>
+                 <td>BU3=0<br>(синий)</td>
+             </tr>
+             <tr>
+                 <td>0xX1XX</td>
+                 <td>BU3=1<br>(зеленый)</td>
+             </tr>
+             <tr>
+                 <td>0xX2XX</td>
+                 <td>BU3=2<br>(серый)</td>
+             </tr>
+
+             </table>
+      </td>
+      <td>signals[2] BU1<br>signals[3] BU2<br>signals[4] BU3</td>
+   </tr>
+
+   <tr>
+      <td>6</td>
+      <td>30007</td>
+      <td>MessagesCount</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Максимальное 8<br>
+      0 - если нет сообщений в блоке
+      </td>
+      <td>Используется для управления сообщениям (messages)</td>
+   </tr>
+
+   <tr>
+      <td>7</td>
+      <td>30008</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>8</td>
+      <td>30009</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>9-10</td>
+      <td>30010 - 30011</td>
+      <td>Breaking path</td>
+      <td>3</td>
+      <td>parameter</td>
+      <td>unsigned long</td>
+      <td>Значение тормозного пути последней остановки
+      <br><br>escalator_data_block::<br>
+      INDEX_PARAM_BREAKING_PATH_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>11-12</td>
+      <td>30012 - 30013</td>
+      <td>Running path</td>
+      <td>4</td>
+      <td>parameter</td>
+      <td>unsigned long</td>
+      <td>Пробег эскалатора
+      <br><br>escalator_data_block::<br>
+      INDEX_PARAM_RUNNING_PATH_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>13</td>
+      <td>30014</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>14</td>
+      <td>30015</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>15-23</td>
+      <td>30016 - 30024</td>
+      <td>NBlock</td>
+      <td>5-69<br>8 signals per register </td>
+      <td>signal</td>
+      <td>64 блокцепи по 8 в каждом регистре по 2 разряда на регистр
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Зеленый</td>
+             </tr>
+             <tr>
+                 <td>1</td>
+                 <td>Синий</td>
+             </tr>
+             <tr>
+                 <td>2</td>
+                 <td>Красный</td>
+             </tr>
+             <tr>
+                 <td>3</td>
+                 <td>Серый</td>
+             </tr>
+            </table>
+      </td>
+      <td>Из каждого регистра вычисляются значения 8 сигналов</td>
+   </tr>
+
+   <tr>
+      <td>24</td>
+      <td>30025</td>
+      <td>NContactor</td>
+      <td>70 - 78</td>
+      <td>signal</td>
+      <td>8 контакторов в регистре по два бита на контактор
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Зеленый</td>
+             </tr>
+             <tr>
+                 <td>1</td>
+                 <td>Синий</td>
+             </tr>
+             <tr>
+                 <td>2</td>
+                 <td>Красный</td>
+             </tr>
+             <tr>
+                 <td>3</td>
+                 <td>Серый</td>
+             </tr>
+            </table>
+      </td>
+      <td>Вычисляются значения 8 сигналов</td>
+   </tr>
+
+   <tr>
+      <td>25</td>
+      <td>30026</td>
+      <td>NAutomat</td>
+      <td>79 - 88</td>
+      <td>signal</td>
+      <td>8 автоматов в регистре по два бита на автомат
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Зеленый</td>
+             </tr>
+             <tr>
+                 <td>1</td>
+                 <td>Синий</td>
+             </tr>
+             <tr>
+                 <td>2</td>
+                 <td>Красный</td>
+             </tr>
+             <tr>
+                 <td>3</td>
+                 <td>Серый</td>
+             </tr>
+            </table>
+      </td>
+      <td>Вычисляются значения 8 сигналов</td>
+   </tr>
+
+   <tr>
+      <td>26</td>
+      <td>30027</td>
+      <td>NOS</td>
+      <td>89 - 98</td>
+      <td>signal</td>
+      <td>8 прочих сигналов в регистре по два бита на сигнал
+             <table cellpadding="2" cellspacing="0" border="1">
+             <tr>
+                 <td>0</td>
+                 <td>Зеленый</td>
+             </tr>
+             <tr>
+                 <td>1</td>
+                 <td>Синий</td>
+             </tr>
+             <tr>
+                 <td>2</td>
+                 <td>Красный</td>
+             </tr>
+             <tr>
+                 <td>3</td>
+                 <td>Серый</td>
+             </tr>
+            </table>
+      </td>
+      <td>Вычисляются значения 8 сигналов</td>
+   </tr>
+
+   <tr>
+      <td>27</td>
+      <td>30028</td>
+      <td>Isolation<br>Resistance</td>
+      <td>5</td>
+      <td>parameter</td>
+      <td>unsigned long</td>
+      <td>Сопротивление изоляции
+      <br><br>escalator_data_block::<br>
+      INDEX_PARAM_ISOLATION<br>_RESISTANCE_VALUE</td>
+   </tr>
+
+   <tr>
+      <td>28</td>
+      <td>30029</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>29</td>
+      <td>30030</td>
+      <td>Unused</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>Зарезервировано</td>
+   </tr>
+
+   <tr>
+      <td>30 - 50</td>
+      <td>30031 - 30051</td>
+      <td>Messages<br>Stack</td>
+      <td>&nbsp;</td>
+      <td>messages</td>
+      <td>unsigned long</td>
+      <td>Сообщения от устройства
+      <br><br>data_block::<br>
+       messages</td>
+   </tr>
+
+
+</table>
+</body>
+</html>

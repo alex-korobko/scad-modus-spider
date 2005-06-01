@@ -1,0 +1,29 @@
+MYOBJ = alert.o\
+ command.o\
+ contain_cmd_pool.o\
+ contain_log_rec.o\
+ contain_metro_devices_types.o\
+ contain_metro_devices.o\
+ contain_metro_lines.o\
+ contain_metro_stations.o\
+ contain_timer_command.o\
+ contain_msg_dict.o\
+ contain_msg_types.o\
+ devices_types.o\
+ escalator.o\
+ metro_device.o\
+ router.o\
+ shavr.o\
+ sound.o\
+ station.o\
+ system_settings.o
+
+#MYOBJ = alert.o\
+# devices_types.o\
+# metro_device.o\
+# escalator.o\
+# system_settings.o\
+# command.o\
+# station.o\
+# router.o\
+# sound.o

@@ -1,0 +1,17 @@
+OBJECTS = program_settings.o\
+ generic_socket.o\
+ server_socket.o\
+ client_socket.o\
+ comport.o\
+ metro_device.o\
+ metro_escalator.o\
+ metro_shavr.o\
+ metro_udku.o\
+ router.o\
+ watchdog.o
+
+ifdef UNIT_TESTING
+
+endif
+
+OBJECTS += main.o

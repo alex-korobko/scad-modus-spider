@@ -1,0 +1,10 @@
+MYHDR=defines.h\
+ system_settings.h\
+ system_settings_spider.h
+
+ifdef UNIT_TESTING
+MYHDR+=all_system_settings_classes_tests.h\
+ system_settings_test.h\
+ system_settings_spider_test.h
+endif
+

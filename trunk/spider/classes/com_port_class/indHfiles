@@ -1,0 +1,10 @@
+HDRS = test_cond.h\
+ defines.h\
+ comport_exception.h\
+ comport.h
+
+ifdef UNIT_TESTING
+HDRS += test_comport.h\
+ all_tests.h
+endif
+
