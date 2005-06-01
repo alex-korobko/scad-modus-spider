@@ -26,6 +26,9 @@
 *.jpg -k 'b'
 *.jpeg -k 'b'
 *.bmp -k 'b'
+#Sounds
+*.wav -k 'b'
+*.mp3 -k 'b'
 #PhAB binary resources
 *.wgtw -k 'b'
 *.wgtd -k 'b'
