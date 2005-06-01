@@ -7,3 +7,7 @@ endif
 ifdef LINTER_DBWRAPPER
 MYLIBS+= -llinapi
 endif
+
+ifdef EXTREAME_DB_DBWRAPPER
+MYLIBS+= -lmcolib 
+endif

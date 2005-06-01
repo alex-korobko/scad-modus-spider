@@ -1,12 +1,12 @@
-include indPlatform
+include ../../indPlatform
 
 .POHNY: all clean test untest linter extremedb
 
 all:
-	for i in ${DIRS} ; do (cd $$i && $(MAKE) all) ; done
-
+	for i in $(ALLDIRS);  do ( cd ../../ && $(MAKE) all) ; done
+ 
 clean:
-	for i in ${ALLDIRS} ; do (cd $$i && $(MAKE) clean) ; done
+	for i in $(ALLDIRS) ;do ( cd ../../ && $(MAKE) clean) ; done
 
 test: 
 	for i in ${ALLDIRS} ; do (cd $$i && $(MAKE) test) ; done

@@ -17,14 +17,25 @@ class manager_of_data_storage {
        static pid_t process_id;
        static int channel_id;
 
-       static byte descriptor_call_pointer_num;
-       static byte descriptor_call_pointer_first;
-       static byte descriptior_call_pointer_second;
+/*
+          INDEX_OF_MESSAGE_TYPE=0,
+          INDEX_OF_MESSAGE_DESCRIPTION,
+          INDEX_OF_MESSAGE_DESTINATION_UID,
+          INDEX_OF_MESSAGE_DESTINATIN_TID=4,
+          INDEX_OF_MESSAGE_SOURCE_UID=6,
+          INDEX_OF_MESSAGE_SOURCE_TID=8,
+          INDEX_OF_MESSAGE_CLASS=10,
+          INDEX_OF_MESSAGE_CONTENT_FIRST_BYTE=12
+*/
 
-       static byte descriptor_channeld_upo_num;
-       static byte descriptor_channeld_ie1_num;
-       static byte descriptor_channeld_e1_num;
-       static byte descriptor_channeld_channel_num;
+       static byte message_type;
+       static byte message_description;
+       static word message_destination_uid;
+       static word message_destination_tid;
+       static word message_source_uid;
+       static word message_source_tid;
+       static byte message_class;
+       static byte message_reserved_value;
 
        static void initialize() throw (objects_storage_exception);
        static void run() throw (objects_storage_exception);

@@ -1,15 +1,16 @@
-#ifndef _STORAGE_COMMON_
-#define _STORAGE_COMMON_
+#ifndef _GENERATOR_COMMON_
+#define _GENERATOR_COMMON_
 
 typedef uint8_t byte;
 typedef uint16_t	word;
 
 typedef vector<byte> bytes;
+typedef vector<uint64_t> results;
 
 namespace program_settings {
 enum { HEADER_SIZE_IN_BYTES=12,
               COMMAND_CODE_INDEX=1,
-              SEND_RECIEVE_BUFFER_SIZE=2048,
+              RECEIVE_BUFFER_SIZE=1024,
               MAX_FAILURES_COUNT=2
             };
 }; //namespace program_settings
@@ -28,7 +29,9 @@ enum {PID_REGISTRATION=1,
 }; //namespace message_header_description
 namespace  message_header_uid {
 enum {UID_UNKNOWN=0,
-             UID_DEPOSITORY=19
+             UID_CALL_CONTROL=0x12,
+             UID_DEPOSITORY=0x13,
+             UID_PROC_CONTROL=0x14
             };
 }; //namespace  message_header_uid 
 
@@ -55,12 +58,11 @@ enum { BLOCK_UID_FLAG=0x01,
 +12:	content
 
 */
-
 namespace  message_header_bytes {
 enum { 
           INDEX_OF_MESSAGE_TYPE=0,
           INDEX_OF_MESSAGE_DESCRIPTION,
-          INDEX_OF_MESSAGE_DESTINATION_UID=2,
+          INDEX_OF_MESSAGE_DESTINATION_UID,
           INDEX_OF_MESSAGE_DESTINATION_TID=4,
           INDEX_OF_MESSAGE_SOURCE_UID=6,
           INDEX_OF_MESSAGE_SOURCE_TID=8,
@@ -87,17 +89,11 @@ namespace message_content_bytes {
 
 namespace database_settings{
 enum { UPO_COUNT=4,
-            IE1_COUNT=16,
-            E1_COUNT=16,
-            CHANNELB_COUNT=32 
+                IE1_COUNT=16,
+                E1_COUNT=16,
+                CHANNELB_COUNT=32 
             };
  }; //namespace database_settings
-
-namespace  data_managers_types {
-enum { CALL_CONTROL_MANAGER = 0x12,
-            PROC_CONTROL_MANAGER = 0x14
-           };
-}; // namespace  data_managers_types
 
 //COMMON COMMANDS
 namespace common_commands {
@@ -156,18 +152,19 @@ namespace  call_control_commands_sizes {
              REQUEST_TO_OCCUPATE_CALL_POINTER=5,
              REQUEST_TO_FREE_CALL_POINTER=5,
 
-             ANSWER_TO_OCCUPATE_CHANNEL_B=5,
+             ANSWER_TO_OCCUPATE_CHANNEL_B_SIDE_A=5,
+             ANSWER_TO_OCCUPATE_CHANNEL_B_SIDE_B=12,
              ANSWER_TO_FREE_CHANNEL_B=1,
              ANSWER_TO_OCCUPATE_CALL_POINTER=3,
              ANSWER_TO_FREE_CALL_POINTER=1,
 
-             ERROR_IN_CHANNEL_B_OCCUPATION=1,
+             ERROR_IN_CHANNEL_B_OCCUPATION_SIDE_A=1,
+             ERROR_IN_CHANNEL_B_OCCUPATION_SIDE_B=1,
              ERROR_IN_CHANNEL_B_FREE=1,
              ERROR_IN_CALL_POINTER_OCCUPATE=1,
              ERROR_IN_CALL_POINTER_FREE=1,
              UNKNOWN_COMMAND=1,
              BAD_COMMAND=1
-
             };
 }; //namespace  call_control_commands_sizes
 

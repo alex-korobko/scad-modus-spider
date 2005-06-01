@@ -1,2 +1,2 @@
-./requests_generator 10000 objects_storage > result.html
+nice --9 ./requests_generator -1 500 depository > result.html
 
