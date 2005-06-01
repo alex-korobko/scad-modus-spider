@@ -1,0 +1,14 @@
+#!/bin/sh
+if test -x /root/disable_watchdog; then
+slay modbus_srv
+#if test $!;  then
+#	/root/disable_watchdog
+#	echo "\nmodbus_srv slayed....\nwatch dog timer disabled...\n"
+#	fi		    
+
+/root/disable_watchdog
+echo "\nmodbus_srv slayed....\nwatch dog timer disabled...\n"
+
+else
+echo "\nNo souch or not executable file /root/disable_watchdog\n"
+fi

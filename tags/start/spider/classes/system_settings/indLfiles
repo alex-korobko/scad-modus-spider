@@ -1,0 +1,5 @@
+MYLIB = -l Ap -l ph -l phrender -l m -lang-c++
+
+ifdef UNIT_TESTING
+MYLIB +=  -lcppunit
+endif

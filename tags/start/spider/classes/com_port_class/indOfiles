@@ -1,0 +1,8 @@
+OBJS = comport.o
+
+ifdef UNIT_TESTING
+OBJS += test_comport.o\
+ all_tests.o
+endif
+
+OBJS += main.o

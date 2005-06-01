@@ -1,0 +1,5 @@
+VPATH = ../unit_tests\
+      :../objects_stor_classes\
+      :../objects_stor_classes/dbwrappers\
+      :../objects_stor_classes/jobs_data_managers\
+      :../

@@ -1,0 +1,4 @@
+VPATH =../unit_tests\
+ :../com_port_class\
+ :../system_settings_classes\
+ :../

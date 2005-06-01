@@ -1,0 +1,5 @@
+LIBS = -lm   -lcpp -lang-c++
+
+ifdef UNIT_TESTING
+LIBS +=  -lcppunit
+endif

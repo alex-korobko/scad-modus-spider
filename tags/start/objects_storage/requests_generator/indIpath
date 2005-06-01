@@ -1,0 +1,5 @@
+MYIPATH = -I.\
+        -I../requests_generator_classes/\
+	-I../unit_tests\
+	-I../\
+	-I /usr/local/include/

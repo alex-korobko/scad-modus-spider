@@ -1,0 +1,19 @@
+OBJECTS= system_settings.o\
+ system_settings_spider.o\
+ comport.o\
+ command.o\
+ timer_command_container.o\
+ data_block.o\
+ metro_device.o\
+ escalator.o\
+ station.o\
+ metro_devices_types_container.o\
+ metro_devices_container.o\
+ msg_types_container.o\
+ msg_dict_container.o\
+ shavr.o\
+ threads_functions.o\
+ in_code_attached_callbacks.o\
+ devices_types.o\
+ main.o
+

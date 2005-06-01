@@ -1,0 +1,5 @@
+VPATH =../unit_tests\
+ :../src\
+ :../src/dbobjects\
+ :../src/tests\
+ :../

@@ -1,0 +1,35 @@
+typeNum=1
+
+[type]
+type=1
+name=ЛТ-1
+
+blockNum=3
+[section]
+name=Блок-цепи
+[section]
+name=Автоматы
+[section]
+name=Контакторы
+
+signalNum=45
+[signal]
+num=1
+name=БТП
+description=Блок-контакт тормоза правый
+[signal]
+num=2
+name=БТЛ
+description=Блок-контакт тормоза левый
+[signal]
+num=3
+name=БСН
+description=Блок-контакт ступени нижний
+[signal]
+num=4
+name=БСВ
+description=Блок-контакт ступени верхний
+[signal]
+num=5
+name=КАНК
+description=Ключ СТОП контролера нижний

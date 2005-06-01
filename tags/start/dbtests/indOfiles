@@ -1,0 +1,24 @@
+OBJS =  test_interface.o
+
+ifdef MOCK_OBJECT
+OBJS += dbobject_mock.o
+endif
+
+ifdef TEST_1
+OBJS +=  test_1.o
+endif
+
+ifdef UNIT_TESTING
+
+ifdef MOCK_OBJECT
+OBJS +=  test_dbobject_mock.o
+endif
+
+ifdef TEST_1
+OBJS += test_test_1.o
+endif
+
+OBJS += all_tests.o
+endif
+
+OBJS += main.o

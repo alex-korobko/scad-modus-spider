@@ -1,0 +1,3 @@
+OBJECTS=main.o\
+  in_code_attached_callbacks.o
+

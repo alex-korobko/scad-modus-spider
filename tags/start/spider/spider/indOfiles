@@ -1,0 +1,35 @@
+OBJECTS= system_settings.o\
+ system_settings_spider.o\
+ sound.o\
+ generic_socket.o\
+ client_socket.o\
+ command.o\
+ command_pool_container.o\
+ data_block.o\
+ devices_types.o\
+ timer_command_container.o\
+ metro_devices_types_container.o\
+ msg_types_container.o\
+ msg_dict_container.o\
+ log_records_container.o\
+ metro_stations_container.o\
+ metro_device.o\
+ metro_devices_container.o\
+ escalator.o\
+ shavr.o\
+ door.o\
+ udku.o\
+ station.o\
+ line.o\
+ metro_lines_container.o\
+ router.o
+
+OBJECTS+=threads_functions.o\
+ in_code_attached_callbacks.o\
+ log_window_callbacks.o\
+ commands_pool_window_callbacks.o\
+ timer_commands_callbacks.o\
+ station_devices_properties_callbacks.o\
+ draw_functions.o\
+ main.o
+

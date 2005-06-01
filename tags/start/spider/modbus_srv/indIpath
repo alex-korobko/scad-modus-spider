@@ -1,0 +1,7 @@
+MYIPATH=-I.\
+     -I /usr/local/include/\
+     -I../\
+     -I../system_settings_classes/\
+     -I../com_port_class/\
+     -I../socket_classes/
+    
