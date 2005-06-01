@@ -9,13 +9,13 @@ class database_wrapper {
 
        WORD linter_cursor_id;
 
-       WORD call_control_channel_occupation_statement_1;
-       WORD call_control_channel_occupation_statement_2;
-       WORD call_control_channel_occupation_statement_3;
-       WORD call_control_channel_occupation_statement_4;
-       WORD call_control_channel_occupation_statement_5;
-       WORD call_control_channel_occupation_statement_6;
-       WORD call_control_channel_free_statement_1;
+       WORD pri_channel_occupation_statement_1;
+       WORD pri_channel_occupation_statement_2;
+       WORD pri_channel_occupation_statement_3;
+       WORD pri_channel_occupation_statement_4;
+       WORD pri_channel_occupation_statement_5;
+       WORD pri_channel_occupation_statement_6;
+       WORD pri_channel_free_statement_1;
 
        struct occupation_answer  {
               LONG channel_id;
@@ -52,21 +52,21 @@ class database_wrapper {
     public:
 
 // PRI SUPPORT METODS
-vector<byte> call_control_occupate_channel_only(byte upo_number, 
+vector<byte> pri_occupate_channel_only(byte upo_number, 
                                                 byte ie1_number,
                                                 byte e1_number,
                                                 byte channel_interval,
                                                 word channelb_number,
                                                 pthread_t pthread_id);
 
-vector<byte> call_control_occupate_channel_any(byte upo_number, 
+vector<byte> pri_occupate_channel_any(byte upo_number, 
                                                 byte ie1_number,
                                                 byte e1_number,
                                                 byte channel_interval,
                                                word channelb_number,
                                                 pthread_t pthread_id);
 
-bool call_control_free_channel(byte upo_number, 
+bool pri_free_channel(byte upo_number, 
                                      byte ie1_number,
                                      byte e1_number,
                                      byte channel_interval,

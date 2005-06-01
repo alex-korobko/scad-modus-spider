@@ -1,6 +1,6 @@
 include indPlatform
 
-.POHNY: all clean test untest linter extremedb
+.POHNY: all clean test untest linter
 
 all:
 	for i in ${DIRS} ; do (cd $$i && $(MAKE) all) ; done
@@ -16,9 +16,6 @@ untest:
 
 linter:
 	for i in ${ALLDIRS} ; do (cd $$i && $(MAKE) linter) ; done
-
-extreamedb:
-	for i in ${ALLDIRS} ; do (cd $$i && $(MAKE) extreamedb) ; done
 
 mock:
 	for i in ${ALLDIRS} ; do (cd $$i && $(MAKE) mock) ; done

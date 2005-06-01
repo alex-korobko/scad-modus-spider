@@ -1,11 +1,13 @@
+using namespace std;
+
 #include <string>
 
 #include <sys/slog.h>
 #include <sys/slogcodes.h>
 
-using namespace std;
-
 #include "generator_logger.h"
+
+generator_logger* generator_logger::logger_instance=NULL;
 
 void 
     generator_logger::log_message
@@ -39,9 +41,12 @@ buffer.reserve(message.size()+12);
   };
 }
 
-generator_logger&
+generator_logger* 
            generator_logger::get_instance(){
-      static generator_logger gen_logger_inst;
-      return gen_logger_inst;
+        if (logger_instance==NULL) {
+                  logger_instance=new generator_logger();
+          };
+
+      return logger_instance;
  };
 

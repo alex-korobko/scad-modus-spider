@@ -742,6 +742,3 @@ Packet [25] tid 3 socket 8:
 Packet [26] tid 4 socket 9:
 3 1 1 0 
 
-Packet [10] tid 3 socket 9:
-1 4 4c 0 6 0 3 0 6 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 5b 0 0 0 0 aa aa aa aa aa aa aa aa aa aa aa aa aa aa 0 0 0 0 0 0 aa 5f 0 0 0 0 0 0 0 0 0 7b 0 7d 0 7f 0 0 0 0 0 0 0 0 0 0 
-

@@ -1,405 +1,212 @@
 /* Y o u r   D e s c r i p t i o n                       */
 /*                            AppBuilder Photon Code Lib */
-/*                                         Version 2.01  */
+/*                                         Version 2.01A */
 
+/* Standard headers */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+/* Toolkit headers */
+#include <Ph.h>
+#include <Pt.h>
+#include <Ap.h>
+
+/* Local headers */
 #include "global.h"
+#include "abimport.h"
+#include "proto.h"
+
+#include "log.h"
+
+char *blockingNames[] = {
+ "",//  "Блок-контакт рабочего тормоза правый                    ",  //0
+ "БТЛ",//  "Блок-контакт рабочего тормоза левый                     ",  //0
+ "БСН",//  "Блок-контакт ступени нижний                            ",  //0
+ "БСВ",//  "Блок-контакт ступени верхний                           ",  //0
+ "БЗП",//  "Блок-контакт натяжных звездочек правый                 ",  //0
+ "БЗЛ",//  "Блок-контакт натяжных звездочек левый                  ",  //0
+ "БМ",//  "Блок-контакт малого привода                            ",  //0
+ "ТС",//  "Кнопка отмены сигнала СТОП от ключей                   ",  //0
+ "БПП",//  "Блок-контакт натяжения поручня правый                  ",  //0
+ "БПЛ",//  "Блок-контакт натяжения поручня левый                   ",  //0
+ "БОП",//  "Блок-контакт остановки тросом правый                   ",  //0
+ "БОЛ",//  "Блок-контакт остановки тросом левый                    ",  //0
+ "КЗН+КСН",//  "Кнопка СТОП и ключ запрета нижний                      ",  //0
+ "КАНЛ",//  "Ключ СТОП на балюстраде нижний левый                   ",  //0
+ "КАНП",//  "Ключ СТОП $$а балюстраде нижний правый                  ",  //0
+ "КАНК",//  "Ключ СТОП контролера нижний                            ",  //0
+ "КЗВ+КСВ",//  "Кнопка СТОП и ключ запрета верхний                     ",  //0
+ "КАВЛ",//  "Ключ СТОП на балюстраде верхний левый                  ",  //0
+ "КАВП",//  "Ключ СТОП на балюстраде верхний правый                 ",  //0
+ "КАВК",//  "Ключ СТОП контролера верхний                           ",  //0
+ "ТР",//  "Температурное реле                                     ",  //0
+ "БР",//  "Блок-контакт рубильника ввода                          ",  //0
+ "БГЛ",//  "Блок-контакт гайки АТ левый                            ",  //0
+ "БГП",//  "Блок-контакт гайки АТ правый                           ",  //0
+ "БАЛ",//  "Блок-контакт аварийного тормоза левый                  ",  //0
+ "БАП",//  "Блок-контакт аварийного тормоза правый                 ",  //0
+ "QS1",//  "Рубильник главного привода                             ",  //0
+ "RU24V",//  "Сопротивление утечки управляющего напряжения +24В      ",  //0
+ "QF2",//  "Автомат малого привода                                 ",  //0
+ "QF3",//  "Автомат рабочего тормоза                               ",  //0
+ "ГП(щ)",// "Режим управления главным приводом со щита              ",  //0
+ "ГП(п)",//  "Режим управления главным приводом с пульта             ",  //0
+ "ГП(Д)",//  "Режим управления главным приводом от диспетчера        ",  //0
+ "МП(щ)",//  "$$ежим управления малым приводом со щита                ",  //0
+ "МП(п)",//  "Режим управления малым приводом с пульта               ",  //0
+ "Тест",//  "Режим проверки контакторов и рабочего тормоза          ",  //0
+ "Раст.",//  "Режим растормаживания аварийного тормоза               ",  //0
+ "Выбег",//  "Режим измерения выбега                                 ",  //0
+ "ВЕРХщ",//  "Кнопка ВВЕРХ на щите                                   ",  //0
+ "ВНИЗщ",//  "Кнопка ВНИЗ на щите                                    ",  //0
+ "СТОПщ",//  "Кнопка СТОП на щите                                    ",  //0
+ "ГПВп",//  "Кнопка пуска главного привода ВВЕРХ на пультах         ",  //0
+ "ГПНп",//  "Кнопка пуска главного привода ВНИЗ на пультах          ",  //0
+ "МПВп",//  "Кнопка пуска малого привода ВВЕРХ на пультах           ",  //0
+ "МПНп",//  "Кнопка пуска малого привода ВНИЗ на пультах            ",  //0
+ "ДИМ0",//  "Сигнал от датчика ДИМ0                                 ",  //0
+ "ДИМ90",//  "Сигнал от датчика ДИМ90                                ",  //0
+ "ДИМ0П",//  "Сигнал от датчика ДИМ0П                                ",  //0
+ "ОСТР",// "Сигнал обратной связи от токового реле                  ",  //0
+ "ОСКД",//  "Сигнал обратной связи от контактора дублирующего       ",  //0
+ "ОСКВ",//  "Сигнал обратной связи от контактора верха              ",  //0
+ "ОСКН",//  "Сигнал обратной связи от контактора низа               ",  //0
+ "ОСКУ1",//  "Сигнал обратной связи от контактора ускорения 1        ",  //0
+ "ОСКУ2",//  "Сигнал обратной связи от контактора ускорения 2        ",  //0
+ "ОСКУ3",//  "Сигнал обратной связи от контактора ускорения 3        ",  //0
+ "ОСКУ4",//  "Сигнал обратной связи от контактора ускорения 4        ",  //0
+ "ОСЭАТ",//  "Исправность катушки электромагнита аварийного тормоза  ",  //0
+ "ОСКТ",//  "Сигнал обратной связи от контактора тормоза            ",  //0
+ "ОСДП",//  "Сигнал открытия передней двери шкафа управления        ",  //0
+ "ОСДЗ",//  "Сигнал открытия задней двери шкафа управления          ",  //0
+ "+24В",//  "Сигнал наличия напряжения управления +24В              ",  //0
+ "БВВ",//  "Блок-контакт входной площадки верхней                  ",  //0
+ "БВН",//  "Блок-контакт входной площадки нижней                   ",  //0
+ "ДПС",//
+ "ВПНЛ",//
+ "ВПНП",//
+ "ВПВЛ",//
+ "ВПВП",//
+ "БКП",//Блок-контакт проема
+ "РКН",// "Реле контроля напряжения  фазы                          ",  //0
+ "КСР",//"Контроль стыковки разъема датчика                        ",  //0
+ "Стенд",// "Контроль подключения стенда                             ",  //0
+ "",
+ "",
+ "",
+ "БТП" //  "Блок-контакт рабочего тормоза правый                    ",  //0
+};
 
 void draw_log_item(
-        PtWidget_t *widget,
-        PtGenListItem_t *items,
-        unsigned index,
-        unsigned nitems, PhRect_t *where
-        ) {
-
-     vector<PtArg_t> args(2);
-     PtListColumn_t *internal_column_pos=NULL;
-    log_records_container *log_rec_contain=NULL;
-	log_records_container::iterator_log_rec iter_log_rec;
-	msg_types_container::msg_types_iterator  iter_msg_types;	
-	
-	unsigned count;
-	PhPoint_t draw_point;
-
-	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
-
-	if (g_system_settings.small_font_prepared())
-		{
-			PgSetFont( (char*) g_system_settings.get_small_font() );
-		} else {
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"Not found system_settings::small_font for re-drawing log_items");
-		};
-
-	PtSetArg(&args[0], Pt_ARG_LIST_COLUMN_POS, &internal_column_pos, 0);
-	PtSetArg(&args[1], Pt_ARG_POINTER, &log_rec_contain, 0);	
-
-	PtGetResources(widget,
-							  args.size(),
-							  &args[0]);		
-	
-	if (log_rec_contain==NULL){
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"Not found log_rec_contain for re-drawing log_items");
-			return;
-		};
-	iter_log_rec=log_rec_contain->begin();
-	advance(iter_log_rec, index-1);
-
-	count=0;
-	draw_point.y=where->ul.y+system_settings::ROW_HEIGHT;
-
-	while (	count < nitems &&
-				iter_log_rec!=log_rec_contain->end())
-	{
-		int tmp_msg_id=iter_log_rec->get_msg_id() & 0x7FFF;
-		int msg_value=(tmp_msg_id >> 16) & 0xFFFF;
-		int msg_type=0, device_id=0;
-		string message_text, device_text;
-
-		msg_type=iter_log_rec->get_msg_type();
-		iter_msg_types=g_msg_types.find(msg_type);
-		if (iter_msg_types==g_msg_types.end())
-			{
-				vector<char> tmp_chars(8);
-				itoa (msg_type, &tmp_chars[0], 10);
-				string mess="Not found msg_type ";
-				mess+=&tmp_chars[0];
-				mess+=" for re-drawing log_items";					
-				g_system_settings.sys_message(system_settings::ERROR_MSG,
-																	mess);
-				return;
-			};
-
-		PgSetTextColor(iter_msg_types->second.get_type_color());
-
-		if (tmp_msg_id!=0)	// it`s real id of message
-		{
-			metro_escalators_container::iterator_metro_escalators iter_metro_devices;			
-			devices_types_container::iterator_devices_types iter_devices_types;
-			
-			device_id=iter_log_rec->get_device_id();
-			if (device_id>0)
-			{
-				iter_metro_devices=g_escalators.find(device_id);
-				if (iter_metro_devices!=g_escalators.end())
-					{
-						iter_devices_types=g_metro_devices_types.find(iter_metro_devices->second.get_type());
-						if (iter_devices_types!=g_metro_devices_types.end()) 
-							{
-								msg_dict_container::msg_dict_iterator tmp_msg_iter=
-								iter_devices_types->second.type_messages.find(tmp_msg_id);
-								if (tmp_msg_iter!=
-									iter_devices_types->second.type_messages.end()) 
-									{
-										message_text=tmp_msg_iter->second.get_text();
-										device_text.append(iter_devices_types->second.get_name(),
-																		0,
-																		5);
-										device_text+=" ";
-										vector<char> tmp_chars(8);
-										itoa (iter_metro_devices->second.get_number(), 
-												&tmp_chars[0], 
-												10);
-										device_text+=&tmp_chars[0];
-									};	//if (tmp_msg_iter!=
-							} // if (iter_devices_types!=g_metro_devices_types.end())
-					} else { //insert here code to finding in other metro devices containers  -  using GLOBAL id`s identificators
-						vector<char> tmp_chars(8);
-						itoa (device_id, &tmp_chars[0], 10);
-						string mess="Not found device id ";
-						mess+=&tmp_chars[0];
-						mess+=" for re-drawing log_items";					
-						g_system_settings.sys_message(system_settings::ERROR_MSG,
-																			mess);
-						return;	
-					}; // if (iter_metro_devices!=g_escalators.end())
-			}; // if (device_id>0)
-
-			if (message_text.empty())
-				{
-					msg_dict_container::msg_dict_iterator tmp_msg_iter=
-																			g_msg_dictionary.find(tmp_msg_id);
-					if (tmp_msg_iter!=
-								g_msg_dictionary.end()) 
-					 	{
-					 		message_text=tmp_msg_iter->second.get_text();
-					 	} else { // if (tmp_msg_iter! =
-							vector<char> tmp_chars(8);
-							itoa (tmp_msg_id, &tmp_chars[0], 10);
-							string mess="Not found message id ";
-							mess+=&tmp_chars[0];
-							mess+=" for re-drawing log_items";					
-							g_system_settings.sys_message(system_settings::ERROR_MSG,
-																				mess);
-							return;	
-					 	}; // if (tmp_msg_iter!=
-				}; // if (message_text.empty())
-				
-
-			int find_pos=message_text.find("%d");
-			
-			if (find_pos>=0)
-				{
-					vector<char> tmp_chars(8);
-					itoa (msg_value, &tmp_chars[0], 10);
-					message_text.replace( find_pos,
-														2,
-														&tmp_chars[0]);
-				};
-
-		}; // if (tmp_msg_id!=0)
-
-		string station_text;
-		metro_stations_container::iterator_metro_stations iter_metro_stat=
-									g_stations.find(iter_log_rec->get_station_id());
-		if (iter_metro_stat!=g_stations.end())
-			{
-				station_text=iter_metro_stat->second.get_stl_name_string();
-			};
-
-		 time_t tmp_time=iter_log_rec->get_record_time();		
-  
-		vector<char> date_text(20);
-	 	strftime(&date_text[0], date_text.size(), "%d-%m-%Y", localtime( &tmp_time));		
-	 	
-		vector<char> time_text(20);
-	 	strftime(&time_text[0], time_text.size(), "%H:%M:%S", localtime( &tmp_time ));		
-
-		// drawing
-		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(&date_text[0], date_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		draw_point.x = where->ul.x + internal_column_pos[1].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(&time_text[0], time_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		draw_point.x = where->ul.x + internal_column_pos[2].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(station_text.c_str(), station_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		draw_point.x = where->ul.x + internal_column_pos[3].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(device_text.c_str(), device_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		draw_point.x = where->ul.x + internal_column_pos[4].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(message_text.c_str(), message_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		count++;
-		iter_log_rec++;
-		draw_point.y+=system_settings::ROW_HEIGHT;
-	}; // while (	count< nitems &&
-
-	}
-
-
-void draw_command_pool_item(
         PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
-        unsigned nitems, PhRect_t *where
-        ) {
-    cmd_pool_container *cmd_pool_cont;
-    cmd_pool_container::cmd_pool_iterator iter_cmd_pool;
-    metro_stations_container::iterator_metro_stations iter_metro_stations;
-    string station_name, direction_string("ОШИБКА!");
-    system_settings::strings_container directions_strings=g_system_settings.get_directions_russ_strings();
-    vector<char> tmp_chars(10);
-    vector<PtArg_t> args(2);
-	unsigned count;
-	PhPoint_t draw_point;
-    PtListColumn_t *internal_column_pos=NULL;
-     
+        unsigned nitems, PhRect_t *where)
+{
+	uchar_t Helvetica10[MAX_FONT_TAG];
+	uchar_t font_name[] = { "Arial" };
+	PtGenListItem_t *cur_item;
+	PhPoint_t point;
+	PhRect_t extent;
+	int count;
+	char	str[128];
+	int		strSize;
+	char buffer[256];
+	LogRecord* record;
+   	char  translate[256*MB_LEN_MAX];	
+   	int		msgID, param;
+   	DictEntry*		curEntry = NULL;
+
 	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
 
-	if (g_system_settings.small_font_prepared())
-		{
-			PgSetFont( (char*) g_system_settings.get_small_font() );
-		} else {
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"draw_command_pool_item: not found system_settings::small_font");
-		};
-
-	PtSetArg(&args[0], Pt_ARG_LIST_COLUMN_POS, &internal_column_pos, 0);
-	PtSetArg(&args[1], Pt_ARG_POINTER, &cmd_pool_cont, 0);	
-
-	PtGetResources(widget,
-							  args.size(),
-							  &args[0]);		
-	
-	if (cmd_pool_cont==NULL){
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"draw_command_pool_item: cmd_pool_cont==NULL");
-			return;
-		};
-
-	iter_cmd_pool=cmd_pool_cont->begin();
-	advance(iter_cmd_pool, index-1);
-
-	count=0;
-	draw_point.y=where->ul.y+system_settings::ROW_HEIGHT;
-	while (	count < nitems &&
-				iter_cmd_pool!=cmd_pool_cont->end())
+	if (PfGenerateFontName(font_name, 0, 10, Helvetica10) == NULL)
 	{
-		PgSetTextColor(iter_cmd_pool->get_item_color());
-		iter_metro_stations=g_stations.find(iter_cmd_pool->get_station());
-		if (iter_metro_stations==g_stations.end())
-			{
-				g_system_settings.sys_message(system_settings::ERROR_MSG,
-																	"draw_command_pool_item: iter_metro_stations==g_stations.end()");
-				return;
-			};
-
-		station_name=iter_metro_stations->second.get_stl_name_string();
-		itoa( iter_cmd_pool->get_escalator_number(), 
-				&tmp_chars[0], 
-				10);
-		
-		// drawing
-		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(station_name.c_str(), station_name.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		draw_point.x = where->ul.x + internal_column_pos[1].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(&tmp_chars[0], tmp_chars.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		switch (iter_cmd_pool->get_command_code())
-		{
-		case system_settings::COMMAND_UP:
-			{
-				direction_string=directions_strings[system_settings::DIRECTION_UP];
-				break;
-			}; 
-		case system_settings::COMMAND_DOWN:
-			{
-				direction_string=directions_strings[system_settings::DIRECTION_DOWN];
-				break;
-			}; 
-		};
-
-		draw_point.x = where->ul.x + internal_column_pos[2].from + system_settings::COLUMN_LEFT_MARGIN;				
-		PgDrawText(direction_string.c_str(), direction_string.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-
-		count++;
-		iter_cmd_pool++;
-		draw_point.y+=system_settings::ROW_HEIGHT;
-	}; //	while (	count < nitems &&
-	
+		perror("Unable to generate font name"); 
+	} else	
+	{    
+		PgSetFont((char*)Helvetica10);
 	}
 
+	PtListColumn_t* column_pos = (PtListColumn_t*)get_widget_scalar(widget,	Pt_ARG_LIST_COLUMN_POS);
 
-void draw_escalator_start_item(
-        PtWidget_t *widget, PtGenListItem_t *items, unsigned index,
-        unsigned nitems, PhRect_t *where
-        ) {
-    	unsigned count, escalator_number;
-	PhPoint_t draw_point;
-    vector<PtArg_t> args(2);
-    vector<char> tmp_chars(10);
-    PtListColumn_t *internal_column_pos=NULL;
-    PtWidget_t *wnd_widget;
-	contain_morning_start *ptr_morn_start_cont=NULL;	
-    	contain_morning_start::iterator_morining_start iter_morn_start;	
-    	metro_stations_container::iterator_metro_stations iter_stations;
-    	metro_escalators_container::iterator_metro_escalators iter_escalators;
-	string tmp_string;
-	system_settings::strings_container directions_strings_ru=g_system_settings.get_directions_russ_strings();    	
-	system_settings::strings_container start_modes_strings_ru=g_system_settings.get_start_days_modes_russ_strings();    	
-
-	PtGenListDrawBackground( widget, items, nitems, where, 0, 0, 0, 0 );
-	if (g_system_settings.small_font_prepared())
+	count = 0;
+	cur_item = items;
+	point.x = where->ul.x;
+	point.y = where->ul.y + 18;
+	while(cur_item)
 	{
-		PgSetFont( (char*) g_system_settings.get_small_font() );
-	} else {
-		g_system_settings.sys_message(system_settings::ERROR_MSG,
-													"Not found system_settings::small_font for re-drawing log_items");
-	};
+		if ( cur_item->flags & Pt_LIST_ITEM_DAMAGED ) {
+		record  = (LogRecord*)(cur_item);
 
-	PtGetResource(widget, Pt_ARG_LIST_COLUMN_POS, &internal_column_pos, 0);
-	wnd_widget=ApGetInstance(widget);	
-	if (wnd_widget==NULL){
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"Not found window widget for re-drawing escalator_start items");
-			return;
-		};
-	
-	PtGetResource(wnd_widget, Pt_ARG_POINTER, &ptr_morn_start_cont, 0);	
-	if (ptr_morn_start_cont==NULL){
-			g_system_settings.sys_message(system_settings::ERROR_MSG,
-														"Not found ptr_morn_start_cont for re-drawing escalator_start items");
-			return;
-		};
+		msgID = record->msgID & 0xFFFF;
+		param = (record->msgID >> 16)& 0xFFFF;
 
-	iter_morn_start=ptr_morn_start_cont->begin();
-	advance(iter_morn_start, index-1);
-	
-	count=0;
-	draw_point.y=where->ul.y+system_settings::ROW_HEIGHT;
+		if (!(msgID & 0x8000))
+		{
+		curEntry = g_msgDictionary.GetByKey(msgID);
+		if (!curEntry)
+			return;		
 
-	while (	count < nitems &&
-				iter_morn_start!=ptr_morn_start_cont->end())
-	{
-		iter_escalators=g_escalators.find(iter_morn_start->get_escalator_id());
-		if (iter_escalators!=g_escalators.end())
-			{
-				escalator_number=iter_escalators->second.get_number();
-				iter_stations=g_stations.find(iter_escalators->second.get_station_id());
-				if (iter_stations!=g_stations.end())
-					{
-						tmp_string=iter_stations->second.get_stl_name_string();
-					} else {
-						tmp_string="СТАНЦИЯ НЕ НАЙДЕНА";
-						iter_morn_start->set_start_enabled(false);
-						string mess="Not found station for escalator id ";
-						itoa(iter_escalators->second.get_id(), 
-							   &tmp_chars[0], 
-							   10);
-						mess+=&tmp_chars[0];	   
-						mess+=" for re-drawing escalator_start items";
-						g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
-					};
-			} else { // if (iter_escalators!=g_
-				escalator_number=0;
-				tmp_string="СТАНЦИЯ НЕ НАЙДЕНА";
-				iter_morn_start->set_start_enabled(false);
-				string mess="Not found escalator with id ";
-				itoa(iter_morn_start->get_escalator_id(), 
-					   &tmp_chars[0], 
-					   10);
-				mess+=&tmp_chars[0];	   
-				mess+=" for re-drawing escalator_start items";
-				g_system_settings.sys_message(system_settings::ERROR_MSG, mess);
+		PgSetTextColor(curEntry->color);
+		
+		//point.x = where->ul.x + column_pos[0].from + (column_pos[0].to -  column_pos[0].from - 18)/2;
+		
+		// Date
+		strftime(buffer, 256, "%d-%m-%Y", localtime(&record->saveTime));
+		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
+		point.x = where->ul.x + 8;		
+		PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
+		
+		// Time
+		strftime(buffer, 256, "%H:%M:%S", localtime(&record->saveTime));
+		point.x = where->ul.x + column_pos[1].from + (column_pos[1].to - column_pos[1].from - extent.lr.x - extent.ul.x)/2;		
+		PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );
+		PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
 
-			};
+		// Station
+		point.x = where->ul.x + column_pos[2].from + COLUMN_LEFT_MARGIN;		
+		if (msgID <143)
+		{
+			strSize = g_stations[record->stationID].Name.Get(str, 128);
+			PgDrawText(str, strSize, &point, Pg_TEXT_BOTTOM);
+		}
+		
+		// Escalator
+		if (msgID <143)
+		{
+			itoa(record->escalatorID, buffer, 10);
+			PgExtentText(&extent, NULL, (char*)Helvetica10, buffer, 0 );		
+			point.x = where->ul.x + column_pos[3].from + (column_pos[3].to - column_pos[3].from - (extent.lr.x - extent.ul.x))/2;
 			
-		iter_morn_start->get_start_enabled()?
-						PgSetTextColor(system_settings::COLOR_RED):
-						PgSetTextColor(system_settings::COLOR_BLACK);	
+			PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);
+		}
 
-		//drawing
-		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		itoa(escalator_number, &tmp_chars[0], 10);
-		draw_point.x=where->ul.x+internal_column_pos[1].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(&tmp_chars[0], tmp_chars.size(), &draw_point, Pg_TEXT_BOTTOM);
-		
-		tmp_string=directions_strings_ru[iter_morn_start->get_escalator_direction()];
-		draw_point.x=where->ul.x+internal_column_pos[2].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		itoa(iter_morn_start->get_start_hour(), &tmp_chars[0], 10);
-		tmp_string=&tmp_chars[0];
-		tmp_string+="ч  ";
-		itoa(iter_morn_start->get_start_minute(), &tmp_chars[0], 10);
-		tmp_string+=&tmp_chars[0];
-		tmp_string+="мин";
-		draw_point.x=where->ul.x+internal_column_pos[3].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
-
-		tmp_string=start_modes_strings_ru[iter_morn_start->get_start_mode()];
-		draw_point.x=where->ul.x+internal_column_pos[4].from + system_settings::COLUMN_LEFT_MARGIN;
-		PgDrawText(tmp_string.c_str(), tmp_string.size(), &draw_point, Pg_TEXT_BOTTOM);
-
+		// Message
+		point.x = where->ul.x + column_pos[4].from + COLUMN_LEFT_MARGIN;
+			//if (translate_string(messages[msgID].text, translate, translate_set))
+			//{	
+				if (msgID == 119)
+				{
+					sprintf(buffer, "%s %d (мм)", curEntry->text, param);
+					PgDrawText(buffer, strlen(buffer), &point, Pg_TEXT_BOTTOM);							
+				}
+				else
+					PgDrawText(curEntry->text, strlen(curEntry->text), &point, Pg_TEXT_BOTTOM);							
+			//}
+		}
+		else
+		{
+			PgSetTextColor(COLOR_GREEN);		
+				point.x = where->ul.x + column_pos[4].from + COLUMN_LEFT_MARGIN;
+				//if (translate_string(blockingNames[abs(short(msgID))], translate, translate_set))
+				//{				
+					PgDrawText(blockingNames[abs(short(msgID))], strlen(blockingNames[abs(short(msgID))]), &point, Pg_TEXT_BOTTOM);
+				//}
+		}
+		}
+		cur_item = cur_item->next;
 		count++;
-		iter_morn_start++;
-		draw_point.y+=system_settings::ROW_HEIGHT;
-	};// 	while (	count < nitems &&
-
+		point.y += 18;		
 	}
-
+}
 

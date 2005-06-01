@@ -1,9 +1,0 @@
-LIBS = -lm   -lcpp -lang-c++
-
-ifdef UNIT_TESTING
-LIBS +=  -lcppunit
-endif
-
-ifdef BERKELEY_DB_OBJECT
-LIBS += -ldb
-endif

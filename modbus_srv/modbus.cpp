@@ -7,33 +7,23 @@ Copyright (C) 2000 - 2002 SCAD Ltd. (software development group)
 *******************************************************************************/
 
 #include <sys/syspage.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <inttypes.h>
-#include <sys/neutrino.h>
-
 #include "global.h"
 #include "system.h"
 #include "modbus.h"
 #include "list.h"
 #include "lbuffer.h"
 
-
 #define CHECK_ADDRESS(addr) if (addr > 247) { Log(ERROR, "Incorrect device address (%d)", addr); return 0; }
 #define CHECK_ORDER(lo, hi)	if (hi < lo) { Log(ERROR, "Last address of requested block less then first"); return 0; }
-
-#define TC_FLUSH_COUNT 10
 
 CmdPool 				outBuffer;
 pthread_mutex_t 	mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  		condvar = PTHREAD_COND_INITIALIZER;
 int dataReady = 0; // переменная состояния (готовность отправки данных)
-const int responseTime = 1000; // время ожидания ответа от устройства (мсек.)
+const int responseTime = 500; // время ожидания ответа от устройства (мсек.)
 const int requestPause = 50000; // мксек
 const int resendTimes = 2;
-
-extern int g_debugMode;
-int NoResponseCount=0;
+extern int		g_debugMode;
 
 void* Receiver(void* arg);
 
@@ -73,7 +63,7 @@ int ModBus_c::SendBuffer(byte* buffer, int size)
 
 int ModBus_c::Run()
 {
-	// оздаем поток для чтени из СОМ-порт
+	// оздаем поток для чтения из СОМ-порта
 	if (pthread_create(&tid, NULL, &Receiver, this) != EOK)
 	{
 		Log(ERROR, "Fail to create thread");
@@ -149,16 +139,8 @@ void* Receiver(void* arg)
 	byte			input[MODBUS_BUFFER_SIZE];
 	int				size = 0;
 	int				noResponse = 0;
-	int 			count_tcflush;
-	
-/* Начало переменные для учета времени */
-	uint64_t before_all, after_all,before=0,after=0, cps = SYSPAGE_ENTRY( qtime )->cycles_per_sec;
-/* Конец переменные для учета времени */
-/*Начало - отладочная переменная */
-	int debug_cou;
-/*Конец - отладочная переменная */
 
-	// если не передан указаль на ModBus_c - до свиданья
+	// если не передан указатель на ModBus_c - до свиданья
 	if (!arg)
 	{
 		Log(ERROR, "pointer to ModBus intstance not initialized");
@@ -167,7 +149,7 @@ void* Receiver(void* arg)
 
 	device = (ModBus_c*)arg;
 
-	// наш СОМ-
+	// наш СОМ-порт
 	port = device->GetPort();
 	if (!port)
 	{
@@ -175,7 +157,7 @@ void* Receiver(void* arg)
 		return 0;
 	}
 
-	// устанавливаем наш порт в "очередь" на чтее
+	// устанавливаем наш порт в "очередь" на чтение
 	FD_ZERO(&allFd);
 	FD_SET(port, &allFd);
 
@@ -186,31 +168,20 @@ void* Receiver(void* arg)
 	silenceTimeout.tv_sec = (int)(timeout*3.5);
 	silenceTimeout.tv_usec = (int)((timeout*3.5 - silenceTimeout.tv_sec)*1000000);
 
-
 	// максимальный таймаут приема между двумя соседними байтами в посылке
 	receiveTimeout.tv_sec = (int)(timeout*1.5);
 	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000);
 
-//	receiveTimeout.tv_sec = (int)(timeout*1.5*5);
-//	receiveTimeout.tv_usec = (int)((timeout*1.5 - receiveTimeout.tv_sec)*1000000 *10);
-
-	
 	// максимальное время ожидания ответа от устройства
-//	responseTimeout.tv_sec = 1;
-//	responseTimeout.tv_usec = responseTime*1000;	
-	
 	responseTimeout.tv_sec = 0;
-	responseTimeout.tv_usec = responseTime*800;	
-
+	responseTimeout.tv_usec = responseTime*1000;	
+	
 	while(1)
 	{
 		if (noResponse)
 		{
 			noResponse = 0;
-			NoResponseCount++;
 			SendNoResponse(output[0], output[2], output[3]);
-			printf ("NoResponseCount  = %d\n",NoResponseCount);
-			if (NoResponseCount>NO_RESPONSE_TRYS) {execlp("shutdown","shutdown", "-S","r", NULL);};
 		}
 
 		// делаем паузу между запросами
@@ -225,11 +196,8 @@ void* Receiver(void* arg)
 			continue;
 
 		if (output[1] > resendTimes)
-			{
-			noResponse=1;
 			continue;
-			};
-				
+
 		if (g_debugMode)
 		{
 			printf("Send modbus packet (size %d): ", size);
@@ -241,35 +209,20 @@ void* Receiver(void* arg)
 
 		// выжидаем паузу между пакетами
 		readFd = allFd;
-		count_tcflush=0;
 		do
 		{
-			
-			if (g_debugMode) {before=ClockCycles();};
 			result = select(port + 1, &readFd, NULL, NULL, &silenceTimeout);
-			if (g_debugMode) {after=ClockCycles();};
-			
-			if (g_debugMode) {
-			printf("Time in select (pause before write)\t%f\n", (float) (after-before)/cps);			
-										};
-			
 			if (result < 0)
 			{
-				Log(ERROR, "fail to select on port. %s\n", strerror(errno));
+				Log(ERROR, "fail to select on port. %s", strerror(errno));
 				break;
 			}
 			else if (result > 0)
 			{
 				// если что-то есть в буффере - очистить
 				tcflush(port, TCIOFLUSH);
-				Log(DEBUG, "Flush garbage into COM-port\n");
-				count_tcflush++;
-				if (count_tcflush>TC_FLUSH_COUNT) 		
-						break;
+				Log(DEBUG, "Flush garbage into COM-port");
 			}
-		
-					
-											
 		} while (result > 0);
 
 		if (result < 0)
@@ -281,54 +234,24 @@ void* Receiver(void* arg)
 		// сбрасывае счетчик байт во ходящем бффере
 		// и заголовок
 		memset(input, 0, 6);
+
 		// посылаем пакет
-		if (g_debugMode) {before_all=ClockCycles();};
 		write(port, &output[2], size-2);
-	
-//		if (tcdrain(port)<0) {Log(ERROR,"In tcdrain [%s]",strerror(errno));};
-		if (g_debugMode) {before=ClockCycles();};
-//		usleep((int)((size+2)*timeout*1000000));
 
-		int usl=(int)((size-4)*timeout*1000000);
-		if (usl<5000) usl=5000;
-		
-		usleep(usl);
-
-
-		if (g_debugMode) {after=ClockCycles();};
-
-		if (g_debugMode) {
-			printf("Time in usleep (pause after write before read)\t%f\n", (float) (after-before)/cps);			
-										};
-		
-
-
-		tcflush(port, TCIOFLUSH);
+//		tcdrain(port);
 		
 		readFd = allFd;
-		if (g_debugMode) {before=ClockCycles();};
 		result = select(port + 1, &readFd, NULL, NULL, &responseTimeout);
-		if (g_debugMode) {after=ClockCycles();};
-
-		if (g_debugMode) {
-			printf("Time in select (reading first byte)\t%f\n", (float) (after-before)/cps);			
-										};
-		
-
-		
 		if (result && FD_ISSET(port, &readFd))
-		{
-//			read(port, &input[6], 1);	
-			readcond(port, &input[6], 1, 1, 5, 15);	
-			NoResponseCount=0;			
-		}
+			read(port, &input[6], 1);	
 		else if (!result)
 		{
-			if (g_debugMode)	printf("Not response...\n");
+			if (g_debugMode)
+				printf("Not response...\n");
 
 			output[1]++;
 			if (g_debugMode)
-				printf("Resend packet [%d]\n",output[1]); 
+				printf("Resend packet\n");
 			device->SendBuffer(output, size);			
 			continue;
 		}
@@ -339,33 +262,22 @@ void* Receiver(void* arg)
 			continue;
 		}
 
-		if (g_debugMode) {printf("1 byte 0x%x\n", input[6]);};			
-				
+		
 		// минимально вычитваем три байта
 		count = 3;
 		for(i=1; i<count; i++)
 		{
 			readFd = allFd;
-//			if (g_debugMode) {before=ClockCycles();};
 			result = select(port + 1, &readFd, NULL, NULL, &receiveTimeout);
-//			if (g_debugMode) {after=ClockCycles();};
-
-//            if (g_debugMode) {
-//			printf("Time in select reading %d byte\t%f\n", i,(float) (after-before)/cps);			
-//										};
-
-			//Убрать!!!		
-			debug_cou=i;
 			if (result && FD_ISSET(port, &readFd))
 			{
-//				read(port, &input[i+6], 1);
-				readcond(port, &input[i+6], 1, 1, 5, 15);
+				read(port, &input[i+6], 1);
 				// если это третий байт, то это число байт в ответе
 				if (i == 2)
 				{
-					// определяем размер остатка входящего пакета
+					// опредеяем размер остатка входящего пакета
 					// если установлен старший бит - вернули ошибку (пакет = 5 байт)
-						if (input[i+5] & 0x80)
+					if (input[i+5] & 0x80)
 						count = 5;
 					// иначе вернули нормальный ответ
 					else
@@ -388,29 +300,13 @@ void* Receiver(void* arg)
 								break;
 						}
 					}
-					printf("Try to receive %d bytes\n", count);
 				}							
 			}
 			else if (!result)
 			{
 				output[1]++;
 				if (g_debugMode)
-						{
-						printf("Packets fragment (size - %d): ", debug_cou);
-						i=0;
-						for(j=6; j<debug_cou+6; j++) {
-										if (++i>=10) {
-												  i=0;
-												  printf ("\n");
-													};
-
-						printf("0x%0X\t\t", input[j]);
-						}
-						putchar('\n');
-						putchar('\n');
-						
-						printf("Resend packet\n");
-						};
+					printf("Resend packet\n");
 				device->SendBuffer(output, size);				
 				break;
 			}
@@ -421,13 +317,6 @@ void* Receiver(void* arg)
 				break;
 			}
 		}
-
-		if (g_debugMode) {after_all=ClockCycles();};
-        if (g_debugMode) {
-			printf("\n========\nTime of cicle\t%f\n",(float) (after_all-before_all)/cps);			
-										};
-
-
 		// если из цикла приема вышли с ошибкой - все с начала
 		if (result <= 0)
 			continue;
@@ -438,22 +327,15 @@ void* Receiver(void* arg)
 		if (g_debugMode)
 		{
 			printf("Receive packet (size - %d): ", i);
-			debug_cou=0;
 			for(j=6; j<count+6; j++)
-				{
-				if (++debug_cou>=10) {
-												  debug_cou=0;
-												  printf ("\n");
-													};
-				printf("0x%0X\t\t", input[j]);
-				};
+				printf("0x%0X ", input[j]);
 			putchar('\n');
 			putchar('\n');
 		}
 
 		if ((HIBYTE(crc) == input[i+4]) && (LOBYTE(crc) == input[i+5]))
 		{
-			// устанвливам кол-во байт в приемном буффере
+			// устанавливаем кол-во байт в приемном буффере
 			input[5] = i - 2;
 			printf("Send packet socket %d [%d]\n", output[0], input[6]);
 			send(output[0], input, input[5] + 6, 0);

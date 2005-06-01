@@ -1,4 +1,0 @@
-#!/bin/sh
-slay spider
-cd /spider_test/
-./spider

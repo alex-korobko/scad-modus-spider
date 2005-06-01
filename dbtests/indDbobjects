@@ -1,2 +1,1 @@
-#MOCK_OBJECT = present
-BERKELEY_DB_OBJECT = present
+MOCK_OBJECT = present

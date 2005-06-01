@@ -1,18 +1,28 @@
 #ifndef __SOUND_H__
 #define __SOUND_H__
 
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/asoundlib.h>
+#include <stdlib.h>
+#include <malloc.h>
+#include <pthread.h>
+
 typedef struct
 {
     char    tag[4];
     long    length;
-} riff_tag;
+} RiffTag;
 
 typedef struct
 {
     char    riff[4];
     long    size;
     char    wave[4];
-} riff_hdr;
+} RiffHdr;
 
 typedef struct
 {
@@ -22,13 +32,27 @@ typedef struct
     long    avgBytesPerSec;
     short   blockAlign;
     short   bitsPerSample;
-} wave_hdr;
+} WaveHdr;
 
-struct sound
+class Sound
 {
-	bool play(string filename);
-};
+protected:
+	snd_pcm_t 	*pcmHandle;
+    	int     			card;
+	int     			dev;
+	snd_pcm_channel_info_t 	pcmInfo;
+	snd_mixer_t 					*mixHandle;
+    	snd_mixer_group_t 			mixGroup;
+    	snd_pcm_channel_params_t 	pcmParams;
+    	snd_pcm_channel_setup_t 	pcmSetup;
+	char*			filename;
 
-void* Player(void* arg);
+public:
+	Sound();
+	virtual ~Sound();
+	int Init();
+	int Play(char* filename);
+	friend void* Player(void* arg);
+};
 
 #endif

@@ -9,9 +9,6 @@ include ../indOfiles
 include ../indHfiles
 
 
-DEBUG=-w8
-OPTIM=-O3
-
 ifndef DEBUG
 DEBUG = -g -w8
 endif
@@ -26,8 +23,8 @@ CXXFLAGS = \
    -V gcc_ntox86 \
    -fexceptions \
    -Bstatic \
-    $(DEBUG) \
     $(OPTIM) \
+    $(DEBUG) \
     $(MYIPATH) \
     $(MYLPATH) \
     $(MYLIBS)

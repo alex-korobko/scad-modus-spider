@@ -1,104 +1,64 @@
 #ifndef __ROUTER_H__
 #define __ROUTER_H__
 
-class net
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/route.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <snmp/asn1.h>
+#include <snmp/snmp_api.h>
+#include <snmp/snmp.h>
+#include <snmp/snmp_client.h>
+#include <snmp/mib.h>
+#include <string.h>
+
+enum {addRoute, delRoute};
+
+class Net
 {
+	friend class Router;
 protected:
-	int id;
 	in_addr_t	ip;
-	int  curr_gateway_id;
-	int		broken;
-	int skip_count;
-	
-	net();
+	int			broken;
+	Net*		next;
+	Net*		prev;
 public:
-	net(
-		int new_id,
-		in_addr_t	new_ip,
-		int new_curr_gateway_id,
-		int	 new_broken,
-		int new_skip_count=0
-		) : id (new_id), ip(new_ip), curr_gateway_id(new_curr_gateway_id),
-		broken(new_broken), skip_count(new_skip_count)
-		{};
-/*
-	set_ and get_ methods for private data members
-*/
-	int get_id() {return(id);}
-	in_addr_t get_ip() {return (ip);};
-		
-	int get_broken() {return(broken);};
-	void set_broken(int new_broken) {broken=new_broken;};
-
-	int get_skip_count() {return(skip_count);};
-	void set_skip_count (int new_skip_count) {skip_count=new_skip_count;};
-
-	int  get_curr_gateway_id() {return(curr_gateway_id);};
-	void set_curr_gateway_id(int new_curr_gateway_id) {curr_gateway_id=new_curr_gateway_id;};
-
+	Net();
+	virtual ~Net();
 };
 
-class gateway 
-{
-private:
-int id;
-in_addr_t ip;
-string name; // direction
-gateway();
-public:
-gateway( int  new_id,
-				in_addr_t new_ip,
-				string new_name
-				) : id(new_id), ip (new_ip), name(new_name) 
-{};
-
-int get_id() {return(id);};
-string get_name() {return(name);};
-in_addr_t get_ip() {return(ip);};
-
-};
-
-class router
+class Router
 {
 protected:
-struct ltint
-	{
-		  bool operator() (const int i1, const int i2) const
- 			 {
-   			 return (i1<i2) ;
-  			}
-	};
-	typedef  map <int,  net, ltint> router_nets;	
-	typedef  map <int,  gateway, ltint> router_gateways;	
-	router_nets nets;
-	router_gateways gateways;
-
+	Net*			routeTable;
 	pthread_t		routerTID;
-
-	bool get_gateway_parameters();
-	bool get_net_parameters();
-
+	int				tableSize;
+	oid 				reqOid[MAX_OID_LEN];
+	int 				reqOidLen;
+	Net*			leftLine;
+	Net	*			rightLine;
+	Net*			leftLineTail;
+	Net*			rightLineTail;
+	in_addr			leftGate, rightGate;
 public:
-	typedef router_nets::iterator iterator_nets;
-	typedef router_gateways::iterator iterator_gateways;
-	
-	~router();
-
-	enum {
-				ADD_ROUTE=0,
-				DELETE_ROUTE=1,
-
-				NO_BROKEN=0,
-				BROKEN=1,
-
-				SKIP_TEST_COUNT=4,
-				ECHO_PORT=7
-				};
-
-	bool load_routing(const string file_name);
-
-	int start();
-	void loop();
+	Router();
+	virtual ~Router();
+	void AddLeftLeafGate(char* gate);
+	void AddRightLeafGate(char* gate);
+	int CreateTable(int size);
+	int LoadLeft(const char* filename);
+	int LoadRight(const char* filename);
+	int Start();
+	void Loop();
+	friend void* Routing(void* arg);
 };
-	
+
+int SendRouteMsg(in_addr* host, in_addr* gate);
+
 #endif

@@ -9,8 +9,3 @@ MYIPATH = -I.\
 ifdef LINTER_DBWRAPPER
 MYIPATH+= -I /opt/linter/intlib
 endif
-
-ifdef EXTREAME_DB_DBWRAPPER
-MYIPATH+= -I $(MCO_ROOT)/include 
-endif
-	

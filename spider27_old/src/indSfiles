@@ -1,1 +1,2 @@
-MYSRC = ../alert.cpp ../escalator.cpp ../system.cpp ../command.cpp ../devices_types.cpp ../station.cpp ../router.cpp ../sound.cpp
+MYSRC = cbuffer.cpp system.cpp line.cpp station.cpp sound.cpp\
+	log.cpp goodies.cpp esc_types.cpp string.cpp dictionary.cpp router.cpp

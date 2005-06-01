@@ -4,7 +4,7 @@
 
 ifdef DBG
 DBG_RELEASE = -O3 -fomit-frame-pointer
-DBG_DEBUG = -g
+DBG_DEBUG = -O -gdwarf-2
 DEBUG=$(DBG_$(DBG))
 endif
 
@@ -13,7 +13,7 @@ DEBUG = -g
 endif
 
 ifndef OPTIM
-OPTIM = -O0
+OPTIM = -O
 endif
 
 include	../abOfiles
@@ -28,8 +28,6 @@ include ../indHfiles
 include	../abWfiles
 include	../abLfiles
 
-include ../indLfiles
-
 PLATFORM=gcc_ntox86
 PHABOPTS= 
 
@@ -37,10 +35,10 @@ CC  = qcc
 CXX = qcc
 LD  = qcc
 
-CFLAGS  = -V$(PLATFORM) -w8 $(OPTIM) $(DEBUG) $(PHABOPTS) -I. -I /usr/local/include/ -L /usr/local/lib/
+CFLAGS  = -V$(PLATFORM) -w5 $(OPTIM) $(DEBUG) $(PHABOPTS) -I.
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -vv -V$(PLATFORM) -Bstatic $(DEBUG) $(MYLIBS) $(ABLIB) $(PHABOPTS)
-SDFLAGS = -vv -V$(PLATFORM) -Bdynamic $(DEBUG) $(MYLIBS) $(ABLIB) $(PHABOPTS) 
+LDFLAGS = -V$(PLATFORM) -Bstatic $(DEBUG) -l phexlib -l socket $(ABLIB) $(PHABOPTS)
+SDFLAGS = -V$(PLATFORM) -Bdynamic $(DEBUG) -l phexlib -l socket -l asound -l snmp $(ABLIB) $(PHABOPTS)
 
 VPATH = ..
 

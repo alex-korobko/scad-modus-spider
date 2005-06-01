@@ -1,15 +1,10 @@
 OBJECTS=objects_storage_logger.o\
         manager_of_data_storage.o\
-        call_control_data_manager.o\
-        proc_control_data_manager.o 
-	 
+        jobs_data_managers_container.o\
+        pri_data_manager.o
 	
 ifdef LINTER_DBWRAPPER
 OBJECTS+=linter_database_wrapper.o
-endif
-
-ifdef EXTREAME_DB_DBWRAPPER
-OBJECTS+=extreamedb_database_wrapper.o kgtsdb.o handlers.o initdb.o 
 endif
 
 ifdef MOCK_DBWRAPPER

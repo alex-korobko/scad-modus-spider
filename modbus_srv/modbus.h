@@ -82,7 +82,4 @@ public:
 	int SetRTS(int state);
 };
 
-void* Receiver(void* arg);
-void SendNoResponse(int sock, byte addr, byte cmd);
-
 #endif

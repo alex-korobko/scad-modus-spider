@@ -1,5 +1,5 @@
 HEADERS=test_cond.h \
-        generator_common.h\
+        generator_exception.h\
 	generator_logger.h\
         mock_generator.h
 

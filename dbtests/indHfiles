@@ -1,39 +1,29 @@
 HDRS = test_cond.h\
  defines.h\
- tests.h\
- dbobjects.h\
  dbobject_exception.h\
- dbobject_interface.h \
- test_exception.h\
- test_interface.h
-
-ifdef UNIT_TESTING
-#always must be present to tests unit testing
-HDRS += dbobject_mock.h test_dbobject_mock.h
-
-ifdef BERKELEY_DB_OBJECT
-HDRS += dbobject_berkeley_db.h test_dbobject_berkeley_db.h
-endif
-
-ifdef TEST_1
-HDRS += test_1.h test_test_1.h
-endif
-
-HDRS += all_tests.h
-
-else
-
+ dbobject_interface.h
+ 
 ifdef MOCK_OBJECT
 HDRS +=dbobject_mock.h
 endif
 
-ifdef BERKELEY_DB_OBJECT
-HDRS +=dbobject_berkeley_db.h
-endif
+HDRS +=test_exception.h\
+ test_interface.h\
 
 ifdef TEST_1
 HDRS +=test_1.h
 endif
 
+ifdef UNIT_TESTING
+
+ifdef MOCK_OBJECT
+HDRS += test_dbobject_mock.h
+endif
+
+ifdef TEST_1
+HDRS +=test_test_1.h
+endif
+
+HDRS += all_tests.h
 endif
 

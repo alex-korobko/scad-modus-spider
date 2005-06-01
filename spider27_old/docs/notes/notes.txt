@@ -1,1 +1,0 @@
-all devices in stations had unicue id - no match SHAVR with same id as escalator.

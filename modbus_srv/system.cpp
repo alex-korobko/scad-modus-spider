@@ -5,25 +5,14 @@ Started at 27.12.00
 Last updated at 16.04.02
 Copyright (C) 2000 - 2001 SCAD Ltd. (software development group)
 *******************************************************************************/
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <errno.h>
 
-#include <sys/time.h>
 #include <sys/slog.h>
 #include <sys/slogcodes.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <net/route.h>
-#include <sys/ioctl.h> 
-
+#include <string.h>
 #include "global.h"
 #include "system.h"
 
-int 	g_debugMode=0;
+extern int		g_debugMode;
 
 byte g_CRCHi[] = {
 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
@@ -72,7 +61,7 @@ void Log(int type, const char* message, ...)
 	va_list	arg;
 	va_start(arg, message);
 	char	buffer[256] = { 0 };
-	strcat(buffer, "\n");
+	
 	switch(type)
 	{
 		case ERROR:
@@ -119,191 +108,3 @@ word CRC(const byte* buffer, int size)
 
 	return (highCRC << 8 | lowCRC);
 }
-
-int IsConnected(int sock, fd_set* rd, fd_set* wr, fd_set* ex)
-{
-	int err;
-	size_t 	length = sizeof(err);
-
-	if (!FD_ISSET(sock, rd) && !FD_ISSET(sock, wr))
-		return 0;
-
-	if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &length) < 0)
-		return 0;
-	errno = err;
-	
-	return err == 0;
-}
-
-int ConnectToServer(in_addr_t addr, int port)
-{
-	int		sock;
-	struct	sockaddr_in address;
-	fd_set	readFD, writeFD, exFD;
-	struct timeval timeout;
-	int		flags;
-	int		result;
-
-	address.sin_addr.s_addr = addr;
-	address.sin_port = htons(port);
-	address.sin_family = AF_INET;
-
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (!sock)
-	{
-		Log(ERROR, "fail to create sock [%s]", strerror(errno));
-		return 0;
-	}
-
-	if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
-	{
-		Log(ERROR, "fail to get file status flags [%s]", strerror(errno));
-		close(sock);
-		return 0;
-	}
-	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-		Log(ERROR, "fail to set file status flags [%s]", strerror(errno));
-		close(sock);
-		return 0;
-	}
-
-	if ((result = connect(sock, (sockaddr*)&address, sizeof(address))) && errno != EINPROGRESS)
-	{
-		Log(ERROR, "fail to connect [%s]", strerror(errno));
-		close(sock);
-		return 0;
-	}
-
-	if (!result)
-	{
-		if (fcntl(sock, F_SETFL, flags) < 0)
-		{
-			Log(ERROR, "fail to set file status flags [%s]", strerror(errno));
-			close(sock);
-			return 0;
-		}
-		
-		return sock;
-	}
-
-	FD_ZERO(&readFD);
-	FD_SET(sock, &readFD);
-	writeFD = readFD;
-	exFD = readFD;
-
-	timeout.tv_sec = 4;
-	timeout.tv_usec = 0;
-
-	result = select(sock + 1, &readFD, &writeFD, &exFD, &timeout);
-	if (result < 0)
-	{
-		Log(ERROR, "fail to select socket [%s]", strerror(errno));
-		close(sock);
-		return 0;
-	}
-	else if (!result)
-	{
-		Log(ERROR, "connect timeout expected [%s]", strerror(errno));
-		close(sock);
-		return 0;
-	}
-	else if (IsConnected(sock, &readFD, &writeFD, &exFD))
-	{
-		if (fcntl(sock, F_SETFL, flags) < 0)
-		{
-			Log(ERROR, "fail to set file status flags [%s]", strerror(errno));
-			close(sock);
-			return 0;
-		}
-		
-		return sock;
-	}
-	else
-	{
-		close(sock);
-		return 0;
-	}
-}
-
-int Receive(int sock, byte* buffer, int size)
-{
-	int readNum;
-
-	while (size > 0)
-	{
-    		readNum = recv(sock, buffer, 1, 0);
-    		if (readNum < 0)
-    		{
-        		if (errno == EINTR)
-            		continue;
-        		Log(ERROR, "fail to receive data [%s]", strerror(errno));
-        		return 0;
-    		}
-    		if (readNum == 0)
-    		{
-        		Log(ERROR, "fail to receive data [%s]", strerror(errno));
-        		return 0;
-    		}
-    		buffer += readNum;
-    		size -= readNum;
-	}
-
-	return 1;
-}
-
-int ChangeRoute(struct in_addr* dest, struct in_addr *gateway, int flags, int cmd)
-{
-	int sock;
-  	struct ortentry routeEntry;
-  	struct sockaddr_in destAddr, gateAddr;
-
-  	memset(&routeEntry, 0, sizeof(routeEntry));
-
-  	memset(&destAddr, 0, sizeof(destAddr));
-  	destAddr.sin_family = AF_INET;
-  	destAddr.sin_len = sizeof (struct sockaddr_in);
-  	destAddr.sin_addr = *dest;
-
-  	memset(&gateAddr, 0, sizeof(gateAddr));
-  	gateAddr.sin_family = AF_INET;
-  	gateAddr.sin_len = sizeof (struct sockaddr_in);
-  	gateAddr.sin_addr = *gateway;
-
-  	memcpy (&routeEntry.rt_dst, &destAddr, sizeof(destAddr));
-  	memcpy (&routeEntry.rt_gateway, &gateAddr, sizeof(gateAddr));
-
-  	routeEntry.rt_flags |= (RTF_GATEWAY | RTF_UP | RTF_STATIC);
-  	routeEntry.rt_flags |= flags;
-
-  	sock = socket(AF_INET, SOCK_DGRAM, 0);
-  	if (sock < 0)
-  	{
-      	perror("Error: ");
-      	return 0;
-   	}
-
-	if (cmd == addRoute)
-	{
-  		if (ioctl(sock, SIOCADDRT, &routeEntry) < 0)
-    		{
-	   		close (sock);
-			perror("Error: ");
-			return 0;
-    		}
-    	}
-    	else if (cmd == delRoute)
-	{
-  		if (ioctl(sock, SIOCDELRT, &routeEntry) < 0)
-    		{
-	   		close (sock);
-			perror("Error: ");
-			return 0;
-    		}
-	}	    	
-    	
-  	close (sock);
-
-  	return 1;
-}
-

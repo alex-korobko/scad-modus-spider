@@ -47,8 +47,7 @@ main ( int argc, char *argv[] )
 
 	{
 
-	_Ap_.Ap_winpos.x  = _Ap_.Ap_winpos.y  = AB_LOCKED;
-	_Ap_.Ap_winsize.y = _Ap_.Ap_winsize.x = AB_LOCKED;
+	_Ap_.Ap_winstate = 0;
 
 	/* AppBuilder Initialization */
 	ApInitialize( argc, argv, &AbContext );
@@ -67,22 +66,24 @@ main ( int argc, char *argv[] )
 
 static const ApClassTab_t ClassTable[] = {
 	{ "PtWindow", &PtWindow },
+	{ "PtOSContainer", &PtOSContainer },
 	{ "PtPane", &PtPane },
-	{ "PtClock", &PtClock },
-	{ "PtButton", &PtButton },
-	{ "PtMultiText", &PtMultiText },
 	{ "PtLabel", &PtLabel },
 	{ "PtRawList", &PtRawList },
 	{ "PtDivider", &PtDivider },
+	{ "PtButton", &PtButton },
+	{ "PtClock", &PtClock },
+	{ "PtMultiText", &PtMultiText },
 	{ "PtRect", &PtRect },
 	{ "PtPanelGroup", &PtPanelGroup },
-	{ "PtToggleButton", &PtToggleButton },
 	{ "PtNumericInteger", &PtNumericInteger },
 	{ "PtCalendar", &PtCalendar },
-	{ "PtList", &PtList },
+	{ "PtToggleButton", &PtToggleButton },
 	{ "PtComboBox", &PtComboBox },
+	{ "PtGroup", &PtGroup },
+	{ "PtSeparator", &PtSeparator },
+	{ "PtList", &PtList },
 	{ "PtMenu", &PtMenu },
-	{ "PtOSContainer", &PtOSContainer },
 	{ "PtFileSel", &PtFileSel },
 	{ NULL, NULL }
 	};

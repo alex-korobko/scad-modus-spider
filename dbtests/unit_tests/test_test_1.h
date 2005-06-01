@@ -1,5 +1,5 @@
-#ifndef __1_TEST_TEST__
-#define __1_TEST_TEST__
+#ifndef __TEST_TEST_1__
+#define __TEST_TEST_1__
 
 class test_test_1 : public CppUnit::TestFixture {
 private:
