@@ -1,0 +1,5 @@
+MYLIBS= -lAp -lphexlib -lph -lphrender -lcpp -lang-c++ 
+
+ifdef UNIT_TESTING
+MYLIBS+= -lcppunit
+endif

@@ -1,0 +1,2 @@
+MYIPATH = -I.\
+	-I /usr/local/include
