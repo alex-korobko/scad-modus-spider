@@ -81,6 +81,12 @@ bool generic_socket::send (const vector<byte> buffer) throw (socket_exception){
 	if (buffer.empty())
         throw socket_exception ("generic_socket::send() buffer to sending is empty");
 
+   if (FD_SETSIZE>=m_sock) {
+          ostringstream except_mess;
+          except_mess<<"generic_socket::send() FD_SETSIZE>=m_sock; FD_SETSIZE "<<FD_SETSIZE<<" m_sock "<<m_sock;
+          throw socket_exception (except_mess.str());
+         };
+
 	int send_status = ::send( m_sock, 
 								  &buffer[0],
 								  buffer.size(),
