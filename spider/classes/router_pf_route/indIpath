@@ -1,0 +1,5 @@
+MYIPATH = -I .\
+	-I ../support_classes/socket_classes\
+	-I ../router_classes\
+	-I ../\
+	-I /usr/local/include

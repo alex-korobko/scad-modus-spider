@@ -1,0 +1,7 @@
+MYIPATH = -I.\
+        -I../system_settings_classes\
+        -I../containers_classes\
+	-I../socket_classes\
+	-I../metro_devices_classes\
+	-I../\
+	-I /usr/local/include

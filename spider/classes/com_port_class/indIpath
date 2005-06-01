@@ -1,0 +1,5 @@
+MYIPATH=-I. \
+        -I../system_settings_classes \
+        -I../unit_tests \
+	-I../com_port_class \
+        -I /usr/local/include

@@ -1,0 +1,30 @@
+HEADERS=defines.h\
+spider_exception.h\
+system_settings.h\
+system_settings_spider.h\
+sound.h\
+generic_socket.h\
+client_socket.h\
+command.h\
+devices_types.h\
+metro_device.h\
+data_block.h\
+escalator_data_block.h\
+escalator.h\
+shavr_data_block.h\
+shavr.h\
+timer_command_container.h\
+metro_devices_types_container.h\
+metro_devices_container.h\
+msg_dict_container.h\
+msg_types_container.h\
+station.h\
+metro_stations_container.h\
+
+ifdef UNIT_TESTING
+HEADERS+= command_test.h\
+ metro_device_test.h\
+ escalator_test.h\
+ shavr_test.h\
+ all_metro_devices_tests.h
+endif

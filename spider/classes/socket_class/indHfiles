@@ -1,0 +1,12 @@
+HEADERS =  defines.h\
+ generic_socket.h\
+ socket_exception.h\
+ server_socket.h\
+ client_socket.h
+
+ifdef UNIT_TESTING
+HEADERS += socket_test.h\
+ client_server_sockets_test.h\
+ all_socket_classes_tests.h
+endif
+

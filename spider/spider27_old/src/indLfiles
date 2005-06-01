@@ -1,0 +1,6 @@
+MYLIBS = -lphexlib -lsocket -lasound
+
+ifdef UNIT_TESTING
+MYLIBS +=  -lcppunit
+endif
+
