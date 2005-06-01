@@ -1,2 +1,2 @@
 //Don`t edit that file! It was created automatically
-#define _MOCK_DBWRAPPER_
+#define _EXTREAME_DB_DBWRAPPER_

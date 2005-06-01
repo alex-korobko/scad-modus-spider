@@ -98,12 +98,12 @@ query="select channel_id
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_occupation_statement_1)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_1 creation failed");
+                                                &call_control_channel_occupation_statement_1)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_1 creation failed");
 
    size_of_param=sizeof(right_side_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_1,
+                                    call_control_channel_occupation_statement_1,
                                     1,
                                     NULL,
                                     NULL,
@@ -113,11 +113,11 @@ query="select channel_id
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding right_side_param for pri_channel_occupation_statement_1 failed");
+      throw objects_storage_exception("Binding right_side_param for call_control_channel_occupation_statement_1 failed");
 
    size_of_param=sizeof(channel_interval_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_1,
+                                    call_control_channel_occupation_statement_1,
                                     2,
                                     NULL,
                                     NULL,
@@ -127,10 +127,10 @@ query="select channel_id
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_interval_param for pri_channel_occupation_statement_1 failed");
+      throw objects_storage_exception("Binding channel_interval_param for call_control_channel_occupation_statement_1 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_1,
+                               call_control_channel_occupation_statement_1,
                                1,
                                &(&occupation_needed_ids[0])->channel_id,
                                NULL, 
@@ -138,7 +138,7 @@ query="select channel_id
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_id for pri_channel_occupation_statement_1 failed");
+        throw objects_storage_exception("Binding answer about channel_id for call_control_channel_occupation_statement_1 failed");
 
 //occupation_2 statement
 query="select channeld_id
@@ -150,12 +150,12 @@ query="select channeld_id
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_occupation_statement_2)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_2 creation failed");
+                                                &call_control_channel_occupation_statement_2)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_2 creation failed");
 
    size_of_param=sizeof(channel_id_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_2,
+                                    call_control_channel_occupation_statement_2,
                                     1,
                                     NULL,
                                     NULL,
@@ -165,10 +165,10 @@ query="select channeld_id
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_id_param for pri_channel_occupation_statement_2 failed");
+      throw objects_storage_exception("Binding channel_id_param for call_control_channel_occupation_statement_2 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_2,
+                               call_control_channel_occupation_statement_2,
                                1,
                                &(&occupation_needed_ids[0])->channel_id,
                                NULL, 
@@ -176,7 +176,7 @@ query="select channeld_id
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_id for pri_channel_occupation_statement_2 failed");
+        throw objects_storage_exception("Binding answer about channel_id for call_control_channel_occupation_statement_2 failed");
 
 //occupation_3 statement
 query="select channelb_id
@@ -189,12 +189,12 @@ query="select channelb_id
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_occupation_statement_3)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_3 creation failed");
+                                                &call_control_channel_occupation_statement_3)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_3 creation failed");
 
    size_of_param=sizeof(channel_id_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_3,
+                                    call_control_channel_occupation_statement_3,
                                     1,
                                     NULL,
                                     NULL,
@@ -204,11 +204,11 @@ query="select channelb_id
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_id_param for pri_channel_occupation_statement_3 failed");
+      throw objects_storage_exception("Binding channel_id_param for call_control_channel_occupation_statement_3 failed");
 
    size_of_param=sizeof(channel_number_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_3,
+                                    call_control_channel_occupation_statement_3,
                                     2,
                                     NULL,
                                     NULL,
@@ -218,11 +218,11 @@ query="select channelb_id
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_number_param for pri_channel_occupation_statement_3 failed");
+      throw objects_storage_exception("Binding channel_number_param for call_control_channel_occupation_statement_3 failed");
 
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_3,
+                               call_control_channel_occupation_statement_3,
                                1,
                                &(&occupation_needed_ids[0])->channel_id,
                                NULL, 
@@ -230,7 +230,7 @@ query="select channelb_id
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_id for pri_channel_occupation_statement_3 failed");
+        throw objects_storage_exception("Binding answer about channel_id for call_control_channel_occupation_statement_3 failed");
 
 //occupation_4 statement
 query="select max(channel_id)
@@ -246,12 +246,12 @@ query="select max(channel_id)
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_occupation_statement_4)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_3 creation failed");
+                                                &call_control_channel_occupation_statement_4)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_3 creation failed");
 
    size_of_param=sizeof(channel_id_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_4,
+                                    call_control_channel_occupation_statement_4,
                                     1,
                                     NULL,
                                     NULL,
@@ -261,10 +261,10 @@ query="select max(channel_id)
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_id_param for pri_channel_occupation_statement_4 failed");
+      throw objects_storage_exception("Binding channel_id_param for call_control_channel_occupation_statement_4 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_4,
+                               call_control_channel_occupation_statement_4,
                                1,
                                &(&occupation_needed_ids[0])->channel_id,
                                NULL, 
@@ -272,7 +272,7 @@ query="select max(channel_id)
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_id for pri_channel_occupation_statement_3 failed");
+        throw objects_storage_exception("Binding answer about channel_id for call_control_channel_occupation_statement_3 failed");
 
 //occupation_5 statement
 query="select channels.channel_id,
@@ -289,12 +289,12 @@ query="select channels.channel_id,
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_occupation_statement_5)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_5 creation failed");
+                                                &call_control_channel_occupation_statement_5)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_5 creation failed");
 
    size_of_param=sizeof(channel_id_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_5,
+                                    call_control_channel_occupation_statement_5,
                                     1,
                                     NULL,
                                     NULL,
@@ -304,10 +304,10 @@ query="select channels.channel_id,
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding channel_id_param for pri_channel_occupation_statement_5 failed");
+      throw objects_storage_exception("Binding channel_id_param for call_control_channel_occupation_statement_5 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_5,
+                               call_control_channel_occupation_statement_5,
                                1,
                                &(&occupation_answer_data[0])->channel_id,
                                NULL, 
@@ -315,10 +315,10 @@ query="select channels.channel_id,
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_right_side for pri_channel_occupation_statement_5 failed");
+        throw objects_storage_exception("Binding answer about channel_right_side for call_control_channel_occupation_statement_5 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_5,
+                               call_control_channel_occupation_statement_5,
                                2,
                                &(&occupation_answer_data[0])->channel_right_side,
                                NULL, 
@@ -326,10 +326,10 @@ query="select channels.channel_id,
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_right_side for pri_channel_occupation_statement_5 failed");
+        throw objects_storage_exception("Binding answer about channel_right_side for call_control_channel_occupation_statement_5 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_5,
+                               call_control_channel_occupation_statement_5,
                                3,
                                &(&occupation_answer_data[0])->channel_interval,
                                NULL, 
@@ -337,10 +337,10 @@ query="select channels.channel_id,
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_interval for pri_channel_occupation_statement_5 failed");
+        throw objects_storage_exception("Binding answer about channel_interval for call_control_channel_occupation_statement_5 failed");
 
   if (LINTER_BindAnswer(linter_cursor_id,
-                               pri_channel_occupation_statement_5,
+                               call_control_channel_occupation_statement_5,
                                4,
                                &(&occupation_answer_data[0])->channel_number,
                                NULL, 
@@ -348,7 +348,7 @@ query="select channels.channel_id,
                                tInt,
                                sizeof(LONG),
                                0, 0, NULL)!=LINAPI_SUCCESS)
-        throw objects_storage_exception("Binding answer about channel_number for pri_channel_occupation_statement_5 failed");
+        throw objects_storage_exception("Binding answer about channel_number for call_control_channel_occupation_statement_5 failed");
 
 //occupation_6 statement
   query="update channels set is_busy=:TID where channel_id=:CHANNEL_ID and is_busy=0; ";
@@ -358,12 +358,12 @@ query="select channels.channel_id,
   if (LINTER_CreateStatement(linter_connection_id, 
                                                   &query_string_buffer[0],
                                                   query_string_buffer.size(),
-                                                  &pri_channel_occupation_statement_6)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_occupation_statement_6 creation failed");
+                                                  &call_control_channel_occupation_statement_6)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_occupation_statement_6 creation failed");
 
    size_of_param=sizeof(tid_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_6,
+                                    call_control_channel_occupation_statement_6,
                                     1,
                                     NULL,
                                     NULL,
@@ -377,7 +377,7 @@ query="select channels.channel_id,
 
    size_of_param=sizeof(channel_id_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_occupation_statement_6,
+                                    call_control_channel_occupation_statement_6,
                                     2,
                                     NULL,
                                     NULL,
@@ -400,12 +400,12 @@ query="select channels.channel_id,
   if (LINTER_CreateStatement(linter_connection_id, 
                                                &query_string_buffer[0],
                                                query_string_buffer.size(),
-                                                &pri_channel_free_statement_1)!=LINAPI_SUCCESS)
-                  throw objects_storage_exception ("Statement pri_channel_free_statement_1 creation failed");
+                                                &call_control_channel_free_statement_1)!=LINAPI_SUCCESS)
+                  throw objects_storage_exception ("Statement call_control_channel_free_statement_1 creation failed");
 
    size_of_param=sizeof(right_side_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_free_statement_1,
+                                    call_control_channel_free_statement_1,
                                     1,
                                     NULL,
                                     NULL,
@@ -415,11 +415,11 @@ query="select channels.channel_id,
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding right_side_param for pri_channel_free_statement_1 failed");
+      throw objects_storage_exception("Binding right_side_param for call_control_channel_free_statement_1 failed");
 
    size_of_param=sizeof(tid_param);
    if (LINTER_BindParameter(linter_cursor_id,
-                                    pri_channel_free_statement_1,
+                                    call_control_channel_free_statement_1,
                                     2,
                                     NULL,
                                     NULL,
@@ -429,7 +429,7 @@ query="select channels.channel_id,
                                     tInt,
                                     NULL,
                                     &size_of_param)!=LINAPI_SUCCESS)
-      throw objects_storage_exception("Binding tid_param for pri_channel_free_statement_1 failed");
+      throw objects_storage_exception("Binding tid_param for call_control_channel_free_statement_1 failed");
 };
 
 vector<byte> 
@@ -522,9 +522,9 @@ byte upo_index, ie1_index, e1_index, channelb_index;
 return ret_buff;
 };
 
-// PRI SUPPORT METODS
+// CALL CONTROL SUPPORT METODS
 vector<byte>
-       database_wrapper::pri_occupate_channel_only(byte upo_number, 
+       database_wrapper::call_control_occupate_channel_only(byte upo_number, 
                                                 byte ie1_number,
                                                 byte e1_number,
                                                 byte channel_interval,
@@ -553,7 +553,7 @@ channel_number_param=channelb_number;
 /*
 {
       ostringstream message;
-      message<<"In database_wrapper::pri_occupate_channel_only(...):"
+      message<<"In database_wrapper::call_control_occupate_channel_only(...):"
                           <<" upo "<<static_cast<int>(upo_number)
                           <<" ie1 "<<static_cast<int>(ie1_number)
                           <<" e1 "<<static_cast<int>(e1_number)
@@ -574,13 +574,13 @@ channel_number_param=channelb_number;
 
       try {
       if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                     pri_channel_occupation_statement_1,
+                                     call_control_channel_occupation_statement_1,
                                      NULL, NULL, NULL))!=LINAPI_SUCCESS)
-         throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_1"+
+         throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_1"+
                                     database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_1));
+                                                                call_control_channel_occupation_statement_1));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -597,7 +597,7 @@ channel_number_param=channelb_number;
                if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -620,22 +620,22 @@ channel_number_param=channelb_number;
                       &fetched_rows_count,  /* count of gotten strings      */
                       NULL,
                       NULL)!=LINAPI_SUCCESS)
-                                 throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                                 throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
                       if (rows_count!=
                            fetched_rows_count)
-                              throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                              throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
       channel_id_param=occupation_needed_ids[0].channel_id;
 
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_2,
+                                                        call_control_channel_occupation_statement_2,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_2"+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_2"+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_2));
+                                                                call_control_channel_occupation_statement_2));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -652,7 +652,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -674,22 +674,22 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
      channel_id_param=occupation_needed_ids[0].channel_id;
 
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_3,
+                                                        call_control_channel_occupation_statement_3,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_3 "+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_3 "+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -706,7 +706,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -728,22 +728,22 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_3");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_3");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
         channel_id_param=occupation_needed_ids[0].channel_id;
 
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_5,
+                                                        call_control_channel_occupation_statement_5,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_5"+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_5"+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_5));
+                                                                call_control_channel_occupation_statement_5));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -760,7 +760,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -782,22 +782,22 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
             channel_id_param=occupation_answer_data[0].channel_id;
 
            if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                   pri_channel_occupation_statement_6,
+                                                   call_control_channel_occupation_statement_6,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                            throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_6"+
+                            throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_6"+
                                          database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_6));
+                                                                call_control_channel_occupation_statement_6));
 
                         size_of_param=sizeof(rows_count);
             if (LINTER_GetCursorOption(linter_cursor_id,
@@ -810,7 +810,7 @@ channel_number_param=channelb_number;
             if (rows_count!=1) {
                   if (rows_count>1){ 
                               ostringstream message;
-                              message<<"In database_wrapper::pri_occupate_channel_only(...) trying to update many than 1 channel:"
+                              message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to update many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -839,7 +839,7 @@ channel_number_param=channelb_number;
                                                                                                 pthread_id);
 
           } catch (objects_storage_exception obj_stor_exc) {
-                  string message("In database_wrapper::pri_occupate_channel_only(...) catched exception: ");
+                  string message("In database_wrapper::call_control_occupate_channel_only(...) catched exception: ");
                   message+=obj_stor_exc.get_description();
                   objects_storage_logger* logger_inst=
                       objects_storage_logger::get_instance();
@@ -852,7 +852,7 @@ channel_number_param=channelb_number;
 };
 
 vector<byte> 
-         database_wrapper::pri_occupate_channel_any(byte upo_number, 
+         database_wrapper::call_control_occupate_channel_any(byte upo_number, 
                                                 byte ie1_number,
                                                 byte e1_number,
                                                 byte channel_interval,
@@ -882,7 +882,7 @@ channel_number_param=channelb_number;
 /*
 {
       ostringstream message;
-      message<<"In database_wrapper::pri_occupate_channel_any(...):"
+      message<<"In database_wrapper::call_control_occupate_channel_any(...):"
                           <<" upo "<<static_cast<int>(upo_number)
                           <<" ie1 "<<static_cast<int>(ie1_number)
                           <<" e1 "<<static_cast<int>(e1_number)
@@ -904,13 +904,13 @@ channel_number_param=channelb_number;
 
       try {
       if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                     pri_channel_occupation_statement_1,
+                                     call_control_channel_occupation_statement_1,
                                      NULL, NULL, NULL))!=LINAPI_SUCCESS)
-         throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_1"+
+         throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_1"+
                                     database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_1));
+                                                                call_control_channel_occupation_statement_1));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -927,7 +927,7 @@ channel_number_param=channelb_number;
                if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -950,22 +950,22 @@ channel_number_param=channelb_number;
                       &fetched_rows_count,  /* count of gotten strings      */
                       NULL,
                       NULL)!=LINAPI_SUCCESS)
-                                 throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                                 throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
                       if (rows_count!=
                            fetched_rows_count)
-                              throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                              throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
       channel_id_param=occupation_needed_ids[0].channel_id;
 
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_2,
+                                                        call_control_channel_occupation_statement_2,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_2"+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_2"+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -982,7 +982,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1004,22 +1004,22 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
       channel_id_param=occupation_needed_ids[0].channel_id;
       channeld_id=channel_id_param;
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_3,
+                                                        call_control_channel_occupation_statement_3,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_3 "+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_3 "+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -1036,7 +1036,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1058,21 +1058,21 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_3");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_3");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
         channel_id_param=occupation_needed_ids[0].channel_id;
      if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                        pri_channel_occupation_statement_5,
+                                                        call_control_channel_occupation_statement_5,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_5"+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_5"+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
         size_of_param=sizeof(rows_count);
       if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -1089,7 +1089,7 @@ channel_number_param=channelb_number;
            if (rows_count!=1) {
                   if (rows_count>1){ 
                         ostringstream message;
-                         message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                         message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1105,13 +1105,13 @@ channel_number_param=channelb_number;
 
                 channel_id_param=channeld_id;
                 if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                                      pri_channel_occupation_statement_4,
+                                                                      call_control_channel_occupation_statement_4,
                                                                     NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                         throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_4 "+
+                         throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_4 "+
                                                                  database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
                      size_of_param=sizeof(rows_count);
                  if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -1128,7 +1128,7 @@ channel_number_param=channelb_number;
                          if (rows_count!=1) {
                               if (rows_count>1){ 
                                 ostringstream message;
-                                message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                                message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1150,21 +1150,21 @@ channel_number_param=channelb_number;
                                     &fetched_rows_count,  /* count of gotten strings      */
                                     NULL,
                                    NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_3");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_3");
 
                     if (rows_count!=
                               fetched_rows_count)
-                       throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                       throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
                      channel_id_param=occupation_needed_ids[0].channel_id;
                     if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                            pri_channel_occupation_statement_5,
+                                                            call_control_channel_occupation_statement_5,
                                                            NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                     throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_5"+
+                     throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_5"+
                                         database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
                      size_of_param=sizeof(rows_count);
                     if ((return_code=LINTER_GetCursorOption(linter_cursor_id,
@@ -1181,7 +1181,7 @@ channel_number_param=channelb_number;
                          if (rows_count!=1) {
                               if (rows_count>1){ 
                                 ostringstream message;
-                                message<<"In database_wrapper::pri_occupate_channel_only(...) trying to select many than 1 channel:"
+                                message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to select many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1205,22 +1205,22 @@ channel_number_param=channelb_number;
                    &fetched_rows_count,  /* count of gotten strings      */
                   NULL,
                   NULL)!=LINAPI_SUCCESS)
-                        throw  objects_storage_exception("Can`t fetch result of execution statement pri_channel_occupation_statement_1");
+                        throw  objects_storage_exception("Can`t fetch result of execution statement call_control_channel_occupation_statement_1");
 
              if (rows_count!=
                       fetched_rows_count)
-                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement pri_channel_occupation_statement_1 less than rows in result");
+                          throw  objects_storage_exception("Can`t fetched rows of result of execution statement call_control_channel_occupation_statement_1 less than rows in result");
 
             channel_id_param=occupation_answer_data[0].channel_id;
 
            if ((return_code=LINTER_ExecuteStatement(linter_cursor_id,
-                                                   pri_channel_occupation_statement_6,
+                                                   call_control_channel_occupation_statement_6,
                                                    NULL, NULL, NULL))!=LINAPI_SUCCESS)
-                            throw  objects_storage_exception("Can`t execute statement pri_channel_occupation_statement_6"+
+                            throw  objects_storage_exception("Can`t execute statement call_control_channel_occupation_statement_6"+
                                          database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                pri_channel_occupation_statement_3));
+                                                                call_control_channel_occupation_statement_3));
 
                         size_of_param=sizeof(rows_count);
             if (LINTER_GetCursorOption(linter_cursor_id,
@@ -1233,7 +1233,7 @@ channel_number_param=channelb_number;
             if (rows_count!=1) {
                   if (rows_count>1){ 
                               ostringstream message;
-                              message<<"In database_wrapper::pri_occupate_channel_only(...) trying to update many than 1 channel:"
+                              message<<"In database_wrapper::call_control_occupate_channel_only(...) trying to update many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1262,7 +1262,7 @@ channel_number_param=channelb_number;
                                                                                                 pthread_id);
 
           } catch (objects_storage_exception obj_stor_exc) {
-                  string message("In database_wrapper::pri_occupate_channel_only(...) catched exception: ");
+                  string message("In database_wrapper::call_control_occupate_channel_only(...) catched exception: ");
                   message+=obj_stor_exc.get_description();
                   objects_storage_logger* logger_inst=
                       objects_storage_logger::get_instance();
@@ -1276,7 +1276,7 @@ channel_number_param=channelb_number;
 
 
 bool 
-        database_wrapper::pri_free_channel(byte upo_number, 
+        database_wrapper::call_control_free_channel(byte upo_number, 
                                      byte ie1_number,
                                      byte e1_number,
                                      byte channel_interval,
@@ -1302,13 +1302,13 @@ right_side_param=left_side_param+1;
 
       try {
       if (LINTER_ExecuteStatement(linter_cursor_id,
-                                     pri_channel_free_statement_1,
+                                     call_control_channel_free_statement_1,
                                      NULL, NULL, NULL)!=LINAPI_SUCCESS)
-         throw  objects_storage_exception("Can`t execute statement pri_channel_free_statement_1"+
+         throw  objects_storage_exception("Can`t execute statement call_control_channel_free_statement_1"+
                                                                 database_wrapper::linter_error_decoding (return_code, 
                                                                  linter_connection_id,
                                                                  linter_cursor_id,
-                                                                 pri_channel_free_statement_1));
+                                                                 call_control_channel_free_statement_1));
 
       size_of_param=sizeof(rows_count);
       if (LINTER_GetCursorOption(linter_cursor_id,
@@ -1325,7 +1325,7 @@ right_side_param=left_side_param+1;
                           return_value=true;
                 } else if (rows_count>1){ //if (rows_count==1) {
                         ostringstream message;
-                         message<<"In database_wrapper::pri_free_channel(...) trying to update many than 1 channel:"
+                         message<<"In database_wrapper::call_control_free_channel(...) trying to update many than 1 channel:"
                                         <<" upo "<<static_cast<int>(upo_number)
                                         <<" ie1 "<<static_cast<int>(ie1_number)
                                         <<" e1 "<<static_cast<int>(e1_number)
@@ -1347,7 +1347,7 @@ right_side_param=left_side_param+1;
                 }; // }else if (rows_count>1){
                 // if (rows_count==0) return return_value==false
           } catch (objects_storage_exception obj_stor_exc) {
-                  string message("In  database_wrapper::pri_free_channel(...)  catched exception: ");
+                  string message("In  database_wrapper::call_control_free_channel(...)  catched exception: ");
                   message+=obj_stor_exc.get_description();
                   objects_storage_logger* logger_inst=
                       objects_storage_logger::get_instance();

@@ -1,3 +1,5 @@
+MCO_ROOT=/opt/eXtremeDB
+
 VPATH = ../unit_tests\
       :../objects_stor_classes\
       :../objects_stor_classes/dbwrappers\

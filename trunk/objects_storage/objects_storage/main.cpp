@@ -25,10 +25,15 @@ using namespace std;
 #ifdef _LINTER_DBWRAPPER_
 #include <linapi.h>
 #include "linter_database_wrapper.h"
+#else
+#ifdef _EXTREAME_DB_DBWRAPPER_
+#include "extreamedb_database_wrapper.h"
+#endif  //#ifdef _EXTREAME_DB_DBWRAPPER_
 #endif  //#ifdef _LINTER_DBWRAPPER_
 #endif  //#ifdef _MOCK_DBWRAPPER_
 
-#include "pri_data_manager.h"
+#include "call_control_data_manager.h"
+#include "proc_control_data_manager.h"
 #include "manager_of_data_storage.h"
 
 #ifdef __UNIT_TESTING__
