@@ -17,6 +17,8 @@ using namespace std;
 #include "defines.h"
 #include "program_settings.h"
 
+const string app_version="v1.2.6.5 ";
+
 program_settings* program_settings::program_settings_instance=NULL;
 
 program_settings::program_settings(){};
@@ -29,7 +31,43 @@ program_settings* program_settings::get_instance(){
      return program_settings_instance;
 };
 
-byte g_CRCHi[] = {
+
+//system messages
+	void program_settings::sys_message (const msg_type type, const string mess_text){
+	
+      string buffer;
+      buffer.reserve(app_version.size()+mess_text.size()+12);
+
+	switch(type)
+	{
+		case ERROR_MSG:
+			buffer=app_version + "ERROR: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
+			break;
+		case INFO_MSG:
+			buffer=app_version+"INFO: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_INFO, buffer.c_str(), NULL);
+      		break;
+		case DEBUG_MSG:
+			buffer=app_version+"DEBUG: ";
+			buffer+=mess_text;			
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_DEBUG1, buffer.c_str(), NULL);
+      		break;
+      	default:
+			buffer=app_version+"UNDEFINED: ";
+			buffer+=mess_text;
+			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
+			break;
+
+	}
+};
+
+//CRC16 coding function
+word program_settings::crc(vector<byte> buffer){
+
+static byte g_CRCHi[] = {
 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
 0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01,
@@ -48,9 +86,9 @@ byte g_CRCHi[] = {
 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
 0x40
-} ;
+};
 
-byte g_CRCLo[] = {
+static byte g_CRCLo[] = {
 0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2, 0xC6, 0x06, 0x07, 0xC7, 0x05, 0xC5, 0xC4,
 0x04, 0xCC, 0x0C, 0x0D, 0xCD, 0x0F, 0xCF, 0xCE, 0x0E, 0x0A, 0xCA, 0xCB, 0x0B, 0xC9, 0x09,
 0x08, 0xC8, 0xD8, 0x18, 0x19, 0xD9, 0x1B, 0xDB, 0xDA, 0x1A, 0x1E, 0xDE, 0xDF, 0x1F, 0xDD,
@@ -69,42 +107,7 @@ byte g_CRCLo[] = {
 0x48, 0x49, 0x89, 0x4B, 0x8B, 0x8A, 0x4A, 0x4E, 0x8E, 0x8F, 0x4F, 0x8D, 0x4D, 0x4C, 0x8C,
 0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
 0x40
-} ;
-
-//system messages
-	void program_settings::sys_message (const msg_type type, const string mess_text){
-	
-      string buffer;
-      buffer.reserve(mess_text.size()+12);
-
-	switch(type)
-	{
-		case ERROR_MSG:
-			buffer="ERROR: ";
-			buffer+=mess_text;
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
-			break;
-		case INFO_MSG:
-			buffer="INFO: ";
-			buffer+=mess_text;
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_INFO, buffer.c_str(), NULL);
-      		break;
-		case DEBUG_MSG:
-			buffer="DEBUG: ";
-			buffer+=mess_text;			
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_DEBUG1, buffer.c_str(), NULL);
-      		break;
-      	default:
-			buffer="UNDEFINED: ";
-			buffer+=mess_text;
-			vslogf(_SLOG_SETCODE(_SLOGC_SPIDER, 0), _SLOG_ERROR, buffer.c_str(), NULL);
-			break;
-
-	}
 };
-
-//CRC16 coding function
-word program_settings::crc(vector<byte> buffer){
 
 	byte highCRC = 0xFF;
 	byte lowCRC = 0xFF;

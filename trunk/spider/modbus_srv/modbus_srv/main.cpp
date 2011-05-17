@@ -56,6 +56,7 @@ devices_container metro_devices;
 string welcome_message("");
 double comport_delay_koeff=1;
 int baud_rate=comport::BAUD_19200;
+double delay_value=0;
 
 enum section_type {ESCALATOR=0, SHAVR, UDKU, ROUTE,
                  ROUTING, WATCHDOG_TIMER,
@@ -66,7 +67,7 @@ void* watchdog_thread_function (void* arg) {
 program_settings* sett_obj=program_settings::get_instance();
 watchdog_timer& w_timer=watchdog_timer::get_instance();	
 try {
-    w_timer.loop();
+   w_timer.loop();
  } catch (metro_device::metro_device_exception exc) {
      sett_obj->sys_message(program_settings::ERROR_MSG, exc.get_description());
  };
@@ -79,14 +80,15 @@ void* socket_thread_function(void* socket_ptr){
 	generic_socket *socket_device=static_cast<server_socket*>(socket_ptr);
 
    metro_device::command_data telemetr_request;
+   metro_device::command_data::iterator tmp_iter;
    metro_device::command_data 
             telemetr_answer;
 
    program_settings::bytes telemetr_crc;
    word crc_value;
    devices_container::iterator dev_iter;
+   int  failures_count=0;
 
-  int  failures_count=0;
   while(failures_count<program_settings::SOCKET_FAILURES_COUNT) {
       try {
         telemetr_request.clear();
@@ -128,18 +130,21 @@ void* socket_thread_function(void* socket_ptr){
                                              telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX],
                                              program_settings::MODBUS_EXCEPTION_ILLEGAL_FUNCTION);
   		      socket_device->send(telemetr_answer);
-              usleep(program_settings::SOCKET_USLEEP_BETWEEN_FAILURES);
               continue;
          };
 	     socket_device->recv(telemetr_request, program_settings::MODBUS_CRC_SIZE);
+
          //CRC check
-		 crc_value=sett_obj->crc(metro_device::command_data(
-		                                                                   &telemetr_request[0],
-		                                                                   &telemetr_request[telemetr_request.size()-program_settings::MODBUS_CRC_SIZE] ));
+         if (telemetr_request.size()<=program_settings::MODBUS_CRC_SIZE)   throw socket_exception ("telemetr_request.size()<=program_settings::MODBUS_CRC_SIZE]");
+         tmp_iter=telemetr_request.begin();
+         advance(tmp_iter, telemetr_request.size()-program_settings::MODBUS_CRC_SIZE);
+		 crc_value=program_settings::crc(metro_device::command_data(
+		                                                                   telemetr_request.begin(),
+		                                                                   tmp_iter));
 
         telemetr_crc=program_settings::bytes_of_type<word>(crc_value);
-		   if (telemetr_crc[1]!=telemetr_request[telemetr_request.size()-2] ||
-		       telemetr_crc[0]!=telemetr_request[telemetr_request.size()-1] ) { 
+		   if (telemetr_crc[0]!=telemetr_request[telemetr_request.size()-2] ||
+		       telemetr_crc[1]!=telemetr_request[telemetr_request.size()-1] ) { 
 		         throw socket_exception("Bad packet CRC");
                  };
 
@@ -150,7 +155,6 @@ void* socket_thread_function(void* socket_ptr){
 	   message+=sock_exc.get_description();
        sett_obj->sys_message(program_settings::ERROR_MSG, message);
        failures_count++;
-       usleep(program_settings::SOCKET_USLEEP_BETWEEN_FAILURES);
        continue;
 	} //catch (socket_exception
 
@@ -168,13 +172,19 @@ void* socket_thread_function(void* socket_ptr){
                                              program_settings::MODBUS_EXCEPTION_FAILURE_IN_ASSOCIATED_DEVICE);
 
 	} else { //if (dev_iter==metro_devices
+
             pthread_mutex_lock(dev_iter->second->get_sockets_to_device_queue_mutex());
             dev_iter->second->put_command_request_from_socket(telemetr_request);
                 if (dev_iter->second->get_command_request_to_comport_buffer()!=
                     dev_iter->second->get_default_command_request_to_comport()) {
 	                         pthread_mutex_lock(dev_iter->second->get_data_transfer_process_mutex());
-                             pthread_cond_wait(dev_iter->second->get_data_transfer_process_cond_var(),
-                                                            dev_iter->second->get_data_transfer_process_mutex());
+							  struct timespec to;
+  							  memset(&to, 0, sizeof to);
+    						  to.tv_sec = time(0) + 10; //  10 seconds
+    						  to.tv_nsec = 0;
+                             pthread_cond_timedwait(dev_iter->second->get_data_transfer_process_cond_var(),
+                                                            dev_iter->second->get_data_transfer_process_mutex(),
+															&to);
                              pthread_mutex_unlock(dev_iter->second->get_data_transfer_process_mutex());
                         } else {
                                dev_iter->second->set_command_answer_to_socket_buffer(
@@ -183,18 +193,36 @@ void* socket_thread_function(void* socket_ptr){
             telemetr_answer=dev_iter->second->get_command_answer_to_socket_buffer();
 	        pthread_mutex_unlock(dev_iter->second->get_sockets_to_device_queue_mutex());
       }; //else for if (dev_iter==metro_devices
-
 	try {
 
+		if (telemetr_answer.empty())
+			{
+				   ostringstream exception_descripton;
+	 			  exception_descripton<<"modbus_srv socket_thread_function (... ) Empty response from device with number "<<
+     			                                 static_cast<int>(telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX]);
+       				sett_obj->sys_message(program_settings::ERROR_MSG, exception_descripton.str());
+
+			        //if device not responding - generate error message for function
+   				     telemetr_answer=metro_device::generate_error_answer_for_function ( 
+                                             telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX],
+                                             telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX],
+                                             program_settings::MODBUS_EXCEPTION_FAILURE_IN_ASSOCIATED_DEVICE);				
+			};
+		 socket_device->send(telemetr_answer);
 //=========telemetr_answer===========================
 /*
 if (dev_iter->second->get_number()==2) {
+ ostringstream message_descripton;
 if (telemetr_answer.empty()) {
       cout<<"telemetr_answer is EMPTY"<<endl;
  } else { //if (telemetr_answer.empty())
- cout<<"telemetr_answer tid "<<pthread_self()<<" :"<<endl;
+message_descripton<<"telemetr_answer tid "<<pthread_self()<<" : ";
+vector<char>::iterator tmp_iter1, tmp_iter2;
+tmp_iter1=tmp_iter2= telemetr_answer.begin();
+sys_obj->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter1, tmp_iter2) );
+
 vector<char> tmp_buffer(32);
-for (int i=0;
+for (vector<byte>::size_type i=0;
        i<telemetr_answer.size() && i<6;
 //       i<4; //only header
        i++) {
@@ -211,28 +239,28 @@ for (int i=0;
 */
 //============================================
 
-		 socket_device->send(telemetr_answer);
+
          failures_count=0;
 	}	catch (socket_exception sock_exc){
 	   string message("modbus_srv  socket_thread_function (... ) Fail reciving data from telemetry : ");	
 	   message+=sock_exc.get_description();
        sett_obj->sys_message(program_settings::ERROR_MSG, message);
        failures_count++;
-       usleep(program_settings::SOCKET_USLEEP_BETWEEN_FAILURES);
        continue;
 	}; //catch (socket_exception
 	
 	}; //while(failures_count<program_settings::SOCKET_FAILURES_COUNT)
 
     delete(socket_device);
+
     return 0;
 };
 
 void* comport_thread_function(void* comport_ptr){
 	if (comport_ptr==NULL) return 0;
-
 	comport *comport_device=static_cast<comport*>(comport_ptr);
     program_settings *sett_obj=program_settings::get_instance();
+
 
     devices_container::iterator dev_iter = metro_devices.begin();
     metro_device::command_data_container
@@ -243,28 +271,33 @@ void* comport_thread_function(void* comport_ptr){
 
     metro_device::command_data::iterator tmp_iter;
     byte data_bytes_count;
-    word crc_value;
     program_settings::bytes device_crc;
     if (metro_devices.empty()) return 0;
 
     while (true) {
          if (dev_iter == metro_devices.end())  
-                  dev_iter = metro_devices.begin();
+               dev_iter = metro_devices.begin();
 
-        data_from_comport.clear();
+       data_from_comport.clear();
         pthread_mutex_lock(dev_iter->second->get_request_from_socket_mutex());
         data_to_comport=dev_iter->second->get_command_request_to_comport();
 		for (metro_device::command_data_container::size_type
                                                i=0;i<data_to_comport.size();i++) {
-			try {
+
+			if (i>0) //if there is more than 1 request to devices (for shavr, for example), make delay between the 
+				{
+				   usleep(program_settings::COMPORT_USLEEP_BETWEEN_COMMANDS);
+				};
+           try {
 
 //=========device_request===========================
 //{
+//if (dev_iter->second->get_number()==5){
 // cout<<"data_to_comport :"<<endl;
 //vector<char> tmp_buffer(32);
 //for (int j=0;
-////       j<device_answer_header.size();
-//       j<9; //only header
+//       j<static_cast<int>(data_to_comport[i].size());
+////       j<9; //only header
 //       j++) {
 //      itoa(data_to_comport[i][j],
 //             &tmp_buffer[0], 16);
@@ -275,16 +308,14 @@ void* comport_thread_function(void* comport_ptr){
 //    cout<<endl;
 //    cout<<endl;
 //}
+//}
 //============================================
 
-              comport_device->set_rts_state(comport::RTS_SET_1);	
-              usleep(50);
               comport_device->send(data_to_comport[i]);
-              comport_device->set_rts_state(comport::RTS_SET_0);	
-              usleep(15);
-
                 device_answer.clear();
-   				comport_device->recv(device_answer, program_settings::MODBUS_REQUEST_HEADER_SIZE, true);
+ 				comport_device->recv(device_answer, program_settings::MODBUS_REQUEST_HEADER_SIZE, true);
+
+//cout<<"after recv"<<endl;
 
    				if ((device_answer[program_settings::MODBUS_FUNCTION_CODE_INDEX]&0x80)
    				     !=0) {
@@ -307,6 +338,27 @@ void* comport_thread_function(void* comport_ptr){
                    				comport_device->recv(device_answer, program_settings::MODBUS_FUNCTION_16_ANSWER_PARTIAL_SIZE+program_settings::MODBUS_CRC_SIZE);
                                 break;
                              default:
+//=========device_answer===========================
+{
+//if (dev_iter->second->get_number()==5){
+ cout<<"device_answer :"<<endl;
+vector<char> tmp_buffer(32);
+for (int j=0;
+       j<static_cast<int>(device_answer.size());
+////       j<9; //only header
+       j++) {
+      itoa(device_answer[j],
+             &tmp_buffer[0], 16);
+      if (j==3 ||
+          (j-3)%8==0) cout<<endl;
+      cout<<"\t0x"<<&tmp_buffer[0];
+    }; //for (int  i=0;
+    cout<<endl;
+    cout<<endl;
+//}
+}
+//============================================
+
                                 throw comport_exception("Unsupported command from comport");
                         }; //switch (device_answer[program_settings::MODBUS_FUNCTION_CODE_INDEX])
                    }; // if ((device_answer_header[program_settings::MODBUS_FUNCTION_CODE_INDEX]&0x80)
@@ -314,12 +366,11 @@ void* comport_thread_function(void* comport_ptr){
                       //CRC check
                       tmp_iter=device_answer.begin();
                       advance(tmp_iter, device_answer.size()-program_settings::MODBUS_CRC_SIZE);   
-                      crc_value=sett_obj->crc(metro_device::command_data(
+                       device_crc=program_settings::bytes_of_type<word>(program_settings::crc(metro_device::command_data(
 		                                                                   device_answer.begin(),
-		                                                                   tmp_iter));
-                       device_crc=program_settings::bytes_of_type<word>(crc_value);
-                       if (device_crc[1]!=*(tmp_iter) ||
-                            device_crc[0]!=*(++tmp_iter) ) {
+		                                                                   tmp_iter)));
+                       if (device_crc[0]!=*(tmp_iter) ||
+                            device_crc[1]!=*(++tmp_iter) ) {
                                cout<<"Packet with bad CRC for device "<<dev_iter->second->get_number()<<endl;
                                 vector<char> tmp_chars(32);
                                for (metro_device::command_data::size_type
@@ -329,25 +380,7 @@ void* comport_thread_function(void* comport_ptr){
                                };
                                 cout<<endl;
                                 throw comport_exception("Bad packet CRC");
-                             }
-//=========device_answer===========================
-//{
-// cout<<"device_answer after crc :"<<endl;
-//vector<char> tmp_buffer(32);
-//for (int i=0;
-//       i<device_answer.size();
-////       i<9; //only header
-//       i++) {
-//      itoa(device_answer[i],
-//              &tmp_buffer[0], 16);
-//      if (i==3 ||
-//          (i-3)%8==0) cout<<endl;
-//      cout<<"\t0x"<<&tmp_buffer[0];
-//    }; //for (int  i=0;
-//    cout<<endl;
-//    cout<<endl;
-//}
-//============================================
+                             }; //if (device_crc[0]!=*(tmp_iter) 
                     data_from_comport.push_back(device_answer);
 		    } catch (comport_exception cmp_exc) {
 		          ostringstream exceptioin_message;
@@ -355,7 +388,6 @@ void* comport_thread_function(void* comport_ptr){
 		          exceptioin_message<<dev_iter->second->get_number()<<" : "<<cmp_exc.get_description();
                   sett_obj->sys_message(program_settings::ERROR_MSG, exceptioin_message.str());
 		    }; //catch (comport_exception cmp_exc
-		   usleep(program_settings::COMPORT_USLEEP_BETWEEN_COMMANDS);
 		}; //for (int i=0;i<data_to_compo
 
          dev_iter->second->put_command_answer_from_comport(data_from_comport);
@@ -368,6 +400,46 @@ void* comport_thread_function(void* comport_ptr){
 
          pthread_mutex_unlock(dev_iter->second->get_request_from_socket_mutex());
 
+//=========device_answer===========================
+
+if (dev_iter->second->get_number()==1){
+if ((data_from_comport.size() > 0) &&
+    (data_from_comport[0].size () <= program_settings::MODBUS_DATA_BYTES_COUNT_INDEX)) {
+		          ostringstream log_message;
+		          log_message<<"modbus_srv  comport_thread_function (... ) Fail counting RUNNING PATH from device ";
+		          log_message<<dev_iter->second->get_number()<<" : the answer from device is too short.";
+                  sett_obj->sys_message(program_settings::INFO_MSG, log_message.str());		
+};
+if  ((data_from_comport.size()>0) &&
+		(data_from_comport[0][program_settings::MODBUS_FUNCTION_CODE_INDEX] ==4) &&
+	  (data_from_comport[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX] <=data_from_comport[0].size()) &&
+		(program_settings::MODBUS_DATA_BYTES_COUNT_INDEX +27 <=data_from_comport[0].size())  )
+		{
+          ostringstream log_message;
+          log_message<<"modbus_srv  comport_thread_function (... ) RUNNING PATH from device ";
+          log_message<<dev_iter->second->get_number()<<" is ";
+
+			vector<unsigned char>::iterator tmp_iter1, tmp_iter2;
+			tmp_iter1= data_from_comport[0].begin();
+			tmp_iter2 = tmp_iter1;
+     	    advance(tmp_iter1,
+                   (program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+23)); // 11*2+1
+            advance(tmp_iter2,
+                    (program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+27)); //11*2+3+2
+ 			log_message<<sett_obj->type_from_bytes<dword>( program_settings::bytes (tmp_iter1, tmp_iter2) );
+            sett_obj->sys_message(program_settings::INFO_MSG, log_message.str());		
+		}
+		else
+		{
+		          ostringstream exceptioin_message;
+		          exceptioin_message<<"modbus_srv  comport_thread_function (... ) Fail counting RUNNING PATH from device ";
+		          exceptioin_message<<dev_iter->second->get_number()<<" : the answer from device is broken.";
+                  sett_obj->sys_message(program_settings::ERROR_MSG, exceptioin_message.str());		
+		}
+};
+//============================================
+
+
 		 usleep(program_settings::COMPORT_USLEEP_BETWEEN_COMMANDS);
          dev_iter++; 
     }; //while(true)
@@ -377,59 +449,50 @@ void* comport_thread_function(void* comport_ptr){
 
 void* routing_thread_function
           (void* arg) {
+   program_settings *sett_obj=program_settings::get_instance();
     router& router_inst=router::get_instance();
-
     router::routes_iterator routes_iter;
     router::gateways_iterator gateways_iter;
 
     bool connect_to_test_host_established;
-    cout<<"router_inst.size_gateway()  "<<static_cast<int>(router_inst.size_gateway())<<endl;
+   try {
     if (router_inst.size_gateway()<2) {
-            program_settings *sys_sett=program_settings::get_instance();
-            if (sys_sett==NULL) 
-                    cout<<"routing_thread: router_inst.gateways_size()<2"<<endl;
-                   else 
-                     sys_sett->sys_message(program_settings::ERROR_MSG, "routing_thread: router_inst.gateways_size()<2");
+            sett_obj->sys_message(program_settings::ERROR_MSG, "routing_thread: router_inst.gateways_size()<2");     
              return NULL;
            };
 
     if (router_inst.empty_routes()) {
-            program_settings *sys_sett=program_settings::get_instance();
-	            if (sys_sett==NULL) 
-                    cout<<"routing_thread: routes is empty"<<endl;
-                   else 
-                     sys_sett->sys_message(program_settings::ERROR_MSG, "routing_thread: routes is empty");
+              sett_obj->sys_message(program_settings::ERROR_MSG, "routing_thread: routes is empty");     
               return NULL;
            };
 
-	while (true) {
+     	while (true) {
          routes_iter=router_inst.begin_routes();
          while (routes_iter!=router_inst.end_routes()){
-                 cout<<"route"<<endl;
-                 gateways_iter=router_inst.begin_gateway();
+                sleep(20);
+                gateways_iter=router_inst.begin_gateway();
                 while(gateways_iter!=router_inst.end_gateway() ) {
-                           cout<<"gateway"<<endl;
                             //test all connections in previos gateway
                             connect_to_test_host_established=false;
                              router::route::test_hosts_iterator test_hosts_iter=routes_iter->test_hosts.begin();
                              while (test_hosts_iter!=routes_iter->test_hosts.end()) {
-                                  cout<<"test hosts 1"<<endl;
-                                  if (router_inst.test_connection_to_test_host(*test_hosts_iter)) {
+                                        if (router_inst.test_connection_to_test_host(*test_hosts_iter)) {
                                           connect_to_test_host_established=true;
-                                           break;
+                                          break;
                                        };
                                   test_hosts_iter++;
                              }; //while (test_hosts_iter!=routes_iter->test_hosts.end())
+
                            if (connect_to_test_host_established) break;
-                            router_inst.change_route(routes_iter->destination, 
-                                                                       routes_iter->mask,
-                                                                        *gateways_iter);
+
+                           router_inst.change_route(routes_iter->destination, 
+                                                                  routes_iter->mask,
+                                                                 *gateways_iter);
 
                             //test all connections in new gateway
                             connect_to_test_host_established=false;
                             test_hosts_iter= routes_iter->test_hosts.begin();
                              while (test_hosts_iter!=routes_iter->test_hosts.end()) {
-                                    cout<<"test hosts 2"<<endl;
                                   if (router_inst.test_connection_to_test_host(*test_hosts_iter)) {
                                           connect_to_test_host_established=true;
                                            break;
@@ -437,17 +500,25 @@ void* routing_thread_function
                                   test_hosts_iter++;
                              }; //while (test_hosts_iter!=routes_iter->test_hosts.end())
 
-                           if (connect_to_test_host_established) break;
+
+                           if (connect_to_test_host_established) {
+									 gateways_iter=router_inst.end_gateway();
+									 break;
+						    };
+
                       gateways_iter++;
                   }; //while(gateways_iter!=router_inst.end_gateways() &&
                 routes_iter++;
-                sleep(5);
           };//while (routes_iter!=router_inst.end_routes()
      }; //while (true)
+    } catch (runtime_error run_err) {
+        sett_obj->sys_message(program_settings::ERROR_MSG, string("FATAL: in routing_thread catched exception ")+run_err.what());     
+        return NULL;
+  };
 };
 
 void load_settings() throw (metro_device::metro_device_exception) {
- 	enum {WELCOME=0, COMPORT_KOEFF, BAUD_RATE, ENTRIES_COUNT};
+ 	enum {WELCOME=0, COMPORT_KOEFF, DELAY, BAUD_RATE, ENTRIES_COUNT};
 
 ostringstream exception_description;
 string entry_name;
@@ -457,6 +528,7 @@ vector<string> entries_names(ENTRIES_COUNT);
 
 entries_names[WELCOME]="welcome";
 entries_names[COMPORT_KOEFF]="comport koeff";
+entries_names[DELAY]="const delay";
 entries_names[BAUD_RATE]="baud rate";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -481,7 +553,9 @@ entry_name=entry_name_c_str;
                    exception_description<<"Uncorrect baud rate value  "<<&temp_str[0]<<" now supported only 9600, 19200 and 115200";
                    throw metro_device::metro_device_exception(exception_description.str());
                };
- 	} else {
+ } else  if (entry_name.compare(entries_names[DELAY])==0) {
+          delay_value=strtod(&temp_str[0], NULL);
+	} else {
            exception_description<<"Unrecognized config entry  "<<entry_name;
            throw metro_device::metro_device_exception(exception_description.str());
 	};
@@ -646,10 +720,11 @@ int main(int argc, const char *argv[]){
     	server_socket *socket_device;
         generic_socket *accepted_socket=NULL; //make compiler happy :)
 	pthread_attr_t      attr;
-	struct timeval recv_send_timeout;
     program_settings* sett_obj=program_settings::get_instance();
-
+    uint64_t recv_send_timeout_nanosec(program_settings::RECV_SEND_TIMEOUT);
 	int pthread_creating_result;
+
+    recv_send_timeout_nanosec*=1000000000;
 
    if (argc!=2) {
          string usage_description=usage(argv[0]);
@@ -674,11 +749,14 @@ int main(int argc, const char *argv[]){
            <<welcome_message
            <<"\n================================================================="<<endl;
 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-   recv_send_timeout.tv_sec=program_settings::RECV_SEND_TIMEOUT;
-   recv_send_timeout.tv_usec=0;
+	if (pthread_attr_init(&attr)!=EOK){
+          sett_obj->sys_message(program_settings::ERROR_MSG, "Can`t pthread_attr_init(&attr)");
+	      return 0;
+          };
+	if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)!=EOK){
+          sett_obj->sys_message(program_settings::ERROR_MSG, "Can`t pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)");
+	      return 0;
+         };
 
    signal( SIGPIPE, SIG_IGN );
 
@@ -689,7 +767,7 @@ int main(int argc, const char *argv[]){
                                        comport::PARITY_DISABLE,
                                        comport::DATA_BITS_8,
                                        comport::STOP_BITS_1,
-                                       0,
+                                       delay_value,
                                        comport_delay_koeff);
 
 	} catch (comport_exception cmp_exc) {
@@ -698,6 +776,7 @@ int main(int argc, const char *argv[]){
    };
 
 	try {
+
 		pthread_creating_result=pthread_create(NULL, &attr, &comport_thread_function, comport_device);
 		if ( pthread_creating_result!= EOK){
 			   string message("fail to create device thread : ");	
@@ -731,7 +810,7 @@ int main(int argc, const char *argv[]){
 
 
 	try {
-		socket_device = new  server_socket(recv_send_timeout,
+		socket_device = new  server_socket(recv_send_timeout_nanosec,
                                                         program_settings::BACKLOG,
                                                         program_settings::MODBUS_TCP_PORT);
         socket_device->initialize();

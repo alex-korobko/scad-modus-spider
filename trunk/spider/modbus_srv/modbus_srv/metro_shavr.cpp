@@ -220,17 +220,14 @@ void metro_shavr::A0(int event)
       exception_description<<"metro_shavr::A0(...) device number "<<metro_device::get_number();
       exception_description<<" after change A0 has undefined state "<<A0_state;
       throw metro_device::metro_device_exception(exception_description.str());        
-
  }; //switch (A0_state)
 };
 
 metro_device::command_data_container
      metro_shavr::get_default_command_request_to_comport(){
-     program_settings *sys_sett=program_settings::get_instance();
      command_data_container return_val(0);
      program_settings::bytes tmp_bytes;
      vector<byte> buffer(0);
-     word crc_value;
 
 // com port default request for UDKU
 	buffer.push_back(get_number());
@@ -239,10 +236,8 @@ metro_device::command_data_container
 	buffer.push_back(UDKU_FIRST_REGISTER);
 	buffer.push_back(0);
 	buffer.push_back(UDKU_MODBUS_REGISTERS_COUNT);
-	crc_value = sys_sett->crc(buffer);
-	tmp_bytes=program_settings::bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
     return_val.push_back(buffer);
 
 // com port default request for  first power counter
@@ -254,10 +249,8 @@ metro_device::command_data_container
 	buffer.push_back(0);
 	buffer.push_back(POWER_COUNTER_1_MODBUS_REGISTERS_COUNT);
 
-	crc_value = sys_sett->crc(buffer);
-	tmp_bytes=program_settings::bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
     return_val.push_back(buffer);
 
 // com port default request for second power counter
@@ -269,11 +262,8 @@ metro_device::command_data_container
 	buffer.push_back(0);
 	buffer.push_back(POWER_COUNTER_2_MODBUS_REGISTERS_COUNT);
 
-	crc_value = sys_sett->crc(buffer);
-	tmp_bytes=program_settings::bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
-
+	tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
+	buffer.insert(buffer.end(),tmp_bytes.begin(),tmp_bytes.end());
     return_val.push_back(buffer);
 
    	return return_val;
@@ -281,9 +271,8 @@ metro_device::command_data_container
 
 metro_device::command_data
      metro_shavr::get_default_command_request_from_socket(){
-     program_settings *sys_sett=program_settings::get_instance();
  	command_data buffer(0);
-	word		crc_value;
+
 
 	buffer.push_back(get_number());
 	buffer.push_back(4);                      // function number
@@ -296,11 +285,8 @@ metro_device::command_data
                                  2+//MESSAGES_UPPER_ID+MESSAGES_COUNT
                                  MESSAGES_MODBUS_REGISTERS_COUNT);
 
-	crc_value = sys_sett->crc(buffer);
-	program_settings::bytes tmp_bytes=program_settings::bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
-
+	program_settings::bytes tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(),  tmp_bytes.end());
    	return buffer;
 };
 
@@ -321,20 +307,22 @@ pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
 //       <<" function_code "<<static_cast<int>(function_code)<<endl;
 
 //========delete it================
-// {
-// cout<<"\nshavr request size "<<request.size()<<endl;
-// vector<char> tmp_chars(10);
-// for (int i=0;
-//      i<static_cast<int>(request.size());
-//      i++) {
-// itoa(request[i],
-//       &tmp_chars[0],
-//       16);
-//   if (i%9==0) cout<<endl;
-//   cout<<"  0x"<<&tmp_chars[0];
-// };
-// cout<<endl;
-// };
+/*
+ {
+ cout<<"\nshavr request size "<<request.size()<<endl;
+ vector<char> tmp_chars(10);
+ for (int i=0;
+      i<static_cast<int>(request.size());
+      i++) {
+ itoa(request[i],
+       &tmp_chars[0],
+       16);
+   if (i%9==0) cout<<endl;
+   cout<<"  0x"<<&tmp_chars[0];
+ };
+ cout<<endl;
+ };
+*/
 //=============================
 
 
@@ -364,20 +352,22 @@ if (answer_from_com_port.empty() ||
 };
 
 //========delete it================
-//{
-//cout<<"\nshavr new_answer_to_socket size "<<new_answer_to_socket.size()<<endl;
-//vector<char> tmp_chars(10);
-//for (int i=0;
-//      i<static_cast<int>(new_answer_to_socket.size());
-//      i++) {
-//itoa(new_answer_to_socket[i],
-//       &tmp_chars[0],
-//       16);
-//   if (i%9==0) cout<<endl;
-//   cout<<"  0x"<<&tmp_chars[0];
-// };
-// cout<<endl;
-// };
+/*
+{
+cout<<"\nshavr new_answer_to_socket size "<<new_answer_to_socket.size()<<endl;
+vector<char> tmp_chars(10);
+for (int i=0;
+      i<static_cast<int>(new_answer_to_socket.size());
+      i++) {
+itoa(new_answer_to_socket[i],
+       &tmp_chars[0],
+       16);
+   if (i%9==0) cout<<endl;
+   cout<<"  0x"<<&tmp_chars[0];
+ };
+ cout<<endl;
+ };
+*/
 //=============================
 
 if (get_command_request_to_comport()==
@@ -411,7 +401,97 @@ metro_device::command_data_container
         get_default_command_request_from_socket()) {
             data_container=get_default_command_request_to_comport();
          } else {
-            data_container.push_back(request_from_socket);
+            data_container.push_back(local_request);
+
+             //detect is command for shavr
+             if (local_request.size()==8 &&
+                  local_request[1]==5) { //command 5
+                  metro_device::command_data::iterator tmp_iter=local_request.begin();
+                  advance(tmp_iter, local_request.size()-2);
+                  //crc check
+                  word calc_crc=program_settings::crc(program_settings::bytes(local_request.begin(), tmp_iter));
+                  word org_crc=program_settings::type_from_bytes<word>(program_settings::bytes(tmp_iter, local_request.end()));
+                   if (calc_crc==org_crc) {
+                          metro_device::messages_container new_messages(0);
+                           switch (local_request[3]) {
+                               case 0:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_1_CONNECT_TO_INPUT_1);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_1_DISCONNECT_FROM_INPUT_1);
+                                 };
+                                 break;
+                               case 1:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_1_CONNECT_TO_INPUT_2);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_1_DISCONNECT_FROM_INPUT_2);
+                                 };
+                                 break;
+                               case 2:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_2_CONNECT_TO_INPUT_1);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_2_DISCONNECT_FROM_INPUT_1);
+                                 };
+                                 break;
+                               case 3:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_2_CONNECT_TO_INPUT_2);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_2_DISCONNECT_FROM_INPUT_2);
+                                 };
+                                 break;
+                               case 4:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_3_CONNECT_TO_INPUT_1);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_3_DISCONNECT_FROM_INPUT_1);
+                                 };
+                                 break;
+                               case 5:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_3_CONNECT_TO_INPUT_2);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_3_DISCONNECT_FROM_INPUT_2);
+                                 };
+                                 break;
+                               case 6:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_4_CONNECT_TO_INPUT_1);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_4_DISCONNECT_FROM_INPUT_1);
+                                 };
+                                 break;
+                               case 7:
+                                 if (local_request[4]==0) {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_4_CONNECT_TO_INPUT_2);
+                                 } else {
+                                 new_messages.push_back(0);
+                                 new_messages.push_back(MESSAGE_RECIEVED_ESCALATOR_4_DISCONNECT_FROM_INPUT_2);
+                                 };
+                                 break;
+                            };
+                            if (!new_messages.empty()) metro_device::add_messages_fifo (new_messages);
+                       }; //if (calc_crc==org_crc)
+              }; //if (local_request.size()==8 &&
+
+
          };
     return data_container;
 };
@@ -419,9 +499,8 @@ metro_device::command_data_container
 metro_device::command_data
     metro_shavr::create_answer_to_socket_func_4
                (metro_device::command_data_container answer_from_com_port){
-    program_settings* sett_obj=program_settings::get_instance();
     metro_device::messages_container all_messages;
-    word crc_value;
+
     program_settings::bytes tmp_value_bytes;
     metro_device::command_data  answer_to_socket(0);
     metro_device::messages_container new_messages(0);
@@ -438,22 +517,26 @@ metro_device::command_data
 	        old_A0_x16=A0_x16,
 	        old_A0_x17=A0_x17,
             old_A1_x3=A1_x3,
-            old_A2_x3=A2_x3;
+            old_A2_x3=A2_x3,
+            old_A3_x3=A3_x3;
 
 //=======delete it====================
-//cout <<"answer_from_com_port[1]"<<endl;
+//{
+//cout <<"answer_from_com_port[0] from shavr"<<endl;
 //  vector<char> tmp_chars(40);
 //	for(metro_device::command_data::size_type i=0;
-//	      i<answer_from_com_port[2].size();
+//	      i<answer_from_com_port[0].size();
 //	      i++) {
 //	  if (i%8 ==0) cout<<endl;
-//	  itoa(answer_from_com_port[2][i],
+//	  itoa(answer_from_com_port[0][i],
 //	        &tmp_chars[0],
 //	        16);
 //	  cout<<"  0x"<<&tmp_chars[0];
 //   };
 //   cout<<endl;
+//}
 //==================================
+
 
 //     UDKU
 	if(answer_from_com_port[0].size()!=
@@ -532,7 +615,10 @@ metro_device::command_data
            A1_x3=
               ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3]&0x4)!=0);
            A2_x3=
-              ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+4]&0x2)!=0);
+              ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+4]&0x2)==0);
+           A3_x3=
+              ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+4]&0x1)==0);
+
 
              A0(7); // event 7 - data refreshed
              new_messages.clear();
@@ -642,10 +728,10 @@ metro_device::command_data
                }; //if (old_A0_x17!=A0_x17)
 
                if(old_A1_x3!=A1_x3) {
-//                     if (A1_x3) {
-//                          new_messages.push_back(0);
-//                          new_messages.push_back(MESSAGE_DOOR_OPENED);
-//                          };
+                     if (A1_x3) {
+                          new_messages.push_back(0);
+                          new_messages.push_back(MESSAGE_DOOR_OPENED);
+                          };
                }; //if(old_A1_x3!=A1_x3)
 
                if (old_A2_x3!=A2_x3 ) {
@@ -654,6 +740,14 @@ metro_device::command_data
                           new_messages.push_back(MESSAGE_FIRE_ALARM_ACTIVATED);
                           };
                }; //if (old_A2_x3!=A2_x3 )
+
+               if (old_A3_x3!=A3_x3 ) {
+                     if (A3_x3) {
+                          new_messages.push_back(0);
+                          new_messages.push_back(MESSAGE_FIRE_ALARM_ACTIVATED);
+                          };
+               }; //if (old_A3_x3!=A3_x3 )
+
 
             if (!new_messages.empty())
                 metro_device::add_messages_fifo (new_messages);
@@ -696,13 +790,13 @@ metro_device::command_data
 //messages
    tmp_value_bytes=program_settings::bytes_of_type<word>(metro_device::get_upper_message_id());
     answer_to_socket.insert(answer_to_socket.end(),
-                                             tmp_value_bytes.rbegin(),
-                                             tmp_value_bytes.rend());
+                                             tmp_value_bytes.begin(),
+                                             tmp_value_bytes.end());
 
    tmp_value_bytes=program_settings::bytes_of_type<word>(metro_device::get_messages_count()/2);
     answer_to_socket.insert(answer_to_socket.end(),
-                                             tmp_value_bytes.rbegin(),
-                                             tmp_value_bytes.rend());
+                                             tmp_value_bytes.begin(),
+                                             tmp_value_bytes.end());
 
     all_messages=metro_device::get_messages_fifo();
     answer_to_socket.insert(answer_to_socket.end(),
@@ -721,13 +815,29 @@ metro_device::command_data
                                                     sizes_diff,
                                                     0);
 
-    crc_value=sett_obj->crc(answer_to_socket);
-    tmp_value_bytes=program_settings::bytes_of_type<word>(crc_value);    
+    tmp_value_bytes=program_settings::bytes_of_type<word>(program_settings::crc(answer_to_socket)); 
 
 
     answer_to_socket.insert(answer_to_socket.end(),
-                                             tmp_value_bytes.rbegin(),
-                                             tmp_value_bytes.rend());
+                                             tmp_value_bytes.begin(),
+                                             tmp_value_bytes.end());
+
+//=======delete it====================
+//{
+//cout <<"answer_to_socket for shavr"<<endl;
+//  vector<char> tmp_chars(40);
+//	for(metro_device::command_data::size_type i=0;
+//	      i<answer_to_socket.size();
+//	      i++) {
+//	  if (i%8 ==0) cout<<endl;
+//	  itoa(answer_to_socket[i],
+//	        &tmp_chars[0],
+//	        16);
+//	  cout<<"  0x"<<&tmp_chars[0];
+//   };
+//   cout<<endl;
+//}
+//==================================
 
   return answer_to_socket;
 };
