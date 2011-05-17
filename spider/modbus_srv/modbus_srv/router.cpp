@@ -32,68 +32,73 @@ using namespace std;
 #include "generic_socket.h"
 #include "client_socket.h"
 
-#include "metro_device.h"
 #include "router.h"
 
-bool router::test_connection_to_test_host(struct in_addr test_host){
-     struct timeval connection_timeout, recive_send_timeout;
 
-     vector<byte> request_to_server(1);
-     vector<byte> answer_from_server;
+router::router() throw (runtime_error)
+    :routing_enabled(false){
+    if((sock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1) {
+           throw runtime_error(string("In router::router() socket(PF_ROUTE, ...) error: ")+
+                                               strerror(errno));
+        };
+};
+
+router::~router(){
+  	shutdown (sock, 2);
+    close(sock);
+};
+
+
+bool router::test_connection_to_test_host(struct in_addr test_host) {
+     program_settings::bytes request_to_server(1);
+     program_settings::bytes answer_from_server;
      answer_from_server.reserve(request_to_server.size());
-
-    connection_timeout.tv_sec=program_settings::CONNECT_TO_DEVICE_TIMEOUT;
-    connection_timeout.tv_usec=0;
-
-    recive_send_timeout.tv_sec=program_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT;
-   	recive_send_timeout.tv_usec=0;
     request_to_server[0]=0xff;
+
+   uint64_t connect_to_test_host_timeout_nanosec(program_settings::CONNECT_TO_DEVICE_TIMEOUT),
+          recieve_send_to_test_host_timeout_nanosec(program_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT);
+   connect_to_test_host_timeout_nanosec*=1000000000;
+   recieve_send_to_test_host_timeout_nanosec*=1000000000;
+
 
       try{
        client_socket  socket_dev(test_host.s_addr,
-                                                   program_settings::ECHO_TCP_PORT,
-                                                    connection_timeout,
-                                                    recive_send_timeout);
-
+                                                  program_settings::ECHO_TCP_PORT,
+                                                  connect_to_test_host_timeout_nanosec,
+                                                  recieve_send_to_test_host_timeout_nanosec);
          socket_dev.initialize();
          socket_dev.send(request_to_server);
          answer_from_server.clear();
          socket_dev.recv(answer_from_server, request_to_server.size());
-            if (answer_from_server!=request_to_server)
-                    return false;
-          return true;
+         if (answer_from_server!=request_to_server) return false;
       } catch (socket_exception sock_exc) {
-            program_settings *sys_sett=program_settings::get_instance();
-             sys_sett->sys_message(program_settings::ERROR_MSG, "In router::test_connection_to_test_host raised exception: "+
-                                                                                                  sock_exc.get_description());
-           return false;
+            program_settings *prog_sett=program_settings::get_instance();
+            ostringstream except_descr;
+            except_descr<<"In router::test_connection_to_test_host test host "<<inet_ntoa(test_host)<<
+                                       " raised exception: "<<sock_exc.get_description()<<endl;
+            prog_sett->sys_message(program_settings::ERROR_MSG, except_descr.str());
+            return false;
       };
-        return true; //only for compiler happening
+        return true;
 };
 
-void router::change_route(
-                               struct in_addr destination, 
+void router::change_route (
+                               struct in_addr destination,
                                struct in_addr mask,
-                               struct in_addr gateway) {
-    program_settings *sys_sett=program_settings::get_instance();
-
-      int sock;
+                               struct in_addr gateway) throw (runtime_error) {
       struct rt_msghdr *rtm;
       struct sockaddr_in *dst, *gate, *msk;
       struct internal_route my_rt;
 
-      if((sock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1) {
-         if (sys_sett!=NULL)  {
-                  sys_sett->sys_message(program_settings::ERROR_MSG, string("In router::change_route socket(...) error: ")+strerror(errno));
-//		  cout<<"In router::set_route socket(...) error: "<<strerror(errno)<<" socket "<<sock<<endl;
-                } else
-//                  cout<<"In router::set_route socket(...) error: "<<strerror(errno)<<" socket "<<sock<<endl;
-      	return ;
-      }
+     //ATTENTION Only for test
+//     return;
+
+      program_settings *prog_sett=program_settings::get_instance();
+       prog_sett->sys_message(program_settings::ERROR_MSG, "In router change route");
+
       memset(&my_rt, 0x00, sizeof(my_rt));
 
       rtm  = &my_rt.rt;
-
       dst  = &my_rt.dst;
       gate = &my_rt.gate;
       msk = &my_rt.mask;
@@ -104,40 +109,35 @@ void router::change_route(
       rtm->rtm_version = RTM_VERSION;
       rtm->rtm_seq = 1234;
       rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
-      rtm->rtm_pid = getpid();      
-      
-      dst->sin_len    = sizeof(destination);
+      rtm->rtm_pid = getpid();
+
+      dst->sin_len    = sizeof(sockaddr_in);
       dst->sin_family = AF_INET;
       dst->sin_addr=destination;
 
-      msk->sin_len    = sizeof(mask);
+      msk->sin_len    = sizeof(sockaddr_in);
       msk->sin_family = AF_INET;
       msk->sin_addr=mask;
 
-      gate->sin_len    = sizeof(gateway);
+      gate->sin_len    = sizeof(sockaddr_in);
       gate->sin_family = AF_INET;
       gate->sin_addr=gateway;
 
 
-      if(write(sock, rtm, rtm->rtm_msglen) < 0){
-                        rtm->rtm_type = RTM_CHANGE;
-                         if(write(sock, rtm, rtm->rtm_msglen) < 0){
-                             if (sys_sett!=NULL) 
-                                sys_sett->sys_message(program_settings::ERROR_MSG, string("In socket(...) error: ")+strerror(errno));
-                                else 
-                                cout<<"In router::set_route socket(...) error: "<<strerror(errno)<<endl;
-                         } else {
-                             cout<<"route changed"<<endl;
-                          };
-               } else {
-//                   cout<<"route added"<<endl;
-               };
-
-  	shutdown (sock, 0);
+      if(write(sock, rtm, rtm->rtm_msglen) < 0)
+                if( errno == EEXIST) {
+                       rtm->rtm_type = RTM_CHANGE;
+                       if(write(sock, rtm, rtm->rtm_msglen) < 0)
+                              throw runtime_error (string("In write(...) RTM_CHANGE error: ")
+                                     +strerror(errno));
+                  } else {
+                      throw runtime_error (string("In write(...) RTM_ADD error: ")
+                                     +strerror(errno));
+                  };
 };
 
 
-void router::load_route() throw (metro_device::metro_device_exception) {
+void router::load_route() throw (runtime_error) {
  	enum {DESTINATION, MASK, TEST_HOST, ENTRIES_COUNT};
 
 ostringstream exception_description;
@@ -153,7 +153,7 @@ entries_names[DESTINATION]="destination";
 entries_names[MASK]="mask";
 entries_names[TEST_HOST]="test host";
 
-entry_name_c_str=PxConfigNextString(&temp_str[0], 
+entry_name_c_str=PxConfigNextString(&temp_str[0],
                                                                    temp_str.size() );
 
 while(entry_name_c_str!=NULL){
@@ -164,7 +164,7 @@ entry_name=entry_name_c_str;
                     route_to_add.destination=net_device;
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw metro_device::metro_device_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
  } else  if (entry_name.compare(entries_names[MASK])==0) {
@@ -173,7 +173,7 @@ entry_name=entry_name_c_str;
                     route_to_add.mask=net_device;
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw metro_device::metro_device_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
  } else  if (entry_name.compare(entries_names[TEST_HOST])==0) {
@@ -182,12 +182,12 @@ entry_name=entry_name_c_str;
                     route_to_add.test_hosts.push_back(net_device);
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw metro_device::metro_device_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
 	} else {
            exception_description<<"Unrecognized config entry  "<<entry_name;
-           throw metro_device::metro_device_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
 	};
 	
 	entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -201,17 +201,17 @@ if (dest_present &&
         push_back_routes(route_to_add);
       } else  if (!dest_present){
            exception_description<<"In load_route() not present destination";
-           throw metro_device::metro_device_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       } else if (!mask_present) {
            exception_description<<"In load_route() not present mask";
-           throw metro_device::metro_device_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       } else if (!test_host_present) {
            exception_description<<"In load_route() not present test host";
-           throw metro_device::metro_device_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       };
 };
 
-void router::load_routing() throw (metro_device::metro_device_exception) {
+void router::load_routing() throw (runtime_error) {
  enum {ROUTING_MANIPULATING=0, GATEWAY, ENTRIES_COUNT};
 
 ostringstream exception_description;
@@ -239,7 +239,7 @@ entry_name=entry_name_c_str;
                               routing_enabled=false;
                            } else { //if (value_example.compare(value_example)==0)
                               exception_description<<"Uncorrect routing mainpulaing value  "<<&temp_str[0]<<" supported only enabled, disabled";
-                              throw metro_device::metro_device_exception(exception_description.str());
+                              throw runtime_error(exception_description.str());
                            }; //if (value_example.compare(value_example)==0)
                }; //if (value_example.compare(value_example)==0)
 
@@ -248,12 +248,12 @@ entry_name=entry_name_c_str;
                       push_back_gateways(net_device);
                   } else { //if (inet_aton( &temp_str[0],  &net_device )
                    exception_description<<"Uncorrect gateway address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw metro_device::metro_device_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                }; //if (inet_aton( &temp_str[0],  &net_device )
 
          } else {
             exception_description<<"Unrecognized config entry  "<<entry_name;
-            throw metro_device::metro_device_exception(exception_description.str());
+            throw runtime_error(exception_description.str());
          };
 
 	entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -263,7 +263,7 @@ entry_name=entry_name_c_str;
 };
 
 
-void router::load (string file_name) throw (metro_device::metro_device_exception) {
+void router::load (string file_name) throw (runtime_error) {
 	ostringstream exception_description;
 
 	string	section_name;
@@ -272,10 +272,8 @@ void router::load (string file_name) throw (metro_device::metro_device_exception
 
 	sections_names[ROUTING]="routing";
 	sections_names[ROUTE]="route";	
-	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)!=Pt_TRUE ){
-        exception_description<<"Can`t open config file "<<file_name;
-		throw metro_device::metro_device_exception(exception_description.str());
-	};
+	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)!=Pt_TRUE )
+		throw runtime_error("Can`t open config file "+file_name);
 
      try {
                     section_name_c_str=PxConfigNextSection();
@@ -287,22 +285,21 @@ void router::load (string file_name) throw (metro_device::metro_device_exception
                        } else if (section_name.compare(sections_names[ROUTE])==0) {
                                load_route();
                         } else {
-                           exception_description<<"Unrecognized config section "<<section_name;
-                           throw metro_device::metro_device_exception(exception_description.str());
+                           throw runtime_error("Unrecognized config section "+section_name);
                         };
                       section_name_c_str=PxConfigNextSection();
                     };
-	}catch  (metro_device::metro_device_exception dev_exc) {
-           exception_description<<dev_exc.get_description();
-           if  (PxConfigClose()!=Pt_TRUE) {
-               exception_description<<"\nCan`t close file "<<file_name;
-           };
-           throw metro_device::metro_device_exception(exception_description.str());
+	}catch  (runtime_error dev_exc) {
+	          string message(dev_exc.what());
+           if  (PxConfigClose()!=Pt_TRUE) 
+               message+=("\nCan`t close file "+file_name);
+
+           throw runtime_error(message);
  	};
 
      if  (PxConfigClose()!=Pt_TRUE) {
         exception_description<<"Can`t close file "<<file_name;
-        throw metro_device::metro_device_exception(exception_description.str());
+        throw runtime_error(exception_description.str());
       };
 };
 

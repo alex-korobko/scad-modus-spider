@@ -4,8 +4,9 @@
 class router   {
 friend class ghost_class_only_for_compiler_happening ;
 public:
-  enum {ROUTING, ROUTE, SECTIONS_COUNT};
- struct route {
+enum {ROUTING, ROUTE, SECTIONS_COUNT};
+
+struct route {
     typedef vector<in_addr> test_hosts_container;
     typedef test_hosts_container::iterator test_hosts_iterator;
     typedef test_hosts_container::size_type test_hosts_size_type;
@@ -29,17 +30,19 @@ private:
      struct sockaddr_in gate;
      struct sockaddr_in mask;
    };
- routes_container routes;
- gateways_container gateways;
+
+routes_container routes;
+gateways_container gateways;
 
 bool routing_enabled;
+int sock;
 
 //hide unused operators
- router():routing_enabled(false){};
+ router() throw (runtime_error);
  router(const router& ){};
 
 router& operator=(router& r) { return r;};
-~router(){};
+~router();
 
 public:
 
@@ -60,12 +63,12 @@ bool is_routing_enabled() {return routing_enabled;};
 bool test_connection_to_test_host(in_addr test_host);
 void change_route(struct in_addr destination, 
                                struct in_addr gateway,
-                               struct in_addr mask);
+                               struct in_addr mask) throw (runtime_error);
 
-void load_route() throw (metro_device::metro_device_exception);
-void load_routing() throw (metro_device::metro_device_exception);
+void load_route() throw (runtime_error);
+void load_routing() throw (runtime_error);
 void load (string file_name) 
-                  throw (metro_device::metro_device_exception);
+                  throw (runtime_error);
 
 static  router& get_instance() {
      static router router_instance;

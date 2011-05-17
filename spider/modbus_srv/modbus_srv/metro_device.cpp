@@ -102,19 +102,14 @@ metro_device::command_data
                              ( int device_number,
                                int function_code,
                                int exception_code){
-    program_settings *sys_sett=program_settings::get_instance();
  	command_data buffer(0);
-	word		crc_value;
 
 	buffer.push_back(device_number);
 	buffer.push_back(function_code | 0x80);                      // function number with error detected flag
 	buffer.push_back(exception_code);
 
-	crc_value = sys_sett->crc(buffer);
-
-	program_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	program_settings::bytes tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
    	return buffer;
 
