@@ -10,12 +10,8 @@ private:
  pthread_cond_t  data_transfer_process_cond_var;
  pthread_mutex_t  data_transfer_process_mutex;
 
- pthread_mutex_t  sockets_to_device_queue_mutex;
-
- pthread_mutex_t  answer_to_socket_mutex;
- pthread_mutex_t  request_to_com_port_mutex;
  pthread_mutex_t  default_answer_to_socket_mutex;
- pthread_mutex_t  request_from_socket_mutex;
+ pthread_mutex_t  sockets_to_device_queue_mutex;
 
  int device_number;
  byte upper_message_id;
@@ -26,6 +22,8 @@ command_data answer_to_socket;
 command_data_container request_to_com_port;
 
 command_data default_answer_to_socket;
+
+bool log_packets;
 
      class metro_device_exception {
        private:
@@ -40,33 +38,26 @@ command_data default_answer_to_socket;
 protected:
 
 void set_command_request_to_comport_buffer(command_data_container new_request_to_com_port) {
-             pthread_mutex_lock(&request_to_com_port_mutex);
-                   request_to_com_port=new_request_to_com_port;
-             pthread_mutex_unlock(&request_to_com_port_mutex);
-};
-
-
-void set_default_answer_to_socket_buffer(
-             command_data new_default_answer_to_socket) {
-             pthread_mutex_lock(&default_answer_to_socket_mutex);
-                   default_answer_to_socket.swap(new_default_answer_to_socket);
-             pthread_mutex_unlock(&default_answer_to_socket_mutex);
+         request_to_com_port=new_request_to_com_port;
 };
 
 public:
 
-explicit metro_device(int new_device_number) 
+metro_device(int new_device_number, bool new_log_packets) 
                 throw (metro_device_exception);
 
 virtual ~metro_device();
 /*
-setters
+getters and setters
 */
 
 void set_command_answer_to_socket_buffer(command_data new_answer_to_socket) { 
-               pthread_mutex_lock(&answer_to_socket_mutex);
                   answer_to_socket.swap(new_answer_to_socket);
-               pthread_mutex_unlock(&answer_to_socket_mutex);
+};
+
+
+void set_default_answer_to_socket() {
+        default_answer_to_socket = answer_to_socket;
 };
 
 
@@ -76,33 +67,26 @@ void set_command_answer_to_socket_buffer(command_data new_answer_to_socket) {
 pthread_cond_t* get_data_transfer_process_cond_var() { return &data_transfer_process_cond_var;}
 pthread_mutex_t* get_data_transfer_process_mutex() { return &data_transfer_process_mutex;}
 pthread_mutex_t* get_sockets_to_device_queue_mutex() {return &sockets_to_device_queue_mutex;};
-pthread_mutex_t* get_request_from_socket_mutex() {return &request_from_socket_mutex;};
-
+pthread_mutex_t* get_default_answer_to_socket_mutex() {return &default_answer_to_socket_mutex;};
 
 int get_number() {return device_number;};
 
+bool is_packet_logging() const {return log_packets;};
+
 command_data  get_command_answer_to_socket_buffer() { 
-command_data data_to_return;
-     pthread_mutex_lock(&answer_to_socket_mutex);
-        data_to_return=answer_to_socket;
-     pthread_mutex_unlock(&answer_to_socket_mutex);
-     return data_to_return;
+     return answer_to_socket;
  };
 
 command_data get_default_answer_to_socket_buffer() {
-command_data ret_data;
-             pthread_mutex_lock(&default_answer_to_socket_mutex);
-                   ret_data=default_answer_to_socket;
-             pthread_mutex_unlock(&default_answer_to_socket_mutex);
-      return ret_data;
+      return default_answer_to_socket;
 };
 
 command_data_container get_command_request_to_comport_buffer() {
-command_data_container data_to_return(0);
-     pthread_mutex_lock(&request_to_com_port_mutex);
-        data_to_return=request_to_com_port;
-     pthread_mutex_unlock(&request_to_com_port_mutex);
-     return data_to_return;
+     return request_to_com_port;
+};
+
+void clear_command_request_to_comport_buffer() {
+     request_to_com_port.clear();
 };
 
 /*
@@ -133,6 +117,9 @@ virtual command_data_container
 virtual command_data_container
     get_default_command_request_to_comport
                      ()=0;
+
+virtual metro_device::command_data
+     get_default_command_request_from_socket()=0;
 
 /*
 static functions

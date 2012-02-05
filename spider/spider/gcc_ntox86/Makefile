@@ -6,14 +6,15 @@ include ../indIpath
 include ../indLpath
 include ../indVpath
 
-BUILD_TYPE=RELEASE
+#BUILD_TYPE=RELEASE
+BUILD_TYPE=DEBUG
 
 ifdef BUILD_TYPE
-BUILD_RELEASE= -O1 -w8
-BUILD_DEBUG= -g -O0 -w8
+BUILD_RELEASE= -O1 -Wall
+BUILD_DEBUG= -g -O0 -Wall
 BUILD=$(BUILD_$(BUILD_TYPE))
 else
-BUILD=-O3 -w8
+BUILD=-O3 -Wall
 endif
 
 ifndef OPTIM

@@ -26,7 +26,6 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
-
 using namespace std;
 
 #include "defines.h"
@@ -195,6 +194,21 @@ int pulse_reciever_catcher
 	return Pt_HALT;
 }
 
+void log_device_buffer(int device_id, metro_device::buffer_data_type buffer_to_log)
+{
+    system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+      ostringstream msg_description;
+      msg_description<<" buffer for dev id "<<device_id<<"\n";
+
+      vector<char> tmp_chars(20);
+      for (vector<byte>::size_type i =0; i<buffer_to_log.size(); i++) {
+            itoa(buffer_to_log[i], &tmp_chars[0], 16);
+           msg_description<<" 0x"<<&tmp_chars[0];
+            if (i>0 && (i%10)==0) msg_description<<"\n";
+       };
+      spider_sys_sett->sys_message(system_settings::INFO_MSG,  
+                                                          msg_description.str());
+};
 
 void* metro_device_thread
           (void* arg) {
@@ -209,10 +223,14 @@ void* metro_device_thread
 
 	metro_device::buffer_data_type::iterator  answer_buffer_iter;
 	word crc_value;
-	struct timeval connection_timeout , recive_send_timeout;
 	metro_dev = (metro_device*) arg;
 
     system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+
+   uint64_t connect_to_device_timeout_nanosec(system_settings_spider::CONNECT_TO_DEVICE_TIMEOUT),
+          recieve_send_to_device_timeout_nanosec(system_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT);
+   connect_to_device_timeout_nanosec*=1000000000;
+   recieve_send_to_device_timeout_nanosec*=1000000000;
 
     answer_from_device_header.reserve(3);
     answer_from_device.reserve(255);
@@ -223,23 +241,18 @@ void* metro_device_thread
 	}
 
 	if (!metro_dev->get_enabled())
+	{
 						return 0;
-
+	};
 //door not in thread now - it reciv data from shavrs or escalators on station
    if (metro_dev->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR)
 						                                                                                         return 0;
 
-    connection_timeout.tv_sec=system_settings_spider::CONNECT_TO_DEVICE_TIMEOUT;
-    connection_timeout.tv_usec=0;
-
-    recive_send_timeout.tv_sec=system_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT;
-   	recive_send_timeout.tv_usec=0;
-	
 	while (true) {
           socket_dev=new client_socket(metro_dev->get_ip(),
                                                     system_settings::MODBUS_TCP_PORT,
-                                                    connection_timeout,
-                                                    recive_send_timeout);
+                                                    connect_to_device_timeout_nanosec,
+                                                    recieve_send_to_device_timeout_nanosec);
 
 		 connect_faliures_count=0;
 		 try {
@@ -325,9 +338,9 @@ void* metro_device_thread
 		                                                              answer_buffer_iter));
 
                    answer_from_device_crc=spider_sys_sett->bytes_of_type<word>(crc_value);
-                   if (answer_from_device_crc[1]!=
+                   if (answer_from_device_crc[0]!=
                        answer_from_device[answer_from_device.size()-system_settings::MODBUS_CRC_SIZE] ||
-                       answer_from_device_crc[0]!=
+                       answer_from_device_crc[1]!=
                        answer_from_device[answer_from_device.size()-system_settings::MODBUS_CRC_SIZE+1] ) {
 		                        ostringstream exception_description;
                                 exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
@@ -359,11 +372,14 @@ void* metro_device_thread
                   
                    connect_faliures_count=0;
                    metro_dev->set_answer_from_device_buffer(answer_from_device);
-
                    MsgSendPulse(metro_dev->get_connection_id(),
                                           system_settings_spider::PHOTON_THREAD_PULSE,
                                           system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
                                           metro_dev->get_id());
+					if (metro_dev->is_packet_logging())
+						{
+							log_device_buffer(metro_dev->get_id(), answer_from_device);
+						}
                     usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
               }; //while (connect_faliures_count
 
@@ -371,6 +387,14 @@ void* metro_device_thread
                                      system_settings_spider::PHOTON_THREAD_PULSE,
                                      system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
                                      metro_dev->get_id());
+
+		      ostringstream exception_description;
+              exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
+              exception_description<<" reconnection for the socket "<<endl;
+              spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
+                                                          exception_description.str());
+              cout<<exception_description.str()<<endl;
+
 			delete(socket_dev); 
             sleep(system_settings_spider::CONNECT_TO_DEVICE_TIMEOUT);
 
@@ -381,43 +405,41 @@ void* metro_device_thread
 
 void* routing_thread
           (void* arg) {
-    router& router_inst=router::get_instance();
 
+    system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+
+    router& router_inst=router::get_instance();
     router::routes_iterator routes_iter;
     router::gateways_iterator gateways_iter;
-
+   try {
     bool connect_to_test_host_established;
-    cout<<"router_inst.size_gateway()  "<<static_cast<int>(router_inst.size_gateway())<<endl;
     if (router_inst.size_gateway()<2) {
-            system_settings_spider *sys_sett=system_settings_spider::get_instance();
-            if (sys_sett==NULL) 
-                    cout<<"routing_thread: router_inst.gateways_size()<2"<<endl;
-                   else 
-                     sys_sett->sys_message(system_settings::ERROR_MSG, "routing_thread: router_inst.gateways_size()<2");
+             spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
+                                                          "routing_thread: router_inst.gateways_size()<2");
              return NULL;
            };
 
     if (router_inst.empty_routes()) {
-            system_settings_spider *sys_sett=system_settings_spider::get_instance();
-            if (sys_sett==NULL) 
-                    cout<<"routing_thread: routes is empty"<<endl;
-                   else 
-                     sys_sett->sys_message(system_settings::ERROR_MSG, "routing_thread: routes is empty");
+             spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
+                                                          "routing_thread: routes is empty");
               return NULL;
            };
 
-	while (true) {
+		ostringstream err_message;
+        err_message<<"Size of routing "<<router_inst.size_routes();
+         spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
+                                               err_message.str());
+
+     	while (true) {
          routes_iter=router_inst.begin_routes();
          while (routes_iter!=router_inst.end_routes()){
-                 cout<<"route"<<endl;
-                 gateways_iter=router_inst.begin_gateway();
+                sleep(5);
+                gateways_iter=router_inst.begin_gateway();
                 while(gateways_iter!=router_inst.end_gateway() ) {
-                           cout<<"gateway"<<endl;
                             //test all connections in previos gateway
-                            connect_to_test_host_established=false;
+                             connect_to_test_host_established=false;
                              router::route::test_hosts_iterator test_hosts_iter=routes_iter->test_hosts.begin();
                              while (test_hosts_iter!=routes_iter->test_hosts.end()) {
-                                  cout<<"test hosts 1"<<endl;
                                   if (router_inst.test_connection_to_test_host(*test_hosts_iter)) {
                                           connect_to_test_host_established=true;
                                            break;
@@ -425,19 +447,15 @@ void* routing_thread
                                   test_hosts_iter++;
                              }; //while (test_hosts_iter!=routes_iter->test_hosts.end())
                            if (connect_to_test_host_established) break;
-                            cout<<"change route"<<endl;
 
-                            router_inst.change_route(routes_iter->destination, 
+                               router_inst.change_route(routes_iter->destination,
                                                                       routes_iter->mask,
-                                                                        *gateways_iter);
-
-
-
-                            //test all connections in new gateway
+                                                                      *gateways_iter);
+                          
+                               //test all connections in new gateway
                             connect_to_test_host_established=false;
                             test_hosts_iter= routes_iter->test_hosts.begin();
                              while (test_hosts_iter!=routes_iter->test_hosts.end()) {
-                                    cout<<"test hosts 2"<<endl;
                                   if (router_inst.test_connection_to_test_host(*test_hosts_iter)) {
                                           connect_to_test_host_established=true;
                                            break;
@@ -445,12 +463,19 @@ void* routing_thread
                                   test_hosts_iter++;
                              }; //while (test_hosts_iter!=routes_iter->test_hosts.end())
 
-                           if (connect_to_test_host_established) break;
+                           if (connect_to_test_host_established) {
+									 gateways_iter=router_inst.end_gateway();
+									 break;
+						    };
                       gateways_iter++;
-                  }; //while(gateways_iter!=router_inst.end_gateways() &&
+                  }; //while(gateways_iter!=router_inst.end_gateway()
                 routes_iter++;
-                sleep(5);
           };//while (routes_iter!=router_inst.end_routes()
      }; //while (true)
+      } catch (runtime_error run_err) {
+             spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
+                                                                     string("routing_thread: ")+run_err.what());
+      };
+	return NULL;
 };
 

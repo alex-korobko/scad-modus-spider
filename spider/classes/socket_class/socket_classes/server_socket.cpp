@@ -1,4 +1,3 @@
-
 #include <iostream.h>
 
 #include <vector>
@@ -19,19 +18,17 @@
 using namespace std;
 
 #include "defines.h"
-#include <sys/select.h> //#define FD_SETSIZE
 #include "socket_exception.h"
 #include "generic_socket.h"
 
 #include "server_socket.h"
 
-server_socket::server_socket (
-                              struct timeval recv_send_timeout,
+server_socket::server_socket ( uint64_t recv_send_timeout_nsec,
                               int new_backlog,
 							  int new_port):
-			generic_socket(recv_send_timeout),
-			m_port(new_port),
-			m_backlog(new_backlog){};
+			generic_socket(recv_send_timeout_nsec),
+			port(new_port),
+			backlog(new_backlog){};
 
 void server_socket::initialize() throw (socket_exception){
 	if (! generic_socket::create())
@@ -40,15 +37,14 @@ void server_socket::initialize() throw (socket_exception){
 	if ( ! generic_socket::is_valid() )
 		throw socket_exception("server_socket::initialize() : generic_socket don`t valid");
 
-
-	m_addr.sin_family = AF_INET;
-	m_addr.sin_addr.s_addr = INADDR_ANY;
-	m_addr.sin_port = htons ( m_port );
+	sock_addr.sin_family = AF_INET;
+	sock_addr.sin_addr.s_addr = INADDR_ANY;
+	sock_addr.sin_port = htons ( port );
 
 	
-	int bind_return = ::bind( m_sock, 
-										(sockaddr *) &m_addr,
-										sizeof(m_addr)
+	int bind_return = ::bind( sock, 
+										(sockaddr *) &sock_addr,
+										sizeof(sock_addr)
 										);
 
 	if ( bind_return==-1){
@@ -62,8 +58,8 @@ void server_socket::initialize() throw (socket_exception){
 			throw socket_exception (message);
 		};
 
-	int listen_return = ::listen (m_sock,
-											m_backlog);
+	int listen_return = ::listen (sock,
+											backlog);
 
 	if (listen_return == -1){
 			string message="socket::listen() ::listen(...) error : ";
@@ -77,45 +73,17 @@ void server_socket::initialize() throw (socket_exception){
 		}
 }
 
-/*
-void server_socket::send ( const vector<byte> buffer_to_send) throw (socket_exception){
-	if (! socket::send(buffer_to_send)){
-			throw socket_exception("server_socket::send (...): socket::send(...)==false");
-		};
-}
-
-
-void server_socket::recv ( vector<byte> *buffer_to_recv) throw (socket_exception){
-  int result = socket::recv(buffer_to_recv);
-  cout<<"server_socket::recv result " <<result<<" time "<<ClockCycles()<<endl;
-
-  vector<char> tmp_chars(20);
-   cout<<"server_socket::recv for return buffer size "<<buffer_to_recv->size()<<" time "<<ClockCycles()<<endl;
-   for (int i=0; i<buffer_to_recv->size(); i++) {
-   itoa(buffer_to_recv->at(i), &tmp_chars[0], 16);
-   cout<<"\t0x"<<&tmp_chars[0]<<endl;
-   };
-
-}
-
-void server_socket::recv_peek ( vector<byte> *buffer_to_recv) throw (socket_exception){
-	socket::recv_peek(buffer_to_recv);
-}
-*/
-
 generic_socket* server_socket::accept ()  throw (socket_exception){
-	int flags;
 	ostringstream exception_description;
-	socklen_t addr_length = sizeof ( m_addr);
+	socklen_t addr_length = sizeof ( sock_addr);
 
 	if ( ! generic_socket::is_valid() ) 	return false;
-
 
 	generic_socket *new_socket = new generic_socket(
                generic_socket::get_recv_send_timeout());
 
-	new_socket->set_sock( ::accept (m_sock,
-													(sockaddr*) &m_addr,
+	new_socket->set_sock( ::accept (sock,
+													(sockaddr*) &sock_addr,
 													&addr_length)
                                           );
 
@@ -125,16 +93,6 @@ generic_socket* server_socket::accept ()  throw (socket_exception){
 			delete(new_socket);
 			throw socket_exception (message);
 		}
-
-	if ((flags = fcntl(new_socket->get_sock(), F_GETFL, 0)) < 0) {
-	   exception_description<<"server_socket::accept () fail to get file status flags error : "<<strerror(errno);
-	   throw socket_exception(exception_description.str());
-	};
-
-	if (fcntl(new_socket->get_sock(), F_SETFL, flags | O_NONBLOCK) < 0){
-	   exception_description<<"server_socket::accept () fail to set file status flags error : "<<strerror(errno);
-	   throw socket_exception(exception_description.str());
-	};
 
 	return new_socket;
 }

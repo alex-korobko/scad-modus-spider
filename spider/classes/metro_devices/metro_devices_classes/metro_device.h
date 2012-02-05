@@ -27,18 +27,20 @@ private:
 
    	PtWidget_t *device_widget, *station_widget;
 
-   	int 		id;
-   	int			id_station;
-   	int			number;
-   	int			type;
+   	int id;
+   	int id_station;
+   	int number;
+   	int modbus_number;
+   	int type;
 
-   	int			execution_mode; //see enum system_settings::START_DAY_MODE_ 
-   	int			start_hour;
-   	int			start_minute;
+   	int execution_mode; //see enum system_settings::START_DAY_MODE_ 
+   	int start_hour;
+   	int start_minute;
 
-	int			sleepticks;
-   	bool		enabled;
-   	bool		must_set_time;
+	int sleepticks;
+   	bool enabled;
+   	bool must_set_time;
+	bool conduction_is_switched_off;
 
 //count of last failures, if  reading data is success so last_failures_count=0
     int last_failures_count;
@@ -48,6 +50,13 @@ private:
 	//for storing time of message in remote container (attention! not a self message id!) last recived
 
    	in_addr_t	ip;
+
+    //moment when offline or exception state occurs for the device
+    time_t last_offline_or_exception_time;
+	//period of time when switching from offline or exception state moves not to ready not assepted state but to ready state
+	double offline_or_exception_delay;
+
+	bool log_packets;
 
    	buffer_data_type	answer_from_device;
    	buffer_data_type	request_for_send_to_device;
@@ -67,73 +76,89 @@ public:
 	metro_device( int  id,
                    int	  id_station,
                    int number,
+                   int modbus_number,
                    int	 type,
                    int	 start_day_mode,
                    int	 start_hour,
                    int	 start_minute,
                    bool enabled,
                    in_addr_t	ip,
-                   int channel)  throw (spider_exception);
+                   int channel,
+					double offline_or_exception_delay,
+					bool new_conduction_is_switched_off,
+					bool new_log_packets)  throw (spider_exception);
 
 	virtual ~metro_device();
 
 /*
 get_ and set_  metods for private data members
 */
-	PtWidget_t*  get_station_widget() {return station_widget;};
+	PtWidget_t*  get_station_widget() const {return station_widget;};
 	void  set_station_widget(PtWidget_t *station_wgt ) {station_widget=station_wgt;};
 
-	PtWidget_t*  get_device_widget(){return device_widget;};
+	PtWidget_t*  get_device_widget() const {return device_widget;};
 	void  set_device_widget(PtWidget_t *device_wgt ){device_widget=device_wgt;};
 
-	int get_id() { return id; };
+	int get_id() const { return id; };
 	void set_id (dword new_id) {id=new_id;};
 
-	int get_type() { return type; };
+	int get_type() const { return type; };
 	void set_type(int new_type) { type=new_type;};
 
-    int get_number() { return number; }
+    int get_number() const { return number; }
 	void set_number(int new_number) { number=new_number;};
 
-	int get_failures_count() { return last_failures_count; };
+    int get_modbus_number() const { return modbus_number; }
+	void set_modbus_number(int new_modbus_number) { modbus_number=new_modbus_number;};
+
+	int get_failures_count() const { return last_failures_count; };
 	void set_failures_count(int failures_count) { last_failures_count=failures_count;};
 
-	int get_last_message_remote_id() { return last_message_remote_id; };
+	int get_last_message_remote_id() const { return last_message_remote_id; };
 	void set_last_message_remote_id(int new_last_message_remote_id) { last_message_remote_id=new_last_message_remote_id; };
 
-	int get_sleepticks () {return (sleepticks);};
+	int get_sleepticks () const {return (sleepticks);};
 	void set_sleepticks(int new_sleepticks) {sleepticks=new_sleepticks;};
 	void increment_sleepticks() {sleepticks++;};
 
-	int get_connection_id() { return (connection_id);};
+	int get_connection_id() const { return (connection_id);};
   	
-	in_addr_t get_ip() { return ip; };
+	in_addr_t get_ip() const { return ip; };
 	void set_ip(in_addr_t new_ip_address) { ip=new_ip_address; };
+
+	double get_offline_or_exception_delay () const {return offline_or_exception_delay;}
+
+	bool is_packet_logging() const { return log_packets;}
+
+   time_t get_last_offline_or_exception_time() const { return last_offline_or_exception_time;};
+   void set_last_offline_or_exception_time(time_t new_last_offline_or_exception_time) {last_offline_or_exception_time = new_last_offline_or_exception_time;};
 
 	pthread_mutex_t* get_answer_from_device_mutex() {return &answer_from_device_mutex;};
 	pthread_mutex_t* get_request_to_device_mutex() {return &request_to_device_mutex;};
 
-	bool get_enabled() {return(enabled);};
+	bool get_enabled() const {return(enabled);};
 	void set_enabled(bool new_enabled_state) {enabled=new_enabled_state;};
 
-	int get_execution_mode() {return execution_mode;};
+	int get_execution_mode() const {return execution_mode;};
 	void set_execution_mode(int new_execution_mode) {execution_mode=new_execution_mode;};
 	
-	int get_start_hour() {return start_hour;};
+	int get_start_hour() const {return start_hour;};
 	void set_start_hour(int new_start_hour) {start_hour=new_start_hour;};
 
-	int get_start_minute(){ return start_minute;}
+	int get_start_minute() const{ return start_minute;}
 	void set_start_minute(int new_start_minute) {start_minute=new_start_minute;};
 
+	bool is_conduction_is_switched_off() {return conduction_is_switched_off;};
+	void set_conduction_is_switched_off(bool new_conduction_is_switched_off_val) {conduction_is_switched_off = new_conduction_is_switched_off_val;};
    	  	
-   	int get_station_id(){return (id_station);};
+   	int get_station_id() const {return (id_station);};
   	void set_station_id( int new_id_station) { id_station=new_id_station;};
 
-  void set_answer_from_device_buffer (const buffer_data_type answer);
+  void set_answer_from_device_buffer (const buffer_data_type& answer);
   buffer_data_type get_answer_from_device_buffer();
 
-  void set_request_to_device_buffer (const buffer_data_type request);
-  void set_current_request_to_device_buffer (const metro_device::buffer_data_type request);
+  void set_request_to_device_buffer (const buffer_data_type& request);
+  void set_current_request_to_device_buffer (const metro_device::buffer_data_type& request);
    buffer_data_type get_request_for_send_to_device_buffer();
    buffer_data_type  get_current_request_to_device_buffer();
 
@@ -184,9 +209,9 @@ virtual  PhRect_t get_device_widget_extent() throw (spider_exception)=0;
 virtual void update_device_panel(metro_device_type *dev_type) throw (spider_exception)=0;
 virtual data_block* get_data_block()=0;
 
-virtual command get_device_pref_command() throw (spider_exception)=0;
+virtual command get_device_start_command() throw (spider_exception)=0;
 
-virtual vector<command> get_appropriated_commands() =0;
+virtual vector<command> get_appropriated_commands()  throw (spider_exception)=0;
 
 
 virtual void create_properties_widgets(PtWidget_t *parent_widget) =0;

@@ -92,7 +92,6 @@ static void prepare_to_display(PtWidget_t *raw_list_widget , unsigned short size
 
    if (size==0) return ;
 
-
     last=NULL;
     list_item=(PtGenListItem_t*)malloc(1*sizeof(PtGenListItem_t));
 
@@ -167,14 +166,14 @@ try {
            metro_station::iterator_devices_id  device_id = stations_iter->second.begin_devices_id();
            advance(device_id, pos-1);
 
-           devices_iter=metro_devices->find(*device_id);
-           if (devices_iter==metro_devices->end()) {
+          devices_iter=metro_devices->find(*device_id);
+          if (devices_iter==metro_devices->end()) {
                   ostringstream exception_description;
                   exception_description<<"not found device with id "<<*device_id<<" for station with id "<<station_id;
                   throw spider_exception(exception_description.str());
                };
 
-           devices_iter->second->create_properties_widgets
+       devices_iter->second->create_properties_widgets
                       (metro_stations_container::get_metro_station_devices_properties_panel());
 } catch (spider_exception spr_exc) { 
             spider_sys_sett->sys_message(system_settings::ERROR_MSG, 
@@ -204,7 +203,7 @@ vector<PtArg_t> args;
 PhPoint_t widget_position;
 string dialog_title;
 unsigned int dialog_wnd_height=350, 
-                     dialog_wnd_width=750, 
+                     dialog_wnd_width=850,
                      common_panel_height=100,
                      buttons_panel_height=40,
                      divider_height=35,
@@ -397,7 +396,7 @@ try {
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/5,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
         PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Станция", 0);
          current_button=PtCreateWidget(PtButton,
@@ -410,7 +409,7 @@ try {
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/5,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Устройство", 0);
          current_button=PtCreateWidget(PtButton,
@@ -420,11 +419,24 @@ try {
          if (current_button==NULL)
                   throw spider_exception("button \"Device\" in raw list header is NULL");
 
+		args.clear();
+		args.resize(3);
+		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
+         PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
+                       "Режим", 0);
+         current_button=PtCreateWidget(PtButton,
+                                                     divider_in_raw_list,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_button==NULL)
+                  throw spider_exception("button \"Mode\" in raw list header is NULL");
+
 
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/5,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Команда", 0);
          current_button=PtCreateWidget(PtButton,
@@ -438,7 +450,7 @@ try {
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2, 0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/5,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Запуск", 0);
          current_button=PtCreateWidget(PtButton,
@@ -564,15 +576,23 @@ try {
                throw spider_exception(message.str());
            };
 
-
-       if (udku_to_properties->get_udku_direction_combobox_widget()==NULL)
+       if (udku_to_properties->get_udku_pref_direction_combobox_widget()==NULL)
                throw spider_exception("udku_to_properties->get_udku_direction_combobox_widget()==NULL");
-	    PtGetResource(udku_to_properties->get_udku_direction_combobox_widget(),
+	    PtGetResource(udku_to_properties->get_udku_pref_direction_combobox_widget(),
 							Pt_ARG_CBOX_SEL_ITEM,
 							&internal_sel_item_index,
 							0);
  	    sel_item_index=*internal_sel_item_index;
         udku_to_properties->set_pref_direction(sel_item_index);
+
+       if (udku_to_properties->get_udku_start_direction_combobox_widget()==NULL)
+               throw spider_exception("udku_to_properties->get_udku_direction_combobox_widget()==NULL");
+	    PtGetResource(udku_to_properties->get_udku_start_direction_combobox_widget(),
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+ 	    sel_item_index=*internal_sel_item_index;
+        udku_to_properties->set_start_direction(sel_item_index);
 
        if (udku_to_properties->get_udku_start_mode_combobox_widget()==NULL)
                throw spider_exception("udku_to_properties->get_escalator_start_mode_combobox_widget()==NULL");
@@ -668,15 +688,25 @@ try {
                throw spider_exception(message.str());
            };
 
-
-       if (escalator_to_properties->get_escalator_direction_combobox_widget()==NULL)
+       if (escalator_to_properties->get_escalator_pref_direction_combobox_widget()==NULL)
                throw spider_exception("escalator_to_properties->get_escalator_direction_combobox_widget()==NULL");
-	    PtGetResource(escalator_to_properties->get_escalator_direction_combobox_widget(),
+	    PtGetResource(escalator_to_properties->get_escalator_pref_direction_combobox_widget(),
 							Pt_ARG_CBOX_SEL_ITEM,
 							&internal_sel_item_index,
 							0);
  	    sel_item_index=*internal_sel_item_index;
+
         escalator_to_properties->set_pref_direction(sel_item_index);
+
+       if (escalator_to_properties->get_escalator_start_direction_combobox_widget()==NULL)
+               throw spider_exception("escalator_to_properties->get_escalator_direction_combobox_widget()==NULL");
+	    PtGetResource(escalator_to_properties->get_escalator_start_direction_combobox_widget(),
+							Pt_ARG_CBOX_SEL_ITEM,
+							&internal_sel_item_index,
+							0);
+ 	    sel_item_index=*internal_sel_item_index;
+
+        escalator_to_properties->set_start_direction(sel_item_index);
 
        if (escalator_to_properties->get_escalator_start_mode_combobox_widget()==NULL)
                throw spider_exception("escalator_to_properties->get_escalator_start_mode_combobox_widget()==NULL");

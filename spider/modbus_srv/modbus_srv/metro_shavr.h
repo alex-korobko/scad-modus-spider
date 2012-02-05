@@ -10,9 +10,6 @@ metro_device::command_data
          create_answer_to_socket_func_4
                (metro_device::command_data_container answer_from_com_port);
 
-metro_device::command_data
-     get_default_command_request_from_socket();
-
 //automats
 int A0_state;
 
@@ -141,9 +138,9 @@ enum {
 /*
 constructor and destructor
 */
-explicit metro_shavr(int new_number) 
+metro_shavr(int new_number, bool new_log_packets) 
                 throw (metro_device::metro_device_exception) :
-    metro_device(new_number),
+    metro_device(new_number, new_log_packets),
     A0_state(A0_OFFLINE),
     A0_x5(false),  //offline 
     A1_x3(false),
@@ -168,6 +165,9 @@ virtual command_data_container
 
 virtual command_data_container
             get_default_command_request_to_comport();
+
+virtual metro_device::command_data
+     get_default_command_request_from_socket();
 };
 
 #endif

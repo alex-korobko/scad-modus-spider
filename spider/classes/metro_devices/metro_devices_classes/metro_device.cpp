@@ -44,23 +44,29 @@ PtWidget_t* metro_device::device_panel=NULL;
 metro_device::metro_device(int  id,
                    int	  id_station,
                    int number,
+                   int modbus_number,
                    int	 type,
                    int	 start_day_mode,
                    int	 start_hour,
                    int	 start_minute,
                    bool enabled,
                    in_addr_t	ip,
-                   int channel
+                   int channel,
+				   double offline_or_exception_delay,
+					bool new_conduction_is_switched_off,
+					bool new_log_packets
                    )  throw (spider_exception):
                    id(id),
                    id_station(id_station),
                    number(number),
+                   modbus_number(modbus_number),
                    type(type),
                    execution_mode(start_day_mode),
                    start_hour(start_hour),
                    start_minute(start_minute),
                    sleepticks(0),
                    enabled(enabled),
+				   conduction_is_switched_off(new_conduction_is_switched_off),
                    last_failures_count(0),
                    last_message_remote_id(-1),
                    last_message_remote_time(0),
@@ -69,7 +75,10 @@ metro_device::metro_device(int  id,
                    request_for_send_to_device(0),
                    current_request_to_device(0),
 				   connection_id(0),
-				   channel_id(0) {
+				   channel_id(0),
+				  last_offline_or_exception_time (0),
+				  offline_or_exception_delay(offline_or_exception_delay),
+				 log_packets(new_log_packets) {
 
 		connection_id = ConnectAttach(0, 0, channel, 0, 0 );
 		if (connection_id<0){
@@ -117,13 +126,12 @@ metro_device::~metro_device(){
 		ret_value=pthread_mutex_destroy(&time_setting_flag_mutex);
 		if (ret_value!=EOK) 
 		       cout<<"can`t destroy time_setting_flag_mutex error : "<< strerror(ret_value)<<endl;
-
 };
 
 
     void 
      metro_device::set_answer_from_device_buffer 
-               (const metro_device::buffer_data_type answer){
+               (const metro_device::buffer_data_type& answer){
             lock_mutex mutex_lock(&answer_from_device_mutex);
             answer_from_device=answer;
           };
@@ -133,7 +141,7 @@ metro_device::~metro_device(){
             buffer_data_type return_buffer(0);
             {
                lock_mutex mutex_lock(&answer_from_device_mutex);
-               answer_from_device.swap(return_buffer);
+               return_buffer = answer_from_device;
              }
 
             return return_buffer;
@@ -141,7 +149,7 @@ metro_device::~metro_device(){
 
     void 
       metro_device::set_request_to_device_buffer
-           (const metro_device::buffer_data_type request){
+           (const metro_device::buffer_data_type& request){
                  {
                     lock_mutex mutex_lock(&request_to_device_mutex);
                     request_for_send_to_device=request;
@@ -150,7 +158,7 @@ metro_device::~metro_device(){
 
     void 
       metro_device::set_current_request_to_device_buffer
-           (const metro_device::buffer_data_type request){
+           (const metro_device::buffer_data_type& request){
                  {
                     lock_mutex mutex_lock(&request_to_device_mutex);
                     current_request_to_device=request;

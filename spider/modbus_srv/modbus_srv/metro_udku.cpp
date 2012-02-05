@@ -50,6 +50,7 @@ metro_device::command_data_container
    	return return_val;
 };
 
+
 metro_device::command_data
      metro_udku::get_default_command_request_from_socket(){
  	command_data buffer(0);
@@ -74,59 +75,10 @@ void
                    (metro_device::command_data_container answer_from_com_port){
 command_data new_answer_to_socket(0);
 byte function_code;
-metro_device::command_data request;
-
-pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-   request=request_from_socket;
-pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
-
-// answer_from_device
-//============================================
-/*
-{
-vector<char> tmp_buffer(32);
-if (metro_device::get_number()==1) {
-
-//cout<<"\n request size "<<request.size()<<endl;
-//for (vector<byte>::size_type i=0; i<request.size(); i++) {
-//          itoa(request[i],
-//                  &tmp_buffer[0], 16);
-//          if (i==3 ||
-//              (i-3)%8==0) cout<<endl;
-//          cout<<"\t0x"<<&tmp_buffer[0];
-//};
-//cout<<endl;
-
-if (answer_from_com_port.empty()) {
-      cout<<"answer_from_com_port is EMPTY"<<endl;
- } else { //if (answer_from_com_port.empty())
-for (metro_device::command_data_container::size_type j=0;
-       j<answer_from_com_port.size();
-       j++) {
-           cout<<"answer_from_com_port "<<j<<" tid "<<pthread_self()<<" :"<<endl;
-            for (metro_device::command_data_container::value_type::size_type i=0;
-              i<answer_from_com_port[j].size() && i<6;
-//              i<4; //only header
-              i++) {
-              itoa(answer_from_com_port[j][i],
-                      &tmp_buffer[0], 16);
-              if (i==3 ||
-                  (i-3)%8==0) cout<<endl;
-              cout<<"\t0x"<<&tmp_buffer[0];
-           }; //for (metro_device::buffer_data_type::size_type i=0;
-      cout<<endl;
-    }; //for (metro_device::command_data_container::size_type j=0;
-    cout<<endl;
-};//if (answer_from_com_port.empty())
-}; //if (metro_device::get_number()==1 )
-};
-*/
-//============================================
-
 
 if (answer_from_com_port.empty() ||
     answer_from_com_port[0].empty()) {
-        function_code=request[program_settings::MODBUS_FUNCTION_CODE_INDEX];
+        function_code=request_from_socket[program_settings::MODBUS_FUNCTION_CODE_INDEX];
 		new_answer_to_socket=metro_device::generate_error_answer_for_function(
 		                                                              get_number(),
 		                                                              function_code,
@@ -147,70 +99,37 @@ if (answer_from_com_port.empty() ||
          }; // if ((device_answer_header[prog
 };
 
-//========delete it================
-//{
-//cout<<"\nudku new_answer_to_socket size "<<new_answer_to_socket.size()<<endl;
-//vector<char> tmp_chars(10);
-//for (int i=0;
-//      i<static_cast<int>(new_answer_to_socket.size());
-//      i++) {
-//itoa(new_answer_to_socket[i],
-//       &tmp_chars[0],
-//       16);
-//   if (i%9==0) cout<<endl;
-//   cout<<"  0x"<<&tmp_chars[0];
-// };
-// cout<<endl;
-// };
-//=============================
-
-if (get_command_request_to_comport()==
-     get_default_command_request_to_comport()) {
-          metro_device::set_default_answer_to_socket_buffer(new_answer_to_socket);
-    };
-/*
-pthread_mutex_lock(&request_from_socket_mutex);
-request_from_socket.clear();
-pthread_mutex_unlock(&request_from_socket_mutex);
-*/
 metro_device::set_command_answer_to_socket_buffer(new_answer_to_socket);
 };
 
 void 
      metro_udku::put_command_request_from_socket
                    (metro_device::command_data request_from_socket) {
-   pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-     this->request_from_socket=request_from_socket;
-   pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
-
+   this->request_from_socket=request_from_socket;
    metro_device::set_command_request_to_comport_buffer(create_request_to_com_port()); 
  };
 
 metro_device::command_data_container
          metro_udku::create_request_to_com_port(){
     metro_device::command_data_container data_container(0);
-    metro_device::command_data local_request;
-    pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-      local_request=request_from_socket;
-    pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
 
-    if (local_request==
+    if (request_from_socket==
         get_default_command_request_from_socket()) {
             data_container=get_default_command_request_to_comport();
          } else {
-            data_container.push_back(local_request);
+            data_container.push_back(request_from_socket);
 
              //detect is command for udku
-             if (local_request.size()==8 &&
-                  local_request[1]==5) { //command 5
-                  metro_device::command_data::iterator tmp_iter=local_request.begin();
-                  advance(tmp_iter, local_request.size()-2);
+             if (request_from_socket.size()==8 &&
+                  request_from_socket[1]==5) { //command 5
+                  metro_device::command_data::iterator tmp_iter=request_from_socket.begin();
+                  advance(tmp_iter, request_from_socket.size()-2);
                   //crc check
-                  word calc_crc=program_settings::crc(program_settings::bytes(local_request.begin(), tmp_iter));
-                  word org_crc=program_settings::type_from_bytes<word>(program_settings::bytes(tmp_iter, local_request.end()));
+                  word calc_crc=program_settings::crc(program_settings::bytes(request_from_socket.begin(), tmp_iter));
+                  word org_crc=program_settings::type_from_bytes<word>(program_settings::bytes(tmp_iter, request_from_socket.end()));
                    if (calc_crc==org_crc) {
                           metro_device::messages_container new_messages(0);
-                           switch (local_request[3]) {
+                           switch (request_from_socket[3]) {
                               case 0:
                                  new_messages.push_back(0);
                                  new_messages.push_back(MESSAGE_RECIEVE_COMMAND_UP);
@@ -240,22 +159,6 @@ metro_device::command_data
     metro_device::command_data  answer_to_socket(0);
     metro_device::messages_container new_messages(0);
     metro_device::command_data::iterator iter_beg, iter_end;
-
-//=======delete it====================
-//cout <<"answer_from_com_port[1]"<<endl;
-//  vector<char> tmp_chars(40);
-//	for(metro_device::command_data::size_type i=0;
-//	      i<answer_from_com_port[2].size();
-//	      i++) {
-//	  if (i%8 ==0) cout<<endl;
-//	  itoa(answer_from_com_port[2][i],
-//	        &tmp_chars[0],
-//	        16);
-//	  cout<<"  0x"<<&tmp_chars[0];
-//   };
-//   cout<<endl;
-//==================================
-
 //     UDKU
 	if(answer_from_com_port[0].size()!=
 	    program_settings::MODBUS_HEADER_SIZE+
@@ -296,6 +199,12 @@ metro_device::command_data
                           new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
                     };
                   break;
+          case MODBUS_REGISTER_3001_LOW_BYTE_GPUP_VALUE:
+					//no message can be added if escalator goes up
+					break;
+          case MODBUS_REGISTER_3001_LOW_BYTE_GPDOWN_VALUE:
+					//no message can be added if escalator goes up
+					break;
           case MODBUS_REGISTER_3001_LOW_BYTE_UP20_VALUE:
                    if (previos_escalator_condition_value!=
                         MODBUS_REGISTER_3001_LOW_BYTE_UP20_VALUE) {
@@ -452,27 +361,6 @@ metro_device::command_data
                                              tmp_value_bytes.begin(),
                                              tmp_value_bytes.end());
 
-//=======delete it====================
-// answer_from_device
-//============================================
-{
-if (metro_device::get_number()==1) {
-
-cout <<"answer_to_socket"<<endl;
-  vector<char> tmp_chars(40);
-	for(metro_device::command_data::size_type i=0;
-	      i<answer_to_socket.size();
-	      i++) {
-	  if (i%8 ==0) cout<<endl;
-	  itoa(answer_to_socket[i],
-	        &tmp_chars[0],
-	        16);
-	  cout<<"  0x"<<&tmp_chars[0];
-   };
-   cout<<endl;
-};//if (metro_device::get_number()==1)
-};
-//==================================
 
   return answer_to_socket;
 };
@@ -485,10 +373,7 @@ metro_device::command_data_container
      if (return_data.empty()) {
         return_data=get_default_command_request_to_comport();
         metro_device::set_command_request_to_comport_buffer(return_data);
-
-        pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-             request_from_socket=get_default_command_request_from_socket();
-        pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
+         request_from_socket=get_default_command_request_from_socket();
         };
 
      return return_data;

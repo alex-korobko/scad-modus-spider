@@ -47,9 +47,11 @@ size_type size() const {return (container_devices_types.size());};
 
 //load parameters from config file
 void load_message_parameters () throw(spider_exception);
+void load_input_circut_for_message_parameters () throw(spider_exception);
 void load_data_unit_parameters (data_unit_type unit_type)  throw(spider_exception);
 void load_block_parameters ()  throw(spider_exception);
 void load_type_parameters ()  throw(spider_exception);
+void load_device_type_file (string file_name)  throw(spider_exception);
 void load (string file_name)  throw(spider_exception);
 
 //static functions

@@ -294,9 +294,24 @@ if (PtAppAddInput(NULL, 0, pulse_reciever_catcher, NULL)== NULL){
     	}
 
 //	Begin : creating devices threads
+    pthread_attr_t detached_thread_attributes;
+
+    if (pthread_attr_init(&detached_thread_attributes)!=EOK) {
+		spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+													    "Can`t pthread_attr_init(&detached_thread_attributes)");
+          PtExit(EXIT_FAILURE);
+        };
+
+        if (pthread_attr_setdetachstate( &detached_thread_attributes,
+                 PTHREAD_CREATE_DETACHED)!=EOK) {
+           spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+													    "Can`t pthread_attr_setdetachstate( ..., PTHREAD_CREATE_DETACHED)");
+          PtExit(EXIT_FAILURE);
+        };
+
    iter_dev=metro_devices->begin();
    while (iter_dev!=metro_devices->end()) {       
-       	if (pthread_create(NULL, NULL, &metro_device_thread, iter_dev->second) != EOK)
+       	if (pthread_create(NULL, &detached_thread_attributes, &metro_device_thread, iter_dev->second) != EOK)
      		      spider_sys_sett->message_window(system_settings::ERROR_MSG,
                                                                            "Can`t create device thread" );
             iter_dev++;

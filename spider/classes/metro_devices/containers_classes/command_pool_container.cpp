@@ -170,6 +170,7 @@ switch (dev_iter->second->get_type_description()) {
                                      cmd.get_station(),
                                      cmd.get_device_id(),
                                      time(NULL)));
+
                       main_log->prepare_to_display();
                      break;
 				  case system_settings::COMMAND_DOWN:
@@ -184,6 +185,20 @@ switch (dev_iter->second->get_type_description()) {
                                      time(NULL)));
                       main_log->prepare_to_display();
                       break;
+
+				  case system_settings::COMMAND_STOP:
+                    tmp_id=main_log->get_records_autoincrement();
+                    main_log->set_records_autoincrement(++tmp_id);
+
+                    main_log->insert(log_record(tmp_id,
+                                     system_settings::DISPATCHER_MAKE_CMD_STOP,
+                                     system_settings_spider::MESSAGE_TYPE_DISPATCHER_DOIT,
+                                     cmd.get_station(),
+                                     cmd.get_device_id(),
+                                     time(NULL)));
+                      main_log->prepare_to_display();
+                      break;
+
                };
          break;
 

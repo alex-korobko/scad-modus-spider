@@ -1,5 +1,6 @@
 OBJECTS= router.o\
   generic_socket.o\
   client_socket.o\
+  program_settings.o\
   main.o
 

@@ -17,7 +17,7 @@ using namespace std;
 #include "defines.h"
 #include "program_settings.h"
 
-const string app_version="v1.2.6.5 ";
+const string app_version="v1.2.8.2 ";
 
 program_settings* program_settings::program_settings_instance=NULL;
 

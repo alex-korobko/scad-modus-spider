@@ -2,12 +2,10 @@
 #define _ROUTER_H_
 
 class router   {
-friend class frinend_class_only_for_compiler_happening ;
+friend class ghost_class_only_for_compiler_happening ;
 public:
 enum {ROUTING, ROUTE, SECTIONS_COUNT};
-enum {ECHO_TCP_PORT=7,  //echo service port on tested host
-          CONNECT_TO_DEVICE_TIMEOUT=12, //connection established timeout in sec
-          RECIEVE_SEND_TO_DEVICE_TIMEOUT=10}; //recieve/send timeout in sec
+
 struct route {
     typedef vector<in_addr> test_hosts_container;
     typedef test_hosts_container::iterator test_hosts_iterator;
@@ -39,12 +37,12 @@ gateways_container gateways;
 bool routing_enabled;
 int sock;
 
+//hide unused operators
  router() throw (runtime_error);
- ~router();
+ router(const router& ){};
 
-//hide unused operations
-router(const router& ){};
-router& operator=(const router& r) { return const_cast<router&>(r);};
+router& operator=(router& r) { return r;};
+~router();
 
 public:
 
@@ -72,7 +70,7 @@ void load_routing() throw (runtime_error);
 void load (string file_name) 
                   throw (runtime_error);
 
-static  router& get_instance() throw (runtime_error) {
+static  router& get_instance() {
      static router router_instance;
      return router_instance;
 };

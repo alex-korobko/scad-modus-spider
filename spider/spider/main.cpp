@@ -62,6 +62,8 @@ using namespace std;
 #include "shavr.h"
 #include "escalator.h"
 
+#include "dispatchers_persons_container.h"
+
 #include "line.h"
 #include "metro_lines_container.h"
 
@@ -138,7 +140,16 @@ int activate_device_button( PtWidget_t *widget,
  int  activate_sending_commands_disabled_button_in_main_window
                                             (PtWidget_t *widget,
                                               ApInfo_t *apinfo,
-                                              PtCallbackInfo_t *cbinfo);
+                                             PtCallbackInfo_t *cbinfo);
+int
+activate_dictionary_window( PtWidget_t *widget, 
+                                           ApInfo_t *apinfo, 
+                                           PtCallbackInfo_t *cbinfo );
+int
+activate_smena_window( PtWidget_t *widget, 
+                                           ApInfo_t *apinfo, 
+                                           PtCallbackInfo_t *cbinfo );
+
 //threads
 int pulse_reciever_catcher
                     (void *data,
@@ -149,7 +160,7 @@ void* metro_device_thread (void* arg);
 void* routing_thread (void* arg);
 
 void load_map(string file_name, int channel) throw (spider_exception) {
- 	enum {LINE=0, STATION, ESCALATOR, SHAVR, UDKU, DOOR, ENTRIES_COUNT};
+ 	enum {LINE=0, STATION, ESCALATOR, SHAVR, UDKU, DOOR, SETTINGS, ENTRIES_COUNT};
 	ostringstream exception_description;
 	string	section_name;
 	const char *section_name_c_str;
@@ -161,6 +172,7 @@ void load_map(string file_name, int channel) throw (spider_exception) {
  	sections_names[SHAVR]="shavr";
  	sections_names[UDKU]="udku";
  	sections_names[DOOR]="door";
+ 	sections_names[SETTINGS]="settings";
 
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)!=Pt_TRUE){
 		exception_description<<"Can`t open config file "<<file_name<<" : "<<strerror(errno);
@@ -205,6 +217,9 @@ void load_map(string file_name, int channel) throw (spider_exception) {
                          metro_devices->load_udku_parameters (channel);
                   } else if (section_name.compare(sections_names[DOOR])==0) {
                          metro_devices->load_door_parameters (channel);
+                  } else if (section_name.compare(sections_names[SETTINGS])==0) {
+						  system_settings_spider 	*spider_sys_sett=system_settings_spider::get_instance();
+                         spider_sys_sett->load_settings();
                   } else {
 					exception_description<<"Unrecognized config section "<<section_name;
 					throw spider_exception(exception_description.str());
@@ -239,6 +254,7 @@ PhRect_t main_window_rectangle;
 int channel=-1;
 unsigned int top_panel_height=45;
 metro_devices_container::iterator iter_dev;
+pthread_attr_t detached_thread_attributes;
 
 //begin globals initialization
 system_settings_spider 	*spider_sys_sett=system_settings_spider::get_instance();
@@ -316,6 +332,15 @@ if (metro_lines==NULL) {
   spider_sys_sett->sys_message(system_settings::ERROR_MSG,exception_description.str());
   PtExit(EXIT_FAILURE);
  };
+
+dispatcher_persons_container *dispatchers=dispatcher_persons_container::get_instance();
+if (dispatchers==NULL) {
+  exception_description<<"Can`t get instance of dispatchers_persons_container";
+  cout<<exception_description.str()<<endl;
+  spider_sys_sett->sys_message(system_settings::ERROR_MSG,exception_description.str());
+  PtExit(EXIT_FAILURE);
+ };
+
 
 router& router_instance=router::get_instance();
 
@@ -440,8 +465,6 @@ PtSetArg(&args[9], Pt_ARG_MARGIN_HEIGHT,
 PtSetArg(&args[10], Pt_ARG_MARGIN_WIDTH,
          2, 0);
 
-
-
 widget_position.x=1100;
 widget_position.y=0;
 PtSetArg(&args[11], Pt_ARG_POS,
@@ -490,10 +513,8 @@ PtSetArg(&args[26], Pt_ARG_HEIGHT,
 //button command pool
 args.clear();
 args.resize(5);
-PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-         "КОМАНДЫ", 0);
-PtSetArg(&args[1], Pt_ARG_HEIGHT,
-         system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
+PtSetArg(&args[0], Pt_ARG_TEXT_STRING,"КОМАНДЫ", 0);
+PtSetArg(&args[1], Pt_ARG_HEIGHT, system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
          120,0);
 widget_position.x=2;
@@ -560,7 +581,7 @@ PtSetArg(&args[0], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[1], Pt_ARG_WIDTH,
          130,0);
-widget_position.x=170;
+widget_position.x=130;
 widget_position.y=2;
 PtSetArg(&args[2], Pt_ARG_POS,
          &widget_position, 0);
@@ -599,8 +620,8 @@ PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
 PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
-         140,0);
-widget_position.x=410;
+         100,0);
+widget_position.x=370;
 widget_position.y=2;
 PtSetArg(&args[3], Pt_ARG_POS,
          &widget_position, 0);
@@ -630,8 +651,8 @@ PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
 PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
-         120,0);
-widget_position.x=550;
+         100,0);
+widget_position.x=470;
 widget_position.y=2;
 PtSetArg(&args[3], Pt_ARG_POS,
          &widget_position, 0);
@@ -653,6 +674,69 @@ current_button=PtCreateWidget( PtButton,
 if (current_button==NULL)
 	   throw spider_exception("Can`t create button for timer_commands");
 
+//button smena
+args.clear();
+args.resize(5);
+PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
+         "СМЕНА", 0);
+PtSetArg(&args[1], Pt_ARG_HEIGHT,
+         system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
+PtSetArg(&args[2], Pt_ARG_WIDTH,
+         100,0);
+widget_position.x=580;
+widget_position.y=2;
+PtSetArg(&args[3], Pt_ARG_POS,
+         &widget_position, 0);
+
+tmp_callback.event_f=activate_smena_window;
+tmp_callback.data=NULL;
+
+widget_callbacks.clear();
+widget_callbacks.push_back(tmp_callback);
+PtSetArg(&args[4], Pt_CB_ACTIVATE,
+               &widget_callbacks[0],
+               widget_callbacks.size());
+
+current_button=PtCreateWidget( PtButton,
+                current_panel,
+                args.size(),
+                &args[0]);
+
+if (current_button==NULL)
+	   throw spider_exception("Can`t create button for smena");
+
+/*
+//button dictionaries
+args.clear();
+args.resize(5);
+PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "СПРАВОЧНИК", 0);
+PtSetArg(&args[1], Pt_ARG_HEIGHT,
+         system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
+PtSetArg(&args[2], Pt_ARG_WIDTH,
+         100,0);
+widget_position.x=690;
+widget_position.y=2;
+PtSetArg(&args[3], Pt_ARG_POS,
+         &widget_position, 0);
+
+tmp_callback.event_f=activate_dictionary_window;
+tmp_callback.data=NULL;
+
+widget_callbacks.clear();
+widget_callbacks.push_back(tmp_callback);
+PtSetArg(&args[4], Pt_CB_ACTIVATE,
+               &widget_callbacks[0],
+               widget_callbacks.size());
+
+current_button=PtCreateWidget( PtButton,
+                current_panel,
+                args.size(),
+                &args[0]);
+
+if (current_button==NULL)
+	   throw spider_exception("Can`t create button for dictionanries");
+*/
+
 //button sending_commands_disabled
 args.clear();
 args.resize(5);
@@ -662,7 +746,7 @@ PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
          120,0);
-widget_position.x=750;
+widget_position.x=790;
 widget_position.y=2;
 PtSetArg(&args[3], Pt_ARG_POS,
          &widget_position, 0);
@@ -693,8 +777,8 @@ PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "ВЫХОД", 0);
 PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
-         120,0);
-widget_position.x=950;
+         80,0);
+widget_position.x=1000;
 widget_position.y=2;
 PtSetArg(&args[3], Pt_ARG_POS,
          &widget_position, 0);
@@ -828,26 +912,6 @@ messages->load(spider_sys_sett->get_global_messages_name());
 metro_devices_types->load(spider_sys_sett->get_devices_types_name());
 load_map(spider_sys_sett->get_devices_config_name(), channel);
 
-//	Begin : creating devices threads
-   iter_dev=metro_devices->begin();
-   while (iter_dev!=metro_devices->end()) {
-       if (iter_dev->second->get_enabled())
-       	   if (pthread_create(NULL, NULL, &metro_device_thread, iter_dev->second) != EOK)
-     		      spider_sys_sett->message_window(system_settings::ERROR_MSG,
-                                                                           "Can`t create device thread" );
-       iter_dev++;
-    }; //while (iter_dev!=metro_devices->end())
-
-
-main_log->load(spider_sys_sett->get_main_log_name());
-router_instance.load(spider_sys_sett->get_routing_name());
-} catch (spider_exception spr_exc) {
-  string message("In loading from configuration files raised exception:\n"+spr_exc.get_description());
-  cout <<message<<endl;
-  spider_sys_sett->sys_message(system_settings::ERROR_MSG, message);
-  PtExit(EXIT_FAILURE);
-};
-
 try {
   metro_lines_container::iterator lines_iter=metro_lines->begin();
   while (lines_iter!=metro_lines->end()) {
@@ -856,6 +920,44 @@ try {
    };
 } catch (spider_exception spr_exc) {
   string message("In creating widgets map raised exception:\n"+spr_exc.get_description());
+  cout <<message<<endl;
+  spider_sys_sett->sys_message(system_settings::ERROR_MSG, message);
+  PtExit(EXIT_FAILURE);
+};
+
+//	Begin : creating devices threads
+    if (pthread_attr_init(&detached_thread_attributes)!=EOK) {
+		spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+													    "Can`t pthread_attr_init(&detached_thread_attributes)");
+          PtExit(EXIT_FAILURE);
+        };
+
+        if (pthread_attr_setdetachstate( &detached_thread_attributes,
+                 PTHREAD_CREATE_DETACHED)!=EOK) {
+           spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+													    "Can`t pthread_attr_setdetachstate( ..., PTHREAD_CREATE_DETACHED)");
+          PtExit(EXIT_FAILURE);
+        };
+
+   iter_dev=metro_devices->begin();
+   while (iter_dev!=metro_devices->end()) {
+       if (iter_dev->second->get_enabled())
+       	   if (pthread_create(NULL, &detached_thread_attributes, &metro_device_thread, iter_dev->second) != EOK)
+     		      spider_sys_sett->message_window(system_settings::ERROR_MSG,
+                                                                           "Can`t create device thread" );
+       iter_dev++;
+    }; //while (iter_dev!=metro_devices->end())
+
+dispatchers->load(spider_sys_sett->get_dispatchers_name());
+main_log->load(spider_sys_sett->get_main_log_name());
+router_instance.load(spider_sys_sett->get_routing_name());
+} catch (spider_exception spr_exc) {
+  string message("In loading from configuration files raised exception:\n"+spr_exc.get_description());
+  cout <<message<<endl;
+  spider_sys_sett->sys_message(system_settings::ERROR_MSG, message);
+  PtExit(EXIT_FAILURE);
+} catch (runtime_error run_err) {
+  string message(string("In loading from configuration files raised exception:\n")+run_err.what());
   cout <<message<<endl;
   spider_sys_sett->sys_message(system_settings::ERROR_MSG, message);
   PtExit(EXIT_FAILURE);
@@ -889,7 +991,7 @@ try {
 
 //Begin: creating routing thread
 if (router_instance.is_routing_enabled()) {
-       	if (pthread_create(NULL, NULL, &routing_thread, NULL) != EOK)
+       	if (pthread_create(NULL, &detached_thread_attributes, &routing_thread, NULL) != EOK)
      		      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Can`t create routing thread" );
    };
 //End:   creating thread
@@ -905,7 +1007,7 @@ ldword tmp_autoincrement=main_log->get_records_autoincrement();
 main_log->set_records_autoincrement(++tmp_autoincrement);
 main_log->insert(log_record ( tmp_autoincrement,
                                           system_settings::MESSAGE_ID_SYSTEM_STARTED,
-                                          4,
+                                          system_settings::MESSAGE_TYPE_INFO_MESSAGE,
                                           0,
                                           0,
                                           time(NULL)));
@@ -930,8 +1032,13 @@ if (sending_commands_disabled) {
    };
 PtSetResources(indicator_send_commands_disabled, args.size(), &args[0]);
 
-sound& snd=sound::get_instance();
-snd.play("sounds/start.wav");
+//if (! sending_commands_disabled) {
+{
+	sound& snd=sound::get_instance();
+	std::vector<string> *files = new std::vector<string> ();
+    files->push_back("sounds/start.wav");
+	snd.play(files);
+};
 
 PtMainLoop();
 

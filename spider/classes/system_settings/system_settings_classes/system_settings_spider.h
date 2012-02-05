@@ -17,6 +17,7 @@ chars_container font_for_messages_large;
 
 images_container images;
 string start_wav_file_name;
+string report_import_directory;
 
 system_settings_spider();
 
@@ -30,7 +31,8 @@ virtual ~system_settings_spider() {};
 	// PtGenLists and childs parameters
 	enum{
 				COLUMN_LEFT_MARGIN =5,
-				ROW_HEIGHT=18
+				ROW_HEIGHT=40,
+                MAX_CHARS_COUNT_IN_ROW=100
 			};
 
 	// images
@@ -54,13 +56,13 @@ virtual ~system_settings_spider() {};
    				YELLOW_S_UP,
    				YELLOW_S_DOWN,
 
-                   GREEN_REVERSE,
-                   RED_REVERSE,
+                REVERSE,
 
    				BLOCK,
    				EXCEPTION,
    				OFFLINE,
-                  GREY_FLAT,
+   				TU,
+                GREY_FLAT,
 
    				SHAVR_DISABLED_1_DISABLED_2,
    				SHAVR_DISABLED_1_ENABLED_2,
@@ -70,7 +72,7 @@ virtual ~system_settings_spider() {};
    				
                   GRAY_FLAT,
 
-                  BLOCK_GREEN_LED,
+                BLOCK_GREEN_LED,
    				BLOCK_RED_LED,
    				BLOCK_GREY_LED,
    				BLOCK_BLUE_LED,
@@ -95,7 +97,7 @@ virtual ~system_settings_spider() {};
 				BLOCK_COLOR=COLOR_RED,
 
 				INDICATOR_ENABLED_NORMA_FILL=0x247428,
-				INDICATOR_ENABLED_NORMA_TEXT=0x35FF00,
+				INDICATOR_ENABLED_NORMA_TEXT=0xddFFdd,
                 INDICATOR_ENABLED_NOT_NORMA_FILL=0xb60000,
                 INDICATOR_ENABLED_NOT_NORMA_TEXT=0xffb621,
 
@@ -136,7 +138,8 @@ virtual ~system_settings_spider() {};
 	void set_map_container(PtWidget_t *new_map_container) {map_container=new_map_container;};
 
 	PhImage_t* get_image (images_size_type image_index);
-	string get_start_wav_file_name() {return start_wav_file_name;};
+	const string& get_start_wav_file_name() const {return start_wav_file_name;};
+	const string& get_report_import_directory() const {return report_import_directory;};
 
 // windows
 	void message_window(
@@ -154,6 +157,8 @@ virtual ~system_settings_spider() {};
 //virtual metods
 virtual system_settings::types_of_system_settings get_system_settings_type();
 
+//load settings from file
+	void load_settings()  throw (spider_exception);
 //static metods
      static system_settings_spider* get_instance();
 

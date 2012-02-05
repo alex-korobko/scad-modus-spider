@@ -35,9 +35,9 @@ metro_device::command_data_container
 	buffer.push_back(get_number());
 	buffer.push_back(4);                      // function number
 	buffer.push_back(0);
+	buffer.push_back(ESCALATOR_FIRST_REGISTER);
 	buffer.push_back(0);
-	buffer.push_back(0);
-	buffer.push_back(38);
+	buffer.push_back(ESCALATOR_REGISTERS_COUNT);
 
 	program_settings::bytes tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
 	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
@@ -47,80 +47,35 @@ metro_device::command_data_container
    	return return_val;
 };
 
+
 metro_device::command_data
-     metro_escalator::get_default_command_request_from_socket(){
- 	command_data buffer(0);
+     metro_escalator::get_default_command_request_from_socket()
+{
+ 	vector<byte> buffer(0);
 
 	buffer.push_back(get_number());
 	buffer.push_back(4);                      // function number
 	buffer.push_back(0);
+	buffer.push_back(ESCALATOR_FIRST_REGISTER);
 	buffer.push_back(0);
-	buffer.push_back(0);
-	buffer.push_back(38);
+	buffer.push_back(ESCALATOR_REGISTERS_COUNT);
 
 	program_settings::bytes tmp_bytes=program_settings::bytes_of_type<word>(program_settings::crc(buffer));
 	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
    	return buffer;
-};
 
+};
 
 void 
       metro_escalator::put_command_answer_from_comport
                    (metro_device::command_data_container answer_from_com_port){
 command_data new_answer_to_socket;
 byte function_code;
-command_data request;
-pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-   request=request_from_socket;
-pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
-
-// answer_from_device
-//============================================
-/*
-{
-vector<char> tmp_buffer(32);
-if (metro_device::get_number()==1) {
-
-//cout<<"\n request size "<<request.size()<<endl;
-//for (vector<byte>::size_type i=0; i<request.size(); i++) {
-//          itoa(request[i],
-//                  &tmp_buffer[0], 16);
-//          if (i==3 ||
-//              (i-3)%8==0) cout<<endl;
-//          cout<<"\t0x"<<&tmp_buffer[0];
-//};
-//cout<<endl;
-
-if (answer_from_com_port.empty()) {
-      cout<<"answer_from_com_port is EMPTY"<<endl;
- } else { //if (answer_from_com_port.empty())
-for (metro_device::command_data_container::size_type j=0;
-       j<answer_from_com_port.size();
-       j++) {
-           cout<<"answer_from_com_port "<<j<<" tid "<<pthread_self()<<" :"<<endl;
-            for (metro_device::command_data_container::value_type::size_type i=0;
-              i<answer_from_com_port[j].size() && i<6;
-//              i<4; //only header
-              i++) {
-              itoa(answer_from_com_port[j][i],
-                      &tmp_buffer[0], 16);
-              if (i==3 ||
-                  (i-3)%8==0) cout<<endl;
-              cout<<"\t0x"<<&tmp_buffer[0];
-           }; //for (metro_device::buffer_data_type::size_type i=0;
-      cout<<endl;
-    }; //for (metro_device::command_data_container::size_type j=0;
-    cout<<endl;
-};//if (answer_from_com_port.empty())
-}; //if (metro_device::get_number()==2 )
-};
-*/
-//============================================
 
 if (answer_from_com_port.empty() ||
     answer_from_com_port[0].empty()) {
-      function_code=request[program_settings::MODBUS_FUNCTION_CODE_INDEX];
+      function_code=request_from_socket[program_settings::MODBUS_FUNCTION_CODE_INDEX];
       new_answer_to_socket=metro_device::generate_error_answer_for_function(
 		                                                              get_number(),
 		                                                              function_code,
@@ -143,95 +98,37 @@ if (answer_from_com_port.empty() ||
          }; // if ((device_answer_header[prog
 };
 
-if (get_command_request_to_comport()==
-    get_default_command_request_to_comport()) {
-          metro_device::set_default_answer_to_socket_buffer(new_answer_to_socket);
-      };
-//===============================================
-/*
-    if (metro_device::get_number()==1) {
-           vector<char> tmp_buffer(32);
-           cout<<"new_answer_to_socket size :"<<new_answer_to_socket.size()<<endl;
-            for (metro_device::command_data_container::value_type::size_type i=0;
-              i<new_answer_to_socket.size();
-//              i<4; //only header
-              i++) {
-              itoa(new_answer_to_socket[i],
-                      &tmp_buffer[0], 16);
-              if (i==3 ||
-                  (i-3)%8==0) cout<<endl;
-              cout<<"\t0x"<<&tmp_buffer[0];
-           }; //for (metro_device::buffer_data_type::size_type i=0;
-          cout<<endl;
-       };
-*/
-//===============================================
-
 metro_device::set_command_answer_to_socket_buffer(new_answer_to_socket);
-
 };
 
 void 
      metro_escalator::put_command_request_from_socket
-                   (metro_device::command_data request_from_socket) {
+                   (metro_device::command_data request_from_socket_new) {
 
-//========delete it================
-/*
-{
-vector<char> tmp_buffer(32);
-
-if (metro_device::get_number()==3) {
-cout<<"\n request_from_socket size "<<request_from_socket.size()<<" tid "<<pthread_self()<<endl;
-for (vector<byte>::size_type i=0; i<request_from_socket.size(); i++) {
-          itoa(request_from_socket[i],
-                  &tmp_buffer[0], 16);
-          if (i==3 ||
-              (i-3)%8==0) cout<<endl;
-          cout<<"\t0x"<<&tmp_buffer[0];
-};
-cout<<endl;
-}; //if (metro_device::get_number()==1 )
-};
-*/
-//=============================
-
-    pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-     this->request_from_socket=request_from_socket;
+     this->request_from_socket=request_from_socket_new;
      metro_device::set_command_request_to_comport_buffer(create_request_to_com_port()); 
-   pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
 
  };
 
 metro_device::command_data_container
          metro_escalator::create_request_to_com_port(){ 
 
-/*
     metro_device::command_data_container data_container(0);
-    data_container.push_back(request_from_socket);
 
-    return data_container;
-*/
-
-    metro_device::command_data_container data_container(0);
-    metro_device::command_data local_request;
-    pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-      local_request=request_from_socket;
-    pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
-
-    if (local_request==
+    if (request_from_socket==
         get_default_command_request_from_socket()) {
             data_container=get_default_command_request_to_comport();
          } else {
-            data_container.push_back(local_request);
+            data_container.push_back(request_from_socket);
 
              //detect is command for escalator
-             if (local_request.size()==8 &&
-                  local_request[1]==6) { //command 6
-                  metro_device::command_data::iterator tmp_iter=local_request.begin();
-                  advance(tmp_iter, local_request.size()-2);
+             if (request_from_socket.size()==8 &&
+                  request_from_socket[1]==6) { //command 6
+                  metro_device::command_data::iterator tmp_iter=request_from_socket.begin();
+                  advance(tmp_iter, request_from_socket.size()-2);
                   //crc check
-                  word calc_crc=program_settings::crc(program_settings::bytes(local_request.begin(), tmp_iter));
-                  word org_crc=program_settings::type_from_bytes<word>(program_settings::bytes(tmp_iter, local_request.end()));
+                  word calc_crc=program_settings::crc(program_settings::bytes(request_from_socket.begin(), tmp_iter));
+                  word org_crc=program_settings::type_from_bytes<word>(program_settings::bytes(tmp_iter, request_from_socket.end()));
                    if (calc_crc==org_crc) {
                           metro_device::messages_container new_messages(0);
                            switch (request_from_socket[3]) {
@@ -267,25 +164,6 @@ metro_device::command_data
     program_settings::bytes crc_bytes, bytes_of_type_buffer;
     metro_device::command_data tmp_buffer ,buffer_to_return;
     metro_device::messages_container new_messages, messages_fifo;
-
-//========delete it================
-/*
-{
-vector<char> tmp_buffer(32);
-if (metro_device::get_number()==2) {
-cout<<"\n answer_from_com_port[0] size "<<answer_from_com_port[0].size()<<endl;
-for (vector<byte>::size_type i=0; i<answer_from_com_port[0].size(); i++) {
-          itoa(answer_from_com_port[0][i],
-                  &tmp_buffer[0], 16);
-          if (i==3 ||
-              (i-3)%8==0) cout<<endl;
-          cout<<"\t0x"<<&tmp_buffer[0];
-};
-cout<<endl;
-}; //if (metro_device::get_number()==2)
-};
-*/
-//=============================
 
 //answer from comport of modbus command 4 must be only by default request. 
 //so, bytes count in answer always constant
@@ -373,7 +251,20 @@ cout<<endl;
                        message_id=~message_id;
                        message_id+=1;
                        //so,  0 byte is message id, 1 byte is block circut
-                       new_messages[new_messages.size()-1]=(message_id<<8)|(new_messages[new_messages.size()-1] & 0xff);
+
+//=======================
+//Logging block circut id and message id
+                      program_settings* sys_sett=program_settings::get_instance();
+                      ostringstream exception_description;
+                      exception_description<<"In metro_escalator::create_answer_to_socket_func_4 device id "<<this->get_number();
+                      exception_description<<" block circut id "<<message_id<<" added to the message with id "<< static_cast<int>(new_messages[new_messages.size()-1]);
+
+                       sys_sett->sys_message (program_settings::INFO_MSG, exception_description.str());
+//=======================
+
+
+//                       new_messages[new_messages.size()-1]=(message_id<<8)|(new_messages[new_messages.size()-1] & 0xff);
+                       new_messages[new_messages.size()-2]=message_id;
                    }; //if (new_messages.empty())
                } else { //if (message_id && 0x8000!=0) {
                   bytes_of_type_buffer=program_settings::bytes_of_type<word>(message_id);
@@ -382,28 +273,26 @@ cout<<endl;
                                                     bytes_of_type_buffer.end());
               }; //if (message_id && 0x8000!=0) {
 
-/*
+
 //ATTENTION!! Code for block circut adding by old manner
 //=================
-            bytes_of_type_buffer=program_settings::bytes_of_type<word>(message_id);
-            new_messages.insert(new_messages.end(),
-                                                 bytes_of_type_buffer.begin(),
-                                                 bytes_of_type_buffer.end());
+//            bytes_of_type_buffer=program_settings::bytes_of_type<word>(message_id);
+//            new_messages.insert(new_messages.end(),
+//                                                 bytes_of_type_buffer.begin(),
+//                                                 bytes_of_type_buffer.end());
 //=================
-*/
+
             tmp_iter1=tmp_iter2;
             advance(tmp_iter2, 2);
             i++;
          };
 
-//      cout<<"new_messages.size() "<<new_messages.size()<<endl;
       metro_device::add_messages_fifo (new_messages);
 
        messages_fifo=metro_device::get_messages_fifo();
        device_fifo_messages_count=messages_fifo.size();
-//       cout<<"device_fifo_messages_count "<<device_fifo_messages_count<<endl;
        device_fifo_upper_message_id=metro_device::get_upper_message_id();
-//       cout<<"device_fifo_upper_message_id "<<device_fifo_upper_message_id<<endl;
+
        tmp_buffer=program_settings::bytes_of_type<word>(device_fifo_messages_count/2);
        buffer_to_return[MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INDEX]=tmp_buffer[1];
        buffer_to_return[MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INDEX+
@@ -442,10 +331,7 @@ metro_device::command_data_container
         return_data=get_default_command_request_to_comport();
         metro_device::set_command_request_to_comport_buffer(return_data);
 
-        pthread_mutex_lock(metro_device::get_request_from_socket_mutex());
-             request_from_socket=get_default_command_request_from_socket();
-        pthread_mutex_unlock(metro_device::get_request_from_socket_mutex());
-
+        request_from_socket=get_default_command_request_from_socket();
      };
    
      return return_data;

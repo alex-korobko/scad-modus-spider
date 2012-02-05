@@ -199,8 +199,8 @@ extern const int ABN_escalator_number_lbl;
 #define ABW_escalator_number_lbl             AbGetABW( ABN_escalator_number_lbl )
 extern const int ABN_green_reverse;
 #define ABW_green_reverse                    AbGetABW( ABN_green_reverse )
-extern const int ABN_red_reverse;
-#define ABW_red_reverse                      AbGetABW( ABN_red_reverse )
+extern const int ABN_reverse;
+#define ABW_reverse                          AbGetABW( ABN_reverse )
 extern const int ABN_shavr_command;
 #define ABW_shavr_command                    AbGetABW( ABN_shavr_command )
 extern const int ABN_udku_widget;
@@ -209,6 +209,8 @@ extern const int ABN_udku_widget_panel_btn;
 #define ABW_udku_widget_panel_btn            AbGetABW( ABN_udku_widget_panel_btn )
 extern const int ABN_udku_number_lbl;
 #define ABW_udku_number_lbl                  AbGetABW( ABN_udku_number_lbl )
+extern const int ABN_tu;
+#define ABW_tu                               AbGetABW( ABN_tu )
 
 /* 'LogFilterDlg' Dialog link */
 extern const int ABN_LogFilterDlg;

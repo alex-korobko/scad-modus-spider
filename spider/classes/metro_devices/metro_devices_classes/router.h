@@ -35,13 +35,14 @@ routes_container routes;
 gateways_container gateways;
 
 bool routing_enabled;
+int sock;
 
 //hide unused operators
- router():routing_enabled(false){};
+ router() throw (runtime_error);
  router(const router& ){};
 
 router& operator=(router& r) { return r;};
-~router(){};
+~router();
 
 public:
 
@@ -62,12 +63,12 @@ bool is_routing_enabled() {return routing_enabled;};
 bool test_connection_to_test_host(in_addr test_host);
 void change_route(struct in_addr destination, 
                                struct in_addr gateway,
-                               struct in_addr mask);
+                               struct in_addr mask) throw (runtime_error);
 
-void load_route() throw (spider_exception);
-void load_routing() throw (spider_exception);
+void load_route() throw (runtime_error);
+void load_routing() throw (runtime_error);
 void load (string file_name) 
-                  throw (spider_exception);
+                  throw (runtime_error);
 
 static  router& get_instance() {
      static router router_instance;

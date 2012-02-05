@@ -4,9 +4,12 @@
 #include <pthread.h>
 #include <sys/asoundlib.h>
 #include <sys/neutrino.h>
+#include <sys/stat.h>
 
+#include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -22,6 +25,10 @@ using namespace std;
 string riff_Id("RIFF");
 string wave_Id("WAVE");
 
+#include <pthread.h>
+
+pthread_mutex_t sound::sound_mutex_locker::playing_process_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void* sound::player(void* arg) {
 	snd_pcm_t 	*pcmHandle= NULL;
     int  card;
@@ -33,162 +40,194 @@ void* sound::player(void* arg) {
     snd_pcm_channel_setup_t 	pcmSetup;
 
 	string filename;
-	FILE*		fd;
+	vector<string> *filenames;
+	vector<string>::iterator filenames_iter;
+
+	FILE*		fd = NULL;
 	wave_hdr	wavHdr;
 	long		samples;
   	vector<byte> sampleBfr;
    	int     	n, N = 0;
    	fd_set  rfds, wfds;
 	int		maxDesc, bufSize;
+	struct stat file_info;
 
     system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
-	if (arg==NULL)
-		return 0;
-		
-	filename=static_cast<char*>(arg);
-	delete(static_cast<char*>(arg));
-
- 	if (snd_pcm_open_preferred(&pcmHandle, &card, &dev, SND_PCM_OPEN_PLAYBACK) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                              "sound.cpp@Player snd_pcm_open_preferred");
- 		return NULL;
+ try
+{
+	if (arg==NULL) {
+			throw sound_exception("sound.cpp@Player arg is NULL");
  		}
 
-    	if (snd_pcm_plugin_set_disable(pcmHandle, PLUGIN_DISABLE_MMAP) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                               "sound.cpp@Player snd_pcm_plugin_set_disable");
-		return NULL;
-		}
+	 filenames = static_cast<vector<string>* > (arg);
+    sound_mutex_locker lkr();
+	filenames_iter=filenames->begin();
+	while (filenames_iter!=filenames->end()) {
+		filename=*filenames_iter;
 
-        memset(&pcmInfo, 0, sizeof(pcmInfo));
-    	pcmInfo.channel = SND_PCM_CHANNEL_PLAYBACK;
-    	if (snd_pcm_plugin_info(pcmHandle, &pcmInfo) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG,  
-                                               "sound.cpp@Player snd_pcm_plugin_info");
-		return NULL;
-        }
+	    cout<<"in player playing "<<filename<<endl;
+	 	  sys_sett->sys_message(system_settings::INFO_MSG, 
+   			                                     filename+" playing in sound.cpp@Player");
+		
+			if (stat(filename.c_str(),   &file_info) == -1)  {
+			 	  sys_sett->sys_message(system_settings::ERROR_MSG, 
+   			                                     filename+" cannot get stat info");
+					continue;
+			};
+
+			if ((file_info.st_mode & S_IFMT) != S_IFREG) {
+			 	  sys_sett->sys_message(system_settings::ERROR_MSG, 
+   			                                     filename+" not a regulair file");
+					continue;
+				};
+
+		 	if (snd_pcm_open_preferred(&pcmHandle, &card, &dev, SND_PCM_OPEN_PLAYBACK) < 0) {
+					throw sound_exception("sound.cpp@Player snd_pcm_open_preferred");
+		 		};
 	
-	memset (&pcmParams, 0, sizeof (pcmParams));
-
-        pcmParams.mode = SND_PCM_MODE_BLOCK;
-        pcmParams.channel = SND_PCM_CHANNEL_PLAYBACK;
-        pcmParams.start_mode = SND_PCM_START_FULL;
-    	pcmParams.stop_mode = SND_PCM_STOP_STOP;
-
-    	pcmParams.buf.block.frag_size = pcmInfo.max_fragment_size;
-    	pcmParams.buf.block.frags_max = 1;
-    	pcmParams.buf.block.frags_min = 1;
-
-    	pcmParams.format.interleave = 1;
-    	pcmParams.format.rate = 22050;
-    	pcmParams.format.voices = 2;
-        pcmParams.format.format = SND_PCM_SFMT_S16_LE;
-
-    	if (snd_pcm_plugin_params(pcmHandle, &pcmParams) < 0){
-		sys_sett->sys_message(system_settings::ERROR_MSG,
-                                               "sound.cpp@Player snd_pcm_plugin_params");	
-		return NULL;
-		}
-
-	if (snd_pcm_plugin_prepare(pcmHandle, SND_PCM_CHANNEL_PLAYBACK) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG,
-                                             "sound.cpp@Player snd_pcm_plugin_prepare");	
-       	return NULL;
-       	}
-
-    	memset (&pcmSetup, 0, sizeof(pcmSetup));
-    	memset (&mixGroup, 0, sizeof (mixGroup));
-    	pcmSetup.channel = SND_PCM_CHANNEL_PLAYBACK;
-    	pcmSetup.mixer_gid = &mixGroup.gid;
-	if (snd_pcm_plugin_setup (pcmHandle, &pcmSetup) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                               "sound.cpp@Player snd_pcm_plugin_setup");	
-		return NULL;
-		}
-
-	if (mixGroup.gid.name[0] == 0){
-		sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                               "sound.cpp@Player mixGroup.gid.name[0] == 0");
-		return NULL;
-		}
-
-	if (snd_mixer_open(&mixHandle, card, pcmSetup.mixer_device) < 0) {
-		sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                        "sound.cpp@Player snd_mixer_open");	
-		return NULL;
-		}
+		   	if (snd_pcm_plugin_set_disable(pcmHandle, PLUGIN_DISABLE_MMAP) < 0) {
+					throw sound_exception("sound.cpp@Player snd_pcm_plugin_set_disable");
+				};
 	
-    	if ((fd = fopen(filename.c_str(), "r")) == 0) {
-            sys_sett->sys_message(system_settings::ERROR_MSG,
-                                                    "sound.cpp@Player Not found "+filename);
-  		    return NULL;
+		        memset(&pcmInfo, 0, sizeof(pcmInfo));
+	 		   	pcmInfo.channel = SND_PCM_CHANNEL_PLAYBACK;
+	   		 	if (snd_pcm_plugin_info(pcmHandle, &pcmInfo) < 0) {
+					throw sound_exception("sound.cpp@Player snd_pcm_plugin_info");
+	 		       };
+		
+				memset (&pcmParams, 0, sizeof (pcmParams));
+	
+	        pcmParams.mode = SND_PCM_MODE_BLOCK;
+	        pcmParams.channel = SND_PCM_CHANNEL_PLAYBACK;
+	        pcmParams.start_mode = SND_PCM_START_FULL;
+	    	pcmParams.stop_mode = SND_PCM_STOP_STOP;
+	
+	    	pcmParams.buf.block.frag_size = pcmInfo.max_fragment_size;
+	    	pcmParams.buf.block.frags_max = 1;
+	    	pcmParams.buf.block.frags_min = 1;
+	
+	    	pcmParams.format.interleave = 1;
+	    	pcmParams.format.rate = 22050;
+	    	pcmParams.format.voices = 2;
+	        pcmParams.format.format = SND_PCM_SFMT_S16_LE;
+	
+	    	if (snd_pcm_plugin_params(pcmHandle, &pcmParams) < 0){
+				throw sound_exception("sound.cpp@Player snd_pcm_plugin_params"); 
+			};
+	
+		if (snd_pcm_plugin_prepare(pcmHandle, SND_PCM_CHANNEL_PLAYBACK) < 0) {
+				throw sound_exception( "sound.cpp@Player snd_pcm_plugin_prepare");
+	       	};
+	
+	    	memset (&pcmSetup, 0, sizeof(pcmSetup));
+	    	memset (&mixGroup, 0, sizeof (mixGroup));
+	    	pcmSetup.channel = SND_PCM_CHANNEL_PLAYBACK;
+	    	pcmSetup.mixer_gid = &mixGroup.gid;
+		if (snd_pcm_plugin_setup (pcmHandle, &pcmSetup) < 0) {
+				throw sound_exception("sound.cpp@Player snd_pcm_plugin_setup");
+			};
+	
+		if (mixGroup.gid.name[0] == 0){
+				throw sound_exception("sound.cpp@Player mixGroup.gid.name[0] == 0");
+			};
+	
+		if (snd_mixer_open(&mixHandle, card, pcmSetup.mixer_device) < 0) {
+				throw sound_exception("sound.cpp@Player snd_mixer_open");
+			};
+		
+	    	if ((fd = fopen(filename.c_str(), "r")) == 0) {
+				throw sound_exception("sound.cpp@Player Not found "+filename);
+			};
+	
+	    	if (check_hdr(fd) <=0) {
+	        		throw sound_exception("sound.cpp@player: Player Bad header in file "+filename);
+	        	};
+	
+	        samples = find_tag(fd, "fmt");
+	    	fread(&wavHdr, sizeof(wavHdr), 1, fd);
+	    	fseek(fd, (samples - sizeof(wave_hdr)), SEEK_CUR);
+	        samples = find_tag(fd, "data");
+	
+		bufSize = __min (pcmSetup.buf.block.frag_size, samples);
+	    	sampleBfr.resize(bufSize);
+		FD_ZERO (&rfds);
+	    	FD_ZERO (&wfds);
+	    	n = 1;
+	    	
+//	   	printf ("Samples %d \n", samples);
+//	    printf ("Mixer gid %d \n",	pcmSetup.mixer_gid);
+//	    printf ("Format %s  ==%d== \n", snd_pcm_get_format_name (pcmSetup.format.format), pcmSetup.format.format);
+//	    printf ("Frag Size %d \n", pcmSetup.buf.block.frag_size);
+//	    printf ("Rate %d \n", pcmSetup.format.rate);
+	 	
+	    	
+	    	while (N < samples && n > 0){
+	        	FD_SET(snd_mixer_file_descriptor(mixHandle), &rfds);
+	        	FD_SET(snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK), &wfds);
+	
+		    	maxDesc = __max(snd_mixer_file_descriptor(mixHandle),
+	            snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK));
+	
+	        	if (select(maxDesc + 1, &rfds, &wfds, NULL, NULL) == -1)
+				{
+						throw sound_exception("sound.cpp@player: select returned error");
+				};
+	
+	        	if (FD_ISSET(snd_mixer_file_descriptor(mixHandle), &rfds)){
+	            	snd_mixer_callbacks_t callbacks = {0, 0, 0, 0};
+	                snd_mixer_read(mixHandle, &callbacks);
+	        	}
+	
+	        	if (FD_ISSET(snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK), &wfds)){
+	            	snd_pcm_channel_status_t status;
+	            	int written = 0;
+	
+	            	if ((n = fread(&sampleBfr[0], sizeof(byte), __min(samples - N, bufSize), fd)) <= 0)
+	                	continue;
+	            	written = snd_pcm_plugin_write(pcmHandle, &sampleBfr[0], n);
+	            	if (written < n) {
+	                	memset(&status, 0, sizeof(status));
+	                	if (snd_pcm_plugin_status(pcmHandle, &status) < 0)
+							{
+								throw sound_exception("sound.cpp@player: snd_pcm_plugin_status returned error");
+							};
+	
+	                	if (status.status == SND_PCM_STATUS_READY ||
+	                    		status.status == SND_PCM_STATUS_UNDERRUN) {
+	                   	 	if (snd_pcm_plugin_prepare(pcmHandle, SND_PCM_CHANNEL_PLAYBACK) < 0)
+							{
+								throw sound_exception("sound.cpp@player: snd_pcm_plugin_prepare returned error");
+							};
+	        
+	                	}
+	                	if (written < 0)
+	                    		written = 0;
+	                	written += snd_pcm_plugin_write(pcmHandle, &sampleBfr[written], n - written);
+	            	}
+	            	N += written;
+	        	}
+	    }
+	
+	    fclose(fd);
+	
+		if (pcmHandle) {
+		    	snd_pcm_plugin_flush(pcmHandle, SND_PCM_CHANNEL_PLAYBACK);
+				snd_pcm_close(pcmHandle);
 		}
 
-    	if (check_hdr(fd) <=0) {
- 	 	    sys_sett->sys_message(system_settings::ERROR_MSG,
-                                                   "sound.cpp@Player Bad header in file "+filename);
-        	return NULL;
-        	}
+		if (mixHandle) {
+			snd_mixer_close(mixHandle);
+	  	};
 
-        samples = find_tag(fd, "fmt");
-    	fread(&wavHdr, sizeof(wavHdr), 1, fd);
-    	fseek(fd, (samples - sizeof(wave_hdr)), SEEK_CUR);
-        samples = find_tag(fd, "data");
-
-	bufSize = __min (pcmSetup.buf.block.frag_size, samples);
-    	sampleBfr.resize(bufSize);
-	FD_ZERO (&rfds);
-    	FD_ZERO (&wfds);
-    	n = 1;
-/*    	
-   	printf ("Samples %d \n", samples);
-    printf ("Mixer gid %d \n",	pcmSetup.mixer_gid);
-    printf ("Format %s  ==%d== \n", snd_pcm_get_format_name (pcmSetup.format.format), pcmSetup.format.format);
-    printf ("Frag Size %d \n", pcmSetup.buf.block.frag_size);
-    printf ("Rate %d \n", pcmSetup.format.rate);
- */ 	
-    	
-    	while (N < samples && n > 0){
-        	FD_SET(snd_mixer_file_descriptor(mixHandle), &rfds);
-        	FD_SET(snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK), &wfds);
-
-	    	maxDesc = __max(snd_mixer_file_descriptor(mixHandle),
-            snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK));
-
-        	if (select(maxDesc + 1, &rfds, &wfds, NULL, NULL) == -1)
-            	return 0;
-
-        	if (FD_ISSET(snd_mixer_file_descriptor(mixHandle), &rfds)){
-            	snd_mixer_callbacks_t callbacks = {0, 0, 0, 0};
-                snd_mixer_read(mixHandle, &callbacks);
-        	}
-
-        	if (FD_ISSET(snd_pcm_file_descriptor(pcmHandle, SND_PCM_CHANNEL_PLAYBACK), &wfds)){
-            	snd_pcm_channel_status_t status;
-            	int written = 0;
-
-            	if ((n = fread(&sampleBfr[0], sizeof(byte), __min(samples - N, bufSize), fd)) <= 0)
-                	continue;
-            	written = snd_pcm_plugin_write(pcmHandle, &sampleBfr[0], n);
-            	if (written < n) {
-                	memset(&status, 0, sizeof(status));
-                	if (snd_pcm_plugin_status(pcmHandle, &status) < 0)
-                		return 0;
-
-                	if (status.status == SND_PCM_STATUS_READY ||
-                    		status.status == SND_PCM_STATUS_UNDERRUN) {
-                   	 	if (snd_pcm_plugin_prepare(pcmHandle, SND_PCM_CHANNEL_PLAYBACK) < 0)
-                    			return 0;
-                	}
-                	if (written < 0)
-                    		written = 0;
-                	written += snd_pcm_plugin_write(pcmHandle, &sampleBfr[written], n - written);
-            	}
-            	N += written;
-        	}
-    }
-
+		pcmHandle = NULL;
+		mixHandle = NULL;
+		++filenames_iter;
+	}; //while
+}
+catch (sound_exception snd_exc) 
+{
+ 	sys_sett->sys_message(system_settings::ERROR_MSG, snd_exc.get_description() );
     fclose(fd);
 
 	if (pcmHandle)
@@ -199,24 +238,27 @@ void* sound::player(void* arg) {
   
 	if (pcmHandle)
 		snd_pcm_close(pcmHandle);
+};
 
+ if (arg!=NULL) {
+		filenames = static_cast<vector<string>* > (arg);
+		delete(filenames);
+	}; 
  return NULL;
 }
 
-bool sound::play(string name) {
+bool sound::play(std::vector<string> *names_to_play) {
 //ATTENTION!!! only for using file descriptors
-/*
     system_settings_spider *sys_sett=system_settings_spider::get_instance();
+
 	pthread_attr_t      attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	char* file_name =  new char[name.size()+1];
-	strcpy(file_name, name.c_str());
-	if (pthread_create(NULL, &attr, &player, file_name) != EOK) {
+	if (pthread_create(NULL, &attr, &player, names_to_play) != EOK) {
 		sys_sett->sys_message(system_settings::ERROR_MSG, "sound::play can`t start thread");			
 		return false;
 	}
-*/
+
     	return true;
 }
 

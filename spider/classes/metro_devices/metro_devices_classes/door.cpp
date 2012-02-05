@@ -4,6 +4,7 @@ using namespace std;
 #include <Ph.h>
 #include <Pt.h>
 
+#include <iostream>
 #include <pthread.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -54,26 +55,32 @@ class metro_devices_container;
 extern msg_dict_container *messages;
 extern log_records_container *main_log;
 
-extern bool sending_commands_disabled;
-
 metro_door::metro_door(
 		int id, 
 		int id_station,
 		int number,
+		int modbus_number,
 		int type,
 		int channel,
 		bool enabled,
-		in_addr_t	ip) throw (spider_exception):
+		in_addr_t	ip,
+		time_t offline_or_exception_delay,
+		bool new_conduction_is_switched_off,
+		bool new_log_packets ) throw (spider_exception):
 	metro_device( id,
                    id_station,
                    number,
+                   modbus_number,
                    type,
                    system_settings::START_DAY_MODE_NEVER,
                    0,
                    0,
                    enabled,
                    ip,
-                   channel),
+                   channel,
+				   offline_or_exception_delay,
+				   new_conduction_is_switched_off,
+				   new_log_packets),
     A0_x1(false),  //offline 
     A0_state(A0_OFFLINE)
     {};
@@ -96,8 +103,15 @@ void metro_door::A0(int event)  throw (spider_exception){
          break;
      };
      if (A0_x1 &
-         A0_x3) {
+         A0_x3 &
+		!A0_x5()) {
          A0_state=A0_DOOR_OPENED_NOT_ACCEPTED;
+         break;
+     };
+     if (A0_x1 &
+         A0_x3 &
+		 A0_x5()) {
+         A0_state=A0_DOOR_OPENED_ACCEPTED;
          break;
      };
      break;
@@ -112,8 +126,15 @@ void metro_door::A0(int event)  throw (spider_exception){
          break;
      };
      if (A0_x2 &
-         A0_x3) {
+         A0_x3 &
+		 !A0_x5()) {
          A0_state=A0_DOOR_OPENED_NOT_ACCEPTED;
+         break;
+     };
+     if (A0_x2 &
+         A0_x3 &
+		 A0_x5()) {
+         A0_state=A0_DOOR_OPENED_ACCEPTED;
          break;
      };
     break;
@@ -144,6 +165,10 @@ void metro_door::A0(int event)  throw (spider_exception){
          A0_state=A0_DOOR_OPENED_ACCEPTED;
          break;
      };
+     if (A0_x4()) {
+         A0_state=A0_DOOR_OPENED_ACCEPTED;
+         break;
+     };
     break;
     case A0_DOOR_OPENED_ACCEPTED:
      if (!A0_x1) {
@@ -171,8 +196,10 @@ void metro_door::A0(int event)  throw (spider_exception){
  //initializations on enter to new automat state
    switch (A0_state) {
     case A0_OFFLINE:
+		A0_z1();
     break;
     case A0_EXCEPTION:
+		A0_z2();
     break;
     case A0_DOOR_CLOSED:
     break;
@@ -187,6 +214,19 @@ void metro_door::A0(int event)  throw (spider_exception){
       throw spider_exception(exception_description.str());   
     };
 }
+
+void metro_door::A0_z1() { set_last_offline_or_exception_time(time(NULL));};
+
+void metro_door::A0_z2() { set_last_offline_or_exception_time(time(NULL));};
+
+bool metro_door::A0_x5() {
+		return ((time(NULL)  - get_last_offline_or_exception_time()) <= get_offline_or_exception_delay ());
+}
+
+bool metro_door::A0_x4() {
+		return is_conduction_is_switched_off();
+}
+
 
 PhRect_t metro_door::get_device_widget_extent() 
             throw (spider_exception){
@@ -215,7 +255,7 @@ ldword tmp_id;
 	if (cmd.get_device_id()!=get_id())
           throw spider_exception("metro_door::send_command(...) cmd.get_device_id()!=get_id() ");
 
-    if (sending_commands_disabled && 
+    if (is_conduction_is_switched_off() && 
          cmd.get_command_code() !=system_settings::COMMAND_ACCEPT)
                  return;
 
@@ -325,6 +365,19 @@ if (metro_device::get_device_widget()==NULL) return;
                             Pt_ARG_INLINE_COLOR,
                             system_settings_spider::COLOR_BLACK,
                             0);
+}else if (A0_state==A0_DOOR_OPENED_ACCEPTED){
+              PtSetArg(&args[0],
+                            Pt_ARG_COLOR,
+                            system_settings_spider::COLOR_WHITE,
+                            0);
+              PtSetArg(&args[1],
+                            Pt_ARG_FILL_COLOR,
+                            system_settings_spider::COLOR_GREEN,
+                            0);
+              PtSetArg(&args[2],
+                            Pt_ARG_INLINE_COLOR,
+                            system_settings_spider::COLOR_BLACK,
+                            0);
 } else { // if(A0_state==A0_DOOR_OPENED_NOT_ACCEPTED
                PtSetArg(&args[0],
                               Pt_ARG_COLOR,
@@ -390,7 +443,10 @@ void metro_door::decode_answer_from_device_to_data_block(){
                update_device_widget();
                PtFlush();
 
-              if (A0_state==A0_DOOR_OPENED_NOT_ACCEPTED) {
+              if (A0_state==A0_DOOR_OPENED_NOT_ACCEPTED ) {
+					if (!A0_x4())
+					{
+					   //A0_x4==true if conduction is switched off
                        string message("Открыта дверь машзала на станции\n");
 					   metro_stations_container *stations=metro_stations_container::get_instance();
                        metro_stations_container::iterator stations_iter;
@@ -402,7 +458,10 @@ void metro_door::decode_answer_from_device_to_data_block(){
 																	  true);
 
 					 sound& snd=sound::get_instance();
-                     snd.play(stations_iter->second.get_wav_file_name());
+					std::vector<string> *files  = new std::vector<string> ();
+					files->push_back(stations_iter->second.get_wav_file_name());
+                     snd.play(files);
+					}
 
                       metro_devices_types_container *dev_types=metro_devices_types_container::get_instance();
                       metro_devices_types_container::iterator types_iter;
@@ -456,7 +515,6 @@ void metro_door::decode_answer_from_device_to_data_block(){
                                              exception_description.str());
    };
 
-
 };
 
 metro_device::buffer_data_type 
@@ -471,7 +529,7 @@ void
    system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
    door_data_block local_data_block=this->data_block;
-   metro_device::buffer_data_type::reverse_iterator tmp_iter1, tmp_iter2;
+   metro_device::buffer_data_type::iterator tmp_iter1, tmp_iter2;
 
    word register_value;
 
@@ -490,28 +548,25 @@ if (metro_device::get_id()==10) {
 */
 //=======================================
 //data bytes count
-   tmp_iter1=answer.rend();
-   tmp_iter2=tmp_iter1;
-     advance(tmp_iter1,
-                   -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX));
-     advance(tmp_iter2,
-                    -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+1));
-    register_value=sys_sett->type_from_bytes<byte>(system_settings::bytes (tmp_iter2, tmp_iter1));
+   tmp_iter1=answer.begin();
+    advance(tmp_iter1,
+                   system_settings::MODBUS_DATA_BYTES_COUNT_INDEX);
+    register_value=*tmp_iter1;
     if (register_value!=2) {
           A0_x2=false;
           throw spider_exception("In metro_door::decode_answer_from_device_4_function(...) in data packet must be 2 bytes of data");
           };
-//move iteratiors to first register data
-   tmp_iter1=answer.rend();
-   tmp_iter2=tmp_iter1;
-     advance(tmp_iter1,
-                   -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2));
-     advance(tmp_iter2,
-                    -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
 
+//move iteratiors to first register data
+   tmp_iter1=answer.begin();
+   tmp_iter2=tmp_iter1;
+   advance(tmp_iter1,
+                 (system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+1));
+   advance(tmp_iter2,
+                 (system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
 //poehali!
 			register_value=
-			     sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1));
+			     sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
             if ((register_value&0x1)==0) {
                 local_data_block.set_signal_value(
                                       door_data_block::INDEX_SIGNAL_DOOR_OPENED,
@@ -524,16 +579,18 @@ if (metro_device::get_id()==10) {
                 A0_x3=true;
              };
 
+
        this->data_block=local_data_block;
 };
 
 command 
-     metro_door::get_device_pref_command() throw(spider_exception) {
+     metro_door::get_device_start_command() throw(spider_exception) {
   throw spider_exception("door not support timer_command");
 }
 
+
 vector<command> 
-     metro_door::get_appropriated_commands(){
+     metro_door::get_appropriated_commands() throw (spider_exception){
  vector<command> commands_to_return;
 
      if (A0_state==A0_DOOR_OPENED_NOT_ACCEPTED)
@@ -542,7 +599,7 @@ vector<command>
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_ACCEPT, 
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "КВИТИРОВАТЬ")
               );
 

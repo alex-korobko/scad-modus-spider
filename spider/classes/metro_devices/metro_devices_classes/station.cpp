@@ -154,7 +154,9 @@ if (sys_sett_obj->small_font_prepared()) {
           device_x+=(device_widget_rect.lr.x-device_widget_rect.ul.x)+system_settings_spider::SPACE_BETWEEN_METRO_DEVICES_IN_STATION;
 	}; // for (iterator_devices_id dev_id_iter=devices_id.begin(); dev_id_iter
 
-	int station_width=device_x;
+   //ATTENTION - workaround to show the full station window
+	//int station_width=device_x;
+	int station_width=350;
 	args.clear();
 	args.resize(2);
 	PtSetArg(&args[0], Pt_ARG_WIDTH, __max(text_extend.lr.x + 15, station_width), 0);
@@ -162,7 +164,7 @@ if (sys_sett_obj->small_font_prepared()) {
 	
 	station_height=(text_extend.lr.y-text_extend.ul.y) + 
 	                        2*system_settings_spider::TOP_BOTTOM_MARGIN_OF_STATION+
-	                        (rect.lr.y-rect.ul.y)+4; //4 pixels to bottom border - empiric value
+	                        (rect.lr.y-rect.ul.y)+15; //4 pixels to bottom border - empiric value
 
 	PtSetArg(&args[1], Pt_ARG_HEIGHT, station_height, 0);
 	PtSetResources(station_window, args.size(), &args[0]);

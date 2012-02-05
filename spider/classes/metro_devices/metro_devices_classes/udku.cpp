@@ -56,7 +56,6 @@ extern msg_dict_container *messages;
 extern log_records_container *main_log;
 
 //see main.cpp
-extern bool sending_commands_disabled;
 extern bool setting_start_time_disabled;
 
 //see staton_devices_properties_callbacks.cpp
@@ -69,31 +68,46 @@ metro_udku::metro_udku(
 		int id, 
 		int id_station,
 		int number,
+		int modbus_number,
 		int type,
 		int pref_direction,
-	   	int	 start_day_mode,
-	   	int	 start_hour,
-	   	int	 start_minute,
+	   	int start_day_mode,
+	   	int start_hour,
+	   	int start_minute,
+	   	int start_direction,
         int channel,
 		bool enabled,
-		in_addr_t	ip) throw (spider_exception):
+		in_addr_t	ip,
+		double offline_or_exception_delay,
+		double new_conduction_notification_delay,
+		bool new_conduction_is_switched_off,
+		bool new_log_packets) throw (spider_exception):
 
 	metro_device( id,
                    id_station,
                    number,
+                   modbus_number,
                    type,
                    start_day_mode,
                    start_hour,
                    start_minute,
                    enabled,
                    ip,
-                   channel),
+                   channel,
+				   offline_or_exception_delay,
+				   new_conduction_is_switched_off,
+					new_log_packets),
    arrow(NULL),
-   udku_direction_combobox(NULL),
+   udku_pref_direction_combobox(NULL),
+   udku_start_direction_combobox(NULL),
    udku_start_hour(NULL),
    udku_start_minute(NULL),
 	tid(0),	
 	pref_direction(pref_direction),
+	start_direction(start_direction),
+    previous_direction (pref_direction),
+	conduction_notification_delay(new_conduction_notification_delay),
+	previous_stop_time(time(NULL)),
     A0_x2(true), //state accepted
 	A0_x5(false),  //offline
     A0_x1(pref_direction), //predefined direction
@@ -301,11 +315,11 @@ void metro_udku::A0(int event)  throw (spider_exception){
            break;
          };
          if (A0_x3 && A0_x5 && !A0_x2 &&
-             A0_x4 && !A0_x0) {
+             A0_x4 && !A0_x0 & !A0_x8()) {
            A0_state=A0_READY_NOT_ACCEPTED;
            break;
          };
-         if ((!A0_x3 || (A0_x3 && A0_x2)) && 
+         if ((!A0_x3 || (A0_x3 && A0_x2) || (A0_x3 && A0_x8())) && 
              A0_x5 && A0_x4 && !A0_x0) {
            A0_state=A0_READY;
            break;
@@ -329,12 +343,13 @@ void metro_udku::A0(int event)  throw (spider_exception){
          };
          if (!A0_x2 &&
               A0_x6 &&
-              !A0_x0) {
+              !A0_x0 &&
+			  !A0_x8()) {
            A0_state=A0_READY_NOT_ACCEPTED;
            break;
          };
 
-         if (A0_x2 &&
+         if ((A0_x2 || A0_x8()) &&
               A0_x6 &&
               !A0_x0) {
            A0_state=A0_READY;
@@ -367,6 +382,12 @@ void metro_udku::A0(int event)  throw (spider_exception){
 //  cout<<"A0_x5 "<<(A0_x5? "true": "false")<<endl;
 //  cout<<"A0_x6 "<<(A0_x6? "true": "false")<<endl;
 
+switch (old_automat_state) {
+    case A0_RUN:
+			A0_z11();
+          break;	
+};
+
 //initializations on enter to new state
  switch (A0_state) {
     case A0_NOT_READY:
@@ -380,12 +401,15 @@ void metro_udku::A0(int event)  throw (spider_exception){
     case A0_STARTING:
           break;
     case A0_RUN:
+			A0_z10();
           break;
     case A0_STOPPING:
           break;
     case A0_OFFLINE:
+			A0_z9();
           break;
     case A0_EXCEPTION:
+			A0_z8();
           break;
     default :
       ostringstream exception_description;
@@ -393,6 +417,59 @@ void metro_udku::A0(int event)  throw (spider_exception){
       exception_description<<" after change A0 has undefined state "<<A0_state;
       throw spider_exception(exception_description.str());        
    }; //switch (A0_state)
+};
+
+
+bool metro_udku::A0_x8()
+{
+		return ((time(NULL)  - get_last_offline_or_exception_time()) <= get_offline_or_exception_delay ());
+}
+
+
+void metro_udku::A0_z10()
+{
+   previous_direction=A0_x1;
+};
+
+void metro_udku::A0_z11()
+{
+   set_previous_stop_time(time(NULL));
+};
+
+void metro_udku::A0_z8()
+{
+	int tmp_id;
+         tmp_id=main_log->get_records_autoincrement();
+         main_log->set_records_autoincrement(++tmp_id);
+
+          main_log->insert(log_record(tmp_id,
+                                     system_settings::MESSAGE_ID_STATION_OFFLINE,
+                                     system_settings::MESSAGE_TYPE_ERROR_MESSAGE,
+                                     get_station_id(),
+                                     get_id(),
+                                     time(NULL)));
+
+             main_log->prepare_to_display();
+
+		set_last_offline_or_exception_time(time(NULL));
+};
+
+void metro_udku::A0_z9()
+{
+	int tmp_id;
+
+         tmp_id=main_log->get_records_autoincrement();
+         main_log->set_records_autoincrement(++tmp_id);
+
+          main_log->insert(log_record(tmp_id,
+                                     system_settings::MESSAGE_ID_DEVICE_OFFLINE,
+                                     system_settings::MESSAGE_TYPE_ERROR_MESSAGE,
+                                     get_station_id(),
+                                     get_id(),
+                                     time(NULL)));
+
+             main_log->prepare_to_display();
+		set_last_offline_or_exception_time(time(NULL));
 };
 
 
@@ -504,10 +581,17 @@ void metro_udku::update_device_widget() throw (spider_exception) {
 
     switch (A0_state) {
        case A0_NOT_READY:
+            if (A0_x3) {
                  PtSetArg(&args[0],
                                 Pt_ARG_LABEL_IMAGE,
                                 sys_sett_obj->get_image(system_settings_spider::BLOCK),
                                  0);
+            } else {
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+            };
        break;
        case A0_READY_NOT_ACCEPTED:
           if (A0_x3) {
@@ -527,7 +611,7 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                         case system_settings::DIRECTION_REVERSE:
                                 PtSetArg(&args[0],
                                               Pt_ARG_LABEL_IMAGE,
-                                              sys_sett_obj->get_image(system_settings_spider::RED_REVERSE),
+                                              sys_sett_obj->get_image(system_settings_spider::REVERSE),
                                               0);
                          break;
                         default:
@@ -537,32 +621,12 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                                 throw spider_exception(exception_description.str());
                             }; //switch (A0_x1)
               }else { // if (A0_x3)
-                  switch (A0_x1) {
-                       case system_settings::DIRECTION_UP:
-                             PtSetArg(&args[0],
-                                            Pt_ARG_LABEL_IMAGE,
-                                            sys_sett_obj->get_image(system_settings_spider::RED_S_UP),
-                                            0);
-                        break;
-                        case system_settings::DIRECTION_DOWN:
-                              PtSetArg(&args[0],
-                                             Pt_ARG_LABEL_IMAGE,
-                                             sys_sett_obj->get_image(system_settings_spider::RED_S_DOWN),
-                                             0);
-                        break;
-                        case system_settings::DIRECTION_REVERSE:
-                                PtSetArg(&args[0],
-                                              Pt_ARG_LABEL_IMAGE,
-                                              sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //ATTENTION! : that widget equal to widget in DU mode !
-                                              0);                //reverse direction now unused, so, be red 
-                         break;
-                        default:
-                                ostringstream exception_description;
-                                exception_description<<"metro_udku::update_device_widget() device id "<<get_id();
-                                exception_description<<" A0_READY_NOT_ACCEPTED unknown udku direction "<<A0_x1;
-                                throw spider_exception(exception_description.str());
-                            }; //switch (A0_x1)
-                    }; //if (A0_x3)
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+
+              }; //if (A0_x3)
       break;
       case A0_READY:
                      if (A0_x3) {
@@ -582,7 +646,7 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                              case system_settings::DIRECTION_REVERSE:
                                                  PtSetArg(&args[0],
                                                    Pt_ARG_LABEL_IMAGE,
-                                                  sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //reverse direction now unused, so, be red 
+                                                  sys_sett_obj->get_image(system_settings_spider::REVERSE),
                                                   0);
                                      break;
                             default:
@@ -592,34 +656,15 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                                    throw spider_exception(exception_description.str());
                           }; //switch (A0_x1)
                     } else { // if (A0_x3) {
-                          switch (A0_x1) {
-                              case system_settings::DIRECTION_UP:
-                                    PtSetArg(&args[0],
-                                                  Pt_ARG_LABEL_IMAGE,
-                                                  sys_sett_obj->get_image(system_settings_spider::YELLOW_S_UP),
-                                                  0);
-                                    break;
-                               case system_settings::DIRECTION_DOWN:
-                                     PtSetArg(&args[0],
-                                                   Pt_ARG_LABEL_IMAGE,
-                                                   sys_sett_obj->get_image(system_settings_spider::YELLOW_S_DOWN),
-                                                   0);
-                                     break;
-                               case system_settings::DIRECTION_REVERSE:
-                                      PtSetArg(&args[0],
-                                                     Pt_ARG_LABEL_IMAGE,
-                                                     sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //reverse direction now unused, so, be red  
-                                                     0);
-                                      break;
-                               default:
-                                  ostringstream exception_description;
-                                  exception_description<<"metro_udku::update_device_widget() device id "<<get_id();
-                                   exception_description<<" A0_READY unknown udku direction "<<A0_x1;
-                                   throw spider_exception(exception_description.str());
-                             }; //switch (A0_x1)
-                       }; //if (A0_x3)
+                       PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+
+                   }; //if (A0_x3)
       break;
       case A0_STARTING:
+                 if (A0_x3) {
                         if (A0_x2) {
                            switch (A0_x1) {
                               case system_settings::DIRECTION_UP:
@@ -660,11 +705,17 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                                 exception_description<<" A0_STARTING unknown udku direction "<<A0_x1;
                                 throw spider_exception(exception_description.str());
                          }; //switch (A0_x1)
-                }; //if (A0_x2)
+                      }; //if (A0_x2)
+               } else { //if (A0_x3)
+                        PtSetArg(&args[0],
+                                   Pt_ARG_LABEL_IMAGE,
+                                   sys_sett_obj->get_image(system_settings_spider::TU),
+                                   0);
+               }; //if(A0_x3)
        break;
        case A0_RUN:
               if (A0_x3) {
-                          switch (A0_x1) {
+                      switch (A0_x1) {
                              case system_settings::DIRECTION_UP:
                                     PtSetArg(&args[0],
                                                   Pt_ARG_LABEL_IMAGE,
@@ -683,29 +734,15 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                                 exception_description<<" A0_RUN unknown udku direction "<<A0_x1;
                                 throw spider_exception(exception_description.str());
                            }; //switch (A0_x1)
-                     } else { //if (A0_x3) {
-                          switch (A0_x1) {
-                              case system_settings::DIRECTION_UP:
-                                    PtSetArg(&args[0],
-                                                Pt_ARG_LABEL_IMAGE,
-                                                sys_sett_obj->get_image(system_settings_spider::GREEN_S_UP),
-                                                0);
-                                   break;
-                              case system_settings::DIRECTION_DOWN:
-                                   PtSetArg(&args[0],
-                                                Pt_ARG_LABEL_IMAGE,
-                                                sys_sett_obj->get_image(system_settings_spider::GREEN_S_DOWN),
-                                                0);
-                                   break;
-                              default:
-                                   ostringstream exception_description;
-                                   exception_description<<"metro_udku::update_device_widget() device id "<<get_id();
-                                   exception_description<<" A0_RUN unknown udku direction "<<A0_x1;
-                                   throw spider_exception(exception_description.str());
-                             }; //switch (A0_x1)
-                        }; //if (A0_x3) {
+                 } else { //if (A0_x3) {
+                       PtSetArg(&args[0],
+                                Pt_ARG_LABEL_IMAGE,
+                                sys_sett_obj->get_image(system_settings_spider::TU),
+                                0);
+               }; //if (A0_x3) {
       break;
       case A0_STOPPING:
+               if (A0_x3) {
                           switch (A0_x1) {
                               case system_settings::DIRECTION_UP:
                                     PtSetArg(&args[0],
@@ -725,6 +762,13 @@ void metro_udku::update_device_widget() throw (spider_exception) {
                                   exception_description<<" A0_RUN unknown udku direction "<<A0_x1;
                                   throw spider_exception(exception_description.str());
                            }; //switch (A0_x1)
+                   } else { // if (A0_x3)
+                      PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+
+                    }; //if (A0_x3)
        break;
        case A0_EXCEPTION: 
     	      PtSetArg(&args[0],
@@ -739,7 +783,7 @@ void metro_udku::update_device_widget() throw (spider_exception) {
 	                    0);
       break;
 
-       default :
+      default :
            ostringstream exception_description;
            exception_description<<"metro_udku::update_device_widget() device id "<<get_id();
            exception_description<<" unknown A0_state "<<A0_state;
@@ -780,10 +824,10 @@ void metro_udku::decode_answer_from_device_to_data_block(){
 // previos_request_to_device
 //============================================
 /*
-if (metro_device::get_id()==17) {
+if (metro_device::get_id()==16) {
 metro_device::buffer_data_type current_request_to_device=
                         metro_device::get_current_request_to_device_buffer();
-if (metro_device::get_id()==17) {
+if (metro_device::get_id()==16) {
  if (current_request_to_device.empty()) {
       cout<<"current_request_to_device is EMPTY"<<endl;
  }else if ( current_request_to_device[1]!=4){
@@ -883,6 +927,19 @@ for (metro_device::buffer_data_type::size_type i=0;
             }; // if (answer_from_device.empty()
            A0(7); // event 7 - data refreshed
 
+
+             if ((old_A0_x3!=A0_x3) && A0_x3 ) { //escalator switchet to TU
+                     switch (get_pref_direction()) {
+                         case system_settings::DIRECTION_UP:
+                         case system_settings::DIRECTION_DOWN:
+                              A0_x1=get_pref_direction();
+                             break;
+                         case system_settings::DIRECTION_REVERSE:
+                             //old direction
+                             break;
+                         }; //switch (get_pref_direction())
+                  }; //escalator switchet to TU
+
            if (old_A0_state!=A0_state ||
                 old_A0_x3!=A0_x3 ||
                 old_A0_x1_state!=A0_x1) {
@@ -944,11 +1001,9 @@ return return_buffer;
 };
 
 metro_device::buffer_data_type metro_udku::get_4_function_request(){
-system_settings_spider *sys_sett=system_settings_spider::get_instance();
 	vector<byte> buffer(0);
-	word		crc_value;
 
-	buffer.push_back(get_number());   // udku number
+	buffer.push_back(get_modbus_number());   // udku number
 	buffer.push_back(4);                      // function number
 	buffer.push_back(0);
 	buffer.push_back(0);
@@ -957,11 +1012,8 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
                                   2+ //upper message id and messages count in messages pool
                                   system_settings::MAX_MESSAGES_COUNT); // size of pool of messages in data packet
 
-	crc_value = sys_sett->crc(buffer);
-
-	system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
 //	metro_device::set_request_to_device_buffer(buffer);
    	return buffer;
@@ -969,17 +1021,15 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
 
 metro_device::buffer_data_type metro_udku::get_setting_time_request(){
-
 system_settings_spider *sys_sett=system_settings_spider::get_instance();
 	vector<byte> buffer(0);
-	word		crc_value;
     struct tm *tm_local;
     time_t time_now=time(NULL);
 
 	tm_local=localtime(&time_now);
 
   try{
-      buffer.push_back(get_number());   // udku number
+      buffer.push_back(get_modbus_number());   // udku number
       buffer.push_back(16);                      // function number
 
       buffer.push_back(00);                      // first register number high byte
@@ -1002,11 +1052,9 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
        buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_min)));
        buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_sec)));
 
-       crc_value = sys_sett->crc(buffer);
 
-       system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(crc_value);
-       buffer.push_back(tmp_bytes[1]);
-       buffer.push_back(tmp_bytes[0]);
+       system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+       buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
       } catch (spider_exception spr_except) {
          sys_sett->sys_message(system_settings::ERROR_MSG,
@@ -1014,25 +1062,21 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
          buffer=get_4_function_request();
       };
 
-
 //	metro_device::set_request_to_device_buffer(buffer);
    	return buffer;
 
 
 };
 
-
 void metro_udku::send_command(command cmd)throw (spider_exception){
-system_settings_spider* sys_sett=system_settings_spider::get_instance();
 vector<byte> buffer(0);
-word		crc_value;
 ldword tmp_id;
 int old_A0_state=A0_state;
 
 	if (cmd.get_device_id()!=get_id())
           throw spider_exception("metro_udku::send_command(...) cmd.get_device_id()!=get_id() ");
 
-    if (sending_commands_disabled && 
+    if (is_conduction_is_switched_off() && 
          cmd.get_command_code() !=system_settings::COMMAND_ACCEPT)
                  return;
 
@@ -1083,6 +1127,7 @@ int old_A0_state=A0_state;
           A0(5);
           break;
 	case (system_settings::COMMAND_ACCEPT):
+	case (system_settings::COMMAND_CHANCEL):
           A0(6);
           break;
       default:
@@ -1092,8 +1137,9 @@ int old_A0_state=A0_state;
 		 throw spider_exception(exception_description.str());      
     };  //switch (cmd.get_command_code())
 
-  if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT) {
-	  buffer.push_back(get_number());	//udku number
+  if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT &&
+       cmd.get_command_code()!=system_settings::COMMAND_CHANCEL) {
+	  buffer.push_back(get_modbus_number());	//udku number
       buffer.push_back(5);		// modbus function
 
     switch (cmd.get_command_code()) {
@@ -1116,6 +1162,7 @@ int old_A0_state=A0_state;
 	      buffer.push_back(0x00);		// state code low byte
           break;
 	case (system_settings::COMMAND_ACCEPT):
+	case (system_settings::COMMAND_CHANCEL):
           break;
       default:
         ostringstream exception_description;
@@ -1124,10 +1171,8 @@ int old_A0_state=A0_state;
 		 throw spider_exception(exception_description.str());      
     };  //switch (cmd.get_command_code())
 
-       crc_value = sys_sett->crc(buffer);
-	   system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	   buffer.push_back(tmp_bytes[1]);
-	   buffer.push_back(tmp_bytes[0]);
+	   system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	   buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
 	     metro_device::set_request_to_device_buffer(buffer);
     }; // if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT
@@ -1148,7 +1193,6 @@ void metro_udku::decode_answer_from_device_4_function
    msg_dict_container::iterator msg_cont_iter;
 
    metro_devices_types_container::iterator dev_types_iter;
-   metro_device_type::data_unit_iterator type_data_unit_iter;
 
    vector<log_record> received_messages;
 
@@ -1157,37 +1201,36 @@ void metro_udku::decode_answer_from_device_4_function
    udku_data_block local_data_block=this->data_block;
    word begin_addr, registers_count, register_data_word, answer_messages_size=0, answer_last_message_remote_id=0;
    byte tmp_byte_value;
-   metro_device::buffer_data_type::reverse_iterator tmp_iter1, tmp_iter2;
+   metro_device::buffer_data_type::iterator tmp_iter1, tmp_iter2;
    ldword data_block_breaking_path_value;
    metro_device::buffer_data_type request_to_device = metro_device::get_current_request_to_device_buffer();
-
 
    if (request_to_device.empty())
               throw spider_exception("void metro_udku::decode_answer_from_device_4_function :  previos_request_to_device is empty ");
    
-   tmp_iter1=request_to_device.rend();
+   tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-             -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
+             system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
    advance(tmp_iter2,
-                -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
-                   system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
+                (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
+                 system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
 
-   begin_addr=sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter2, tmp_iter1));
+   begin_addr=system_settings::type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter1, tmp_iter2));
    begin_addr+=udku_data_block::MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS;
 
-   tmp_iter1=request_to_device.rend();
+   tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-                  -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
+                 system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
    advance(tmp_iter2,
-                 -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
+                 (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                   system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
 
     registers_count=
-                   sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter2, tmp_iter1));
+                   system_settings::type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter1, tmp_iter2));
 
 	if (registers_count*2 !=answer[system_settings::MODBUS_DATA_BYTES_COUNT_INDEX]) {
         ostringstream exception_description;
@@ -1200,56 +1243,52 @@ void metro_udku::decode_answer_from_device_4_function
 	};
 
 //move iteratiors to first register data
-   tmp_iter1=answer.rend();
+   tmp_iter1=answer.begin();
    tmp_iter2=tmp_iter1;
     advance(tmp_iter1,
-                   -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2));
+                   system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+1);
     advance(tmp_iter2,
-                    -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
+                  (system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
 
 //poehali!
   if (begin_addr<= 30001&&
          begin_addr+registers_count>30001) {
+            word tmp_word_value=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
+
             local_data_block.set_parameter_value(
-                                      udku_data_block::INDEX_PARAM_MODE_VALUE,
-                                       sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1))
-                                       );
+                  udku_data_block::INDEX_PARAM_MODE_VALUE,
+                  tmp_word_value);
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -1);
+            advance(tmp_iter2, 1);
     };
 
     if (begin_addr<= 30002&&
          begin_addr+registers_count>30002) {
 
-            tmp_byte_value=sys_sett->type_from_bytes<byte>(system_settings::bytes (tmp_iter2, tmp_iter1));
+            tmp_byte_value=*tmp_iter1;
             local_data_block.set_parameter_value(
 	             udku_data_block::INDEX_PARAM_DKSE_POSITION,
                 tmp_byte_value);
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -1);
+            advance(tmp_iter2, 1);
 
-            tmp_byte_value=sys_sett->type_from_bytes<byte>(system_settings::bytes (tmp_iter2, tmp_iter1));
-
+            tmp_byte_value=*tmp_iter1;
             local_data_block.set_parameter_value(
                 udku_data_block::INDEX_PARAM_ESCALATOR_TYPE,
                 tmp_byte_value);
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 1);
     };
 
      if (begin_addr<= 30003&&
          begin_addr+registers_count>=30004) {
            if (begin_addr<=30003 && begin_addr+registers_count==30004)
                    throw spider_exception ("In answer 30003 register present but not 30004 - it must be answered both");
-            advance(tmp_iter2, -2); // 4 bytes must be readed
 
-             system_settings::bytes tmp_bytes(tmp_iter2, tmp_iter1);
-            tmp_byte_value=tmp_bytes[tmp_bytes.size()-1];
-            tmp_bytes.pop_back();
-
+            tmp_byte_value=*tmp_iter1;
            if (tmp_byte_value>0) {
                   local_data_block.set_signal_value(
                       udku_data_block::INDEX_SIGNAL_BREAKING_PATH_STATUS,
@@ -1260,42 +1299,46 @@ void metro_udku::decode_answer_from_device_4_function
                       udku_data_block::SIGNAL_VALUE_RED); 
                  };
 
+            advance(tmp_iter1, 1);
+            advance(tmp_iter2, 3);
+            system_settings::bytes tmp_bytes(tmp_iter1, tmp_iter2);
+
             local_data_block.set_parameter_value(
-                        udku_data_block::INDEX_PARAM_BREAKING_PATH_VALUE,
-                        sys_sett->type_from_bytes<data_block::parameter_data_type>(tmp_bytes)
-                        );
+                   udku_data_block::INDEX_PARAM_BREAKING_PATH_VALUE,
+                   system_settings::type_from_bytes<data_block::parameter_data_type>(tmp_bytes)
+                   );
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30005&&
          begin_addr+registers_count>30005) {
             local_data_block.set_parameter_value(
                                       udku_data_block::INDEX_PARAM_ESCALATOR_SPEED_VALUE,
-                                       sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1))
+                                       system_settings::type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2))
                                        );
-            tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+           tmp_iter1=tmp_iter2;
+           advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30006&&
          begin_addr+registers_count>30007) {
            if (begin_addr<=30006 && begin_addr+registers_count<=30007)
                   throw spider_exception ("In answer 30006 register present but not 30007 - it must be answered both");
-            advance(tmp_iter2, -2); // 4 bytes must be readed
+            advance(tmp_iter2, 2); // 4 bytes must be readed
 
             local_data_block.set_parameter_value(
                         udku_data_block::INDEX_PARAM_RUNNING_PATH_VALUE,
-                        sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter2, tmp_iter1) )
+                        sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter1, tmp_iter2))
                         );
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30007&&
           begin_addr+registers_count>30007) {
-           word udku_signals=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1));
+           word udku_signals=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
 
             for (int index_of_block_circut=0; index_of_block_circut<16;index_of_block_circut++)
                     if ((udku_signals & (0x0001<<index_of_block_circut))!=0){
@@ -1309,13 +1352,13 @@ void metro_udku::decode_answer_from_device_4_function
                          };
 
           tmp_iter1=tmp_iter2;
-          advance(tmp_iter2, -2);
+          advance(tmp_iter2, 2);
     };
 
 
      if (begin_addr<= 30008&&
          begin_addr+registers_count>30008) {
-           word udku_signals=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1));
+           word udku_signals=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
 
             for (int index_of_block_circut=0; index_of_block_circut<16;index_of_block_circut++)
                     if ((udku_signals & (0x0001<<index_of_block_circut))!=0){
@@ -1329,22 +1372,22 @@ void metro_udku::decode_answer_from_device_4_function
                          };
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30009&&
          begin_addr+registers_count>30009) {
-            answer_last_message_remote_id=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
+            answer_last_message_remote_id=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
 //			cout<<"answer_last_message_remote_id "<<answer_last_message_remote_id<<endl;
            if (answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
                     throw spider_exception ("In answer 3009 register answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE");
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30010&&
          begin_addr+registers_count>30010) {
-            answer_messages_size=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
+            answer_messages_size=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
 //			cout<<"answer_messages_size "<<answer_messages_size<<endl;
            if (answer_messages_size>system_settings::MAX_MESSAGES_COUNT)
                     throw spider_exception ("In answer 30010 register answer_messages_size>system_settings::MAX_MESSAGES_COUNT");
@@ -1383,7 +1426,6 @@ void metro_udku::decode_answer_from_device_4_function
         }; //switch (local_data_block.get_parameter_value())
 
 //mashzal door
-
            if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
                 local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)) {
                  metro_stations_container *stations=metro_stations_container::get_instance();
@@ -1392,7 +1434,6 @@ void metro_udku::decode_answer_from_device_4_function
                  metro_devices_container::iterator devices_iter;
                  metro_device::buffer_data_type data_to_door;
                  system_settings::bytes tmp_bytes;
-                  word crc_value;
 
                  if (stations!=NULL && devices!=NULL) {
                           stations_iter=stations->find(metro_device::get_station_id());
@@ -1404,7 +1445,7 @@ void metro_udku::decode_answer_from_device_4_function
                                           if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
                                                devices_iter->second->get_enabled()) {
                                              data_to_door.clear();
-                                             data_to_door.push_back(devices_iter->second->get_number()); //modbus device number
+                                             data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
                                              data_to_door.push_back(4); //function code
                                              data_to_door.push_back(2); //data bytes count
                                              data_to_door.push_back(0); //high byte
@@ -1414,11 +1455,9 @@ void metro_udku::decode_answer_from_device_4_function
                                                    } else  {
                                                      data_to_door.push_back(0);
                                                    }
-	                                          crc_value = sys_sett->crc(data_to_door);
 
-	                                        tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-                                            data_to_door.push_back(tmp_bytes[1]);
-                                            data_to_door.push_back(tmp_bytes[0]);
+	                                        tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
+                                            data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
                                             devices_iter->second->set_answer_from_device_buffer(data_to_door);
 
                                            MsgSendPulse(devices_iter->second->get_connection_id(),
@@ -1465,7 +1504,7 @@ void metro_udku::decode_answer_from_device_4_function
 	 for (byte register_offset=0; register_offset<answer_messages_size; register_offset++){
             if (begin_addr+registers_count<current_register+register_offset) break;
 
-           register_data_word=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1) );
+           register_data_word=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2) );
             current_message_id=answer_first_message_remote_id+register_offset;
 
 //            cout<<"current message id"<<endl;
@@ -1478,7 +1517,7 @@ void metro_udku::decode_answer_from_device_4_function
                 upper_last_id<=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id)  {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
@@ -1488,7 +1527,7 @@ void metro_udku::decode_answer_from_device_4_function
                 ((current_message_id>answer_last_message_remote_id  && current_message_id>=answer_first_message_remote_id)||
                 current_message_id<=upper_last_id )) {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
@@ -1498,7 +1537,7 @@ void metro_udku::decode_answer_from_device_4_function
                 current_message_id>=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id) {
                    tmp_iter1=tmp_iter2;
-                   advance(tmp_iter2, -2);
+                   advance(tmp_iter2, 2);
                    continue;
                 };
 
@@ -1544,7 +1583,7 @@ void metro_udku::decode_answer_from_device_4_function
 
                   metro_device::set_last_message_remote_id(current_message_id);
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
 
 	 }; // for (byte register_offset=0; register_offset<
 
@@ -1561,15 +1600,16 @@ void metro_udku::decode_answer_from_device_4_function
        }; // if (!received_messages.empty())
 
 //alerts
-  if (!received_messages.empty()) {
+  if (!received_messages.empty() &&
+      A0_x3) { //udku on DU
         ostringstream message;
         string message_from_messages_container;
         int find_pos;
         vector<char> tmp_chars;
         vector<log_record>::reverse_iterator log_mess_iter=received_messages.rbegin();
         dword breaking_path_value;
-        byte block_circut_index;
-        string block_circut_name;
+        byte input_circut_index;
+        string input_circut_name;
         metro_stations_container *stations=metro_stations_container::get_instance();
         metro_stations_container::iterator stat_iter;
         if (stations==NULL)
@@ -1585,7 +1625,7 @@ void metro_udku::decode_answer_from_device_4_function
                      message.str("Станция ");
                      message_from_messages_container="";
 
-                     message<<stat_iter->second.get_stl_name_string()<<" Эскалатор "<<metro_device::get_number()<<"\n";
+                     message<<stat_iter->second.get_stl_name_string()<<" УДКУ "<<metro_device::get_number()<<"\n";
 
                     system_settings::strings_container parameters_names=
                                            sys_sett->get_parameters_in_messages_strings();
@@ -1622,35 +1662,21 @@ void metro_udku::decode_answer_from_device_4_function
 
                     find_pos=static_cast<int>(message_from_messages_container.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
                     if (find_pos!=-1) {
- 
-                      block_circut_index=static_cast<byte>((log_mess_iter->get_msg_id()&0xff00)>>8);
-                      if (metro_device::get_id()==2)
-                                      cout<<" current_message_id "<<current_message_id<<"  block_circut_index "<<block_circut_index<<endl;
-                      block_circut_index+=6; //shift for signals, added from registers 3004, 3005,3006 and other
-                      metro_devices_types_container *devices_types=metro_devices_types_container::get_instance();
-                      metro_devices_types_container::iterator iter_devices_types=devices_types->find(metro_device::get_type());
-    				  if (iter_devices_types!=devices_types->end()) {
-                             type_data_unit_iter=iter_devices_types->second->data_units_find(block_circut_index);
-                             //ATENTION:index of block circut equals to id, so send to find block circut index
-                             if (type_data_unit_iter->second->get_index()==block_circut_index) {
-                                        block_circut_name=type_data_unit_iter->second->get_name();
-                                    } else { //if (type_data_unit_iter.second.get_index()==block_circut_index)
-                                          block_circut_name="ERROR!!";
-                                          ostringstream mess;
-                                          mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but type_data_unit_iter->second->get_index()!=block_circut_index block_circut_index "
-                                                   <<block_circut_index<<" message id in log"<<current_message_id;
-                                           throw spider_exception(mess.str());
-                                   }; //if (type_data_unit_iter.second.get_index()==block_circut_index)
-                       } else  { // if (iter_devices_types!=devices_types->end())
-                                             block_circut_name="ERROR!!";
-                                             ostringstream mess;
-                                             mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() message id in log"<<current_message_id;
-                                             throw spider_exception(mess.str());
-                         }; // if (iter_devices_types!=devices_types->end())
+                        input_circut_index=static_cast<byte>((current_message_id&0x00ff00)>>8);
+                   if (dev_types_iter!=dev_types_cont->end() &&
+                               dev_types_iter->second->circuts_size()>input_circut_index) {
+                               input_circut_name=(dev_types_iter->second->at_circut(input_circut_index)).get_hint();
+                      } else  { // if (iter_devices_types!=devices_types->end()) &&
+                                 input_circut_name="ERROR!!";
+                                 ostringstream mess;
+                                 mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() or circuts_size()>input_circut_index message id in log="<<current_message_id;
+                                 throw spider_exception(mess.str());
+                     }; // if (iter_devices_types!=devices_types->end())
+
 
                       message_from_messages_container.replace( find_pos,
 												   parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME].size(),
-												   block_circut_name);
+												   input_circut_name);
                     };//if (find_pos!=-1)
                 };
 
@@ -1660,7 +1686,9 @@ void metro_udku::decode_answer_from_device_4_function
                                                                        message.str(),
                                                                         true);
 					 sound& snd=sound::get_instance();
-                     snd.play(stat_iter->second.get_wav_file_name());
+					std::vector<string> *files  = new std::vector<string> ();
+					files->push_back(stat_iter->second.get_wav_file_name());
+                     snd.play(files);
 
                  }; // if (log_mess_iter->get_msg_type()==udku_data_block::ALERT_ERROR_MESSAGES_TYPE)
                  log_mess_iter++;
@@ -1669,60 +1697,72 @@ void metro_udku::decode_answer_from_device_4_function
 
 };
 
-command metro_udku::get_device_pref_command() throw(spider_exception) {
- if (pref_direction==system_settings::DIRECTION_DOWN )
+command metro_udku::get_device_start_command() throw(spider_exception) {
+
+system_settings_spider* sys_sett_obj=system_settings_spider::get_instance();
+if (sys_sett_obj==NULL)
+           throw spider_exception("metro_udku::get_device_start_command() can`t get instance of system_settins_spider");
+
+system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+
+ if (start_direction==system_settings::DIRECTION_DOWN )
     return 	command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_DOWN,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "СПУСК" );
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_DOWN]);
 
- if (pref_direction==system_settings::DIRECTION_UP)
+ if (start_direction==system_settings::DIRECTION_UP)
     return 	command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_UP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "ПОДЪЕМ"); 
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_UP]); 
 
-  throw spider_exception("Cant get prf command - reverse udku");
+  throw spider_exception("Cant get start command - reverse udku"); // it`s imposible start direction not may be reverse
 }
 
 
 vector<command>
-     metro_udku::get_appropriated_commands(){
+     metro_udku::get_appropriated_commands()  throw (spider_exception) {
      vector<command> commands_to_return; 
+system_settings_spider* sys_sett_obj=system_settings_spider::get_instance();
+if (sys_sett_obj==NULL)
+           throw spider_exception("metro_udku::get_appropriated_commands() can`t get instance of system_settins_spider");
+system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+
 
           if (A0_x3) {
-            if (pref_direction==system_settings::DIRECTION_DOWN ) {
-                  commands_to_return.push_back(
- 	                command (metro_device::get_id(),
-	                   metro_device::get_type(),
-	                   system_settings::COMMAND_DOWN,
-	                   metro_device::get_station_id(),
-	                   metro_device::get_number(),
-                       "СПУСК")
-                    );
-              } else  if (pref_direction==system_settings::DIRECTION_UP ) {
                 commands_to_return.push_back(
  	              command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_UP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "ПОДЪЕМ")
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_UP])
                   );
-             };
 
             commands_to_return.push_back(
  	           command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_STOP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "СТОП")
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_STOP])
               );
+
+                  commands_to_return.push_back(
+ 	                command (metro_device::get_id(),
+	                   metro_device::get_type(),
+	                   system_settings::COMMAND_DOWN,
+	                   metro_device::get_station_id(),
+	                   metro_device::get_modbus_number(),
+                       directions_strings[system_settings::DIRECTION_DOWN])
+                    );
+
+
         }; //if (A0_x3)
 
      if (A0_state==A0_READY_NOT_ACCEPTED)
@@ -1731,8 +1771,19 @@ vector<command>
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_ACCEPT, 
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "КВИТИРОВАТЬ")
+              );
+
+     if (A0_state==A0_STARTING ||
+          A0_state==A0_STOPPING)
+            commands_to_return.push_back(
+ 	           command (metro_device::get_id(),
+	                 metro_device::get_type(),
+	                 system_settings::COMMAND_CHANCEL, 
+	                 metro_device::get_station_id(),
+	                 metro_device::get_modbus_number(),
+                     "СБРОСИТЬ КОМАНДУ")
               );
 
     return commands_to_return;
@@ -1780,7 +1831,7 @@ try {
 
       PtGetResource(parent_widget, Pt_ARG_WIDTH, &internal_parent_widget_width, 0);
       parent_widget_width=*internal_parent_widget_width;
-      device_text<<"Эскалатор "<<metro_device::get_number()<<" команда эскалатору";
+      device_text<<"УДКУ "<<metro_device::get_number()<<" режим работы ";
 
       //label with device description
 		args.clear();
@@ -1808,38 +1859,40 @@ try {
 		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
 		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
 		PtSetArg(&args[2], Pt_ARG_WIDTH, 120, 0);
-        widget_position.x=220;
-        widget_position.y=widgets_y_position;
+        widget_position.x=190;
+        widget_position.y=widgets_y_position-2;
         PtSetArg(&args[3], Pt_ARG_POS,
                        &widget_position, 0);
-        PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
-                       Pt_FALSE, Pt_EDITABLE);
+         PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
+                         Pt_FALSE, Pt_EDITABLE);
 
-        current_widget=PtCreateWidget(PtComboBox,
+         current_widget=PtCreateWidget(PtComboBox,
                                                      parent_widget,
                                                      args.size(),
                                                      &args[0]);
-        if (current_widget==NULL)
-                  throw spider_exception("combobox with appropriated commands is NULL");
 
+         if (current_widget==NULL)  throw spider_exception("combobox with appropriated commands is NULL");
 
-            system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
-            udku_direction_combobox=current_widget;
+          system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+          udku_pref_direction_combobox=current_widget;
 
            directions_strings[system_settings::DIRECTION_UP]+="   ";
            directions_strings[system_settings::DIRECTION_DOWN]+="   ";
+           directions_strings[system_settings::DIRECTION_REVERSE]+="   ";
 
-			const char *items[2];
-			items[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
-			items[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+			const char *items_pref_dir[3];
+			items_pref_dir[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
+			items_pref_dir[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+			items_pref_dir[2]=directions_strings[system_settings::DIRECTION_REVERSE].c_str();
 
             PtListAddItems(current_widget,
-									items,
-									2,
+									items_pref_dir,
+									3,
 									0);
 
             if (pref_direction==system_settings::DIRECTION_UP||
-                 pref_direction==system_settings::DIRECTION_DOWN)
+                 pref_direction==system_settings::DIRECTION_DOWN||
+                 pref_direction==system_settings::DIRECTION_REVERSE)
                      PtSetResource(current_widget,
 									Pt_ARG_CBOX_SEL_ITEM,
 									pref_direction,
@@ -1847,77 +1900,11 @@ try {
 
         PtRealizeWidget(current_widget);
 
-        //label  of start mode
-		args.clear();
-		args.resize(3);
-          widget_position.x=350;
-          widget_position.y=widgets_y_position;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "тип запуска", 0);
-         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
-                       Pt_Z_STRING,0);
-         current_widget=PtCreateWidget(PtLabel,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-         if (current_widget==NULL)
-                  throw spider_exception("label with device text is NULL");
-         PtRealizeWidget(current_widget);
-
-       //combobox with starting mode
-		args.clear();
-		args.resize(5);
-		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
-		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
-		PtSetArg(&args[2], Pt_ARG_WIDTH, 150, 0);
-        widget_position.x=430;
-        widget_position.y=widgets_y_position;
-        PtSetArg(&args[3], Pt_ARG_POS,
-                       &widget_position, 0);
-        PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
-                       Pt_FALSE, Pt_EDITABLE);
-
-        current_widget=PtCreateWidget(PtComboBox,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-        if (current_widget==NULL)
-                  throw spider_exception("combobox with appropriated commands is NULL");
-
-            system_settings::strings_container start_day_modes=sys_sett_obj->get_start_days_modes_russ_strings();
-            udku_start_mode_combobox=current_widget;
-
-
-            start_day_modes[system_settings::START_DAY_MODE_EVERYDAY]+="        ";
-			start_day_modes[system_settings::START_DAY_MODE_NEVER]+="         ";
-			start_day_modes[system_settings::START_DAY_MODE_ODD]+="          ";
-			start_day_modes[system_settings::START_DAY_MODE_EVEN]+="         ";
-
-			const char *start_day_items[system_settings::START_DAYS_MODES_COUNT];
-			start_day_items[system_settings::START_DAY_MODE_EVERYDAY]=start_day_modes[system_settings::START_DAY_MODE_EVERYDAY].c_str();
-			start_day_items[system_settings::START_DAY_MODE_NEVER]=start_day_modes[system_settings::START_DAY_MODE_NEVER].c_str();
-			start_day_items[system_settings::START_DAY_MODE_ODD]=start_day_modes[system_settings::START_DAY_MODE_ODD].c_str();
-			start_day_items[system_settings::START_DAY_MODE_EVEN]=start_day_modes[system_settings::START_DAY_MODE_EVEN].c_str();
-
-            PtListAddItems(current_widget,
-									start_day_items,
-									system_settings::START_DAYS_MODES_COUNT,
-									0);
-
-             PtSetResource(current_widget,
-									Pt_ARG_CBOX_SEL_ITEM,
-									metro_device::get_execution_mode()+1,
-									0);
-
-        PtRealizeWidget(current_widget);
-
         //label  of start hour
 		args.clear();
 		args.resize(3);
-          widget_position.x=5;
-          widget_position.y=widgets_y_position+25;
+          widget_position.x=1;
+          widget_position.y=widgets_y_position+28;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
@@ -1934,9 +1921,10 @@ try {
 
         //numeric input for start hour
 		args.clear();
+
      if (setting_start_time_disabled) {
 		  args.resize(8);
-          widget_position.x=70;
+          widget_position.x=60;
           widget_position.y=widgets_y_position+25;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
@@ -1954,7 +1942,7 @@ try {
                        Pt_TRUE, Pt_GHOST);
           } else {
 		  args.resize(5);
-          widget_position.x=70;
+          widget_position.x=60;
           widget_position.y=widgets_y_position+25;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
@@ -1979,8 +1967,8 @@ try {
         //label  of start minute
 		args.clear();
 		args.resize(3);
-          widget_position.x=130;
-          widget_position.y=widgets_y_position+25;
+          widget_position.x=115;
+          widget_position.y=widgets_y_position+28;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
@@ -1999,7 +1987,7 @@ try {
 		args.clear();
      if (setting_start_time_disabled) {
 		   args.resize(8);
-          widget_position.x=150;
+          widget_position.x=130;
           widget_position.y=widgets_y_position+25;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
@@ -2020,7 +2008,7 @@ try {
            } else { //if (setting_start_time_disabled)
 
 		 args.resize(6);
-          widget_position.x=150;
+          widget_position.x=130;
           widget_position.y=widgets_y_position+25;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
@@ -2046,7 +2034,136 @@ try {
 
          PtRealizeWidget(current_widget);
 
-       //button ok
+        //label  of start command
+		args.clear();
+		args.resize(3);
+          widget_position.x=220;
+          widget_position.y=widgets_y_position+28;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
+                       "команда", 0);
+         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
+                       Pt_Z_STRING,0);
+         current_widget=PtCreateWidget(PtLabel,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start minute is NULL");
+         PtRealizeWidget(current_widget);
+
+       //combobox with commands
+		args.clear();
+		args.resize(5);
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+		PtSetArg(&args[2], Pt_ARG_WIDTH, 120, 0);
+        widget_position.x=280;
+        widget_position.y=widgets_y_position+25;
+        PtSetArg(&args[3], Pt_ARG_POS,
+                       &widget_position, 0);
+        PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
+                       Pt_FALSE, Pt_EDITABLE);
+
+        current_widget=PtCreateWidget(PtComboBox,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+        if (current_widget==NULL)
+                  throw spider_exception("combobox with appropriated commands is NULL");
+
+
+            directions_strings=sys_sett_obj->get_directions_russ_strings();
+            udku_start_direction_combobox=current_widget;
+
+           directions_strings[system_settings::DIRECTION_UP]+="   ";
+           directions_strings[system_settings::DIRECTION_DOWN]+="   ";
+
+			const char *items[2];
+			items[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
+			items[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+
+            PtListAddItems(current_widget,
+									items,
+									2,
+									0);
+
+            if (start_direction==system_settings::DIRECTION_UP||
+                 start_direction==system_settings::DIRECTION_DOWN)
+                     PtSetResource(current_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									start_direction,
+									0);
+
+        PtRealizeWidget(current_widget);
+
+        //label  of start mode
+		args.clear();
+		args.resize(3);
+          widget_position.x=405;
+          widget_position.y=widgets_y_position+28;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
+                       "тип запуска", 0);
+         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
+                       Pt_Z_STRING,0);
+         current_widget=PtCreateWidget(PtLabel,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with device text is NULL");
+         PtRealizeWidget(current_widget);
+
+       //combobox with starting mode
+		args.clear();
+		args.resize(5);
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+		PtSetArg(&args[2], Pt_ARG_WIDTH, 150, 0);
+        widget_position.x=490;
+        widget_position.y=widgets_y_position+25;
+        PtSetArg(&args[3], Pt_ARG_POS,
+                       &widget_position, 0);
+        PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
+                       Pt_FALSE, Pt_EDITABLE);
+
+        current_widget=PtCreateWidget(PtComboBox,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+        if (current_widget==NULL)
+                  throw spider_exception("combobox with appropriated commands is NULL");
+
+            system_settings::strings_container start_day_modes=sys_sett_obj->get_start_days_modes_russ_strings();
+            udku_start_mode_combobox=current_widget;
+
+            start_day_modes[system_settings::START_DAY_MODE_EVERYDAY]+="        ";
+			start_day_modes[system_settings::START_DAY_MODE_NEVER]+="         ";
+			start_day_modes[system_settings::START_DAY_MODE_ODD]+="          ";
+			start_day_modes[system_settings::START_DAY_MODE_EVEN]+="         ";
+
+			const char *start_day_items[system_settings::START_DAYS_MODES_COUNT];
+			start_day_items[system_settings::START_DAY_MODE_EVERYDAY]=start_day_modes[system_settings::START_DAY_MODE_EVERYDAY].c_str();
+			start_day_items[system_settings::START_DAY_MODE_NEVER]=start_day_modes[system_settings::START_DAY_MODE_NEVER].c_str();
+			start_day_items[system_settings::START_DAY_MODE_ODD]=start_day_modes[system_settings::START_DAY_MODE_ODD].c_str();
+			start_day_items[system_settings::START_DAY_MODE_EVEN]=start_day_modes[system_settings::START_DAY_MODE_EVEN].c_str();
+
+            PtListAddItems(current_widget,
+									start_day_items,
+									system_settings::START_DAYS_MODES_COUNT,
+									0);
+
+             PtSetResource(current_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									metro_device::get_execution_mode()+1,
+									0);
+
+        PtRealizeWidget(current_widget);
+
+       //button save
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, 30,0);
@@ -2077,7 +2194,7 @@ try {
 
          PtRealizeWidget(current_widget);
  } catch (spider_exception spr_exc) {
-      sys_sett_obj->sys_message(system_settings::ERROR_MSG, "In metro_udku::create_properties_widgets raised exception "+spr_exc.get_description());
+      sys_sett_obj->sys_message(system_settings::ERROR_MSG, "In metro_escalator::create_properties_widgets raised exception "+spr_exc.get_description());
  };
 
 };

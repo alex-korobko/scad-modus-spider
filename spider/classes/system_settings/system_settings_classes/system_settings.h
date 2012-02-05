@@ -24,6 +24,7 @@ string global_messages_name;
 string messages_types_name;
 string devices_types_name;
 string main_log_name;
+string dispatchers_name;
 
 string routing_name;
 
@@ -92,6 +93,7 @@ virtual ~system_settings() {};
 	enum {COMMAND_UP=0xE0,
 				COMMAND_DOWN=0xE1,
 				COMMAND_STOP=0xE2,
+                COMMAND_CHANCEL=0xFE,
                 COMMAND_ACCEPT=0xFF
 				};
 
@@ -164,7 +166,7 @@ virtual ~system_settings() {};
                 UDKU_POSITION_UNUSED,
 				UDKU_POSITIONS_COUNT};
 
-// message types
+// message windows and system messages types
 	enum{
 				DEBUG_MSG=0,
 				ERROR_MSG,
@@ -178,30 +180,47 @@ virtual ~system_settings() {};
                PARAMETER_NAME_BREAKING_PATH_VALUE=0,
                PARAMETER_NAME_BLOCK_CIRCUT_NAME,
                PARAMETER_VALUE,
+               PARAMETER_NAME_DISPATCHER,
+               PARAMETER_NAME_STOP_CAUSE,
                PARAMETERS_NAMES_COUNT
        };
 
 
 
-//predefined messages ids
+//predefined log messages ids
    enum {MESSAGE_ID_SYSTEM_STARTED=1,
+
+                DISPATCHER_BEGIN_SMENU=218,
+                DISPATCHER_MAKE_CMD_STOP=219,
                 DISPATCHER_MAKE_CMD_DOWN=220,
                 DISPATCHER_MAKE_CMD_UP=221,
-                DISPATCHER_SEND_CMD_UP=222,
-                DISPATCHER_SEND_CMD_DOWN=223,
+                DISPATCHER_SEND_CMD_UP=223,
+                DISPATCHER_SEND_CMD_DOWN=222,
                 DISPATCHER_SEND_CMD_STOP=224,
                 DISPATCHER_KVIT_MASHZAL_DOOR=225,
                 DISPATCHER_CHANCEL_CMD_UP=226,
                 DISPATCHER_CHANCEL_CMD_DOWN=227,
                 DISPATCHER_MAKE_CMD=228,
                 DISPATCHER_SEND_CMD=229,
-                DISPATCHER_CHAMCEL_CMD=230
+                DISPATCHER_CHANCEL_CMD=230,
+
+				MESSAGE_ID_STATION_OFFLINE = 240,
+				MESSAGE_ID_DEVICE_OFFLINE = 241
                 };
+
+//predefined log messages types ids
+    enum {  
+				  MESSAGE_TYPE_ERROR_MESSAGE=2,
+				  MESSAGE_TYPE_INFO_MESSAGE=4,
+                  MESSAGE_TYPE_DISPATCHER_DOING=5
+               };
 
 // other system settings
 	enum {
 //				SYSTEM_TIMER=_PULSE_CODE_MINAVAIL+1,
 				PING_TIMEOUT=2000000, // мкс
+				OFFLINE_DELAY=20, //c
+				CONDUCTION_DELAY=300, //c = 5 min 
 				SYSTEM_TICK	=1, // c
 
 				ECHO_TCP_PORT=7,
@@ -252,11 +271,11 @@ virtual ~system_settings() {};
                 MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE=3,
                 MODBUS_EXCEPTION_FAILURE_IN_ASSOCIATED_DEVICE=4,
                 
-                SOCKET_FAILURES_COUNT,
+//                SOCKET_FAILURES_COUNT, //not used
 				TIME_CORR_INTER=10000, //interval (in cicles of requests to hardware) between sending timeset request
-                RECONNECTS_TO_DEVICE_COUNT=10,
-                CONNECT_TO_DEVICE_TIMEOUT=30,
-                RECIEVE_SEND_TO_DEVICE_TIMEOUT=10,
+                RECONNECTS_TO_DEVICE_COUNT=3,
+                CONNECT_TO_DEVICE_TIMEOUT=9, //seconds
+                RECIEVE_SEND_TO_DEVICE_TIMEOUT=5, //seconds
                 DELAY_BETWEEN_REQUESTS_TO_DEVICE=900000 //microseconds
 				};
 
@@ -327,45 +346,55 @@ virtual ~system_settings() {};
 //system messages
 	void sys_message (const int type, const string mess_text);
 
-//CRC16 coding function
-	word crc(vector<byte> buffer);
-
 //config file names in project
 	string get_devices_config_name() {return(devices_config_name);};
 	string get_global_messages_name() {return(global_messages_name);};
 	string get_messages_types_name() {return(messages_types_name);};
 	string get_devices_types_name() {return(devices_types_name);};
+    string get_dispatchers_name() {return(dispatchers_name);};
 	string get_main_log_name() {return(main_log_name);};
 	string get_routing_name() {return(routing_name);};
 
 //virtual metods
 virtual types_of_system_settings get_system_settings_type()=0;
 
-//static metods
+//static methods
+
+//CRC16 coding function
+	static word crc(bytes buffer);
+
 // splitting and merging per bytes -  very dangerous templates using
-	template<typename T>
-	static bytes bytes_of_type (T value_to_splitting) {
-		bytes ret_val(sizeof(T));
-		for (bytes::size_type i=0; i<ret_val.size();i++){
-			ret_val[i]=((value_to_splitting & (0x00FF<<i*8))>>i*8);
-		};
+   template<typename T>
+	static bytes bytes_of_type (T value_to_splitting, bool big_indian=true) {
+		    bytes ret_val(sizeof(T));
+         	for (bytes::size_type i=0; i<ret_val.size(); i++)
+                 if (big_indian) {
+                     ret_val[ret_val.size()-i-1]=((value_to_splitting & (0x00FF<<i*8))>>i*8);
+                   } else { // if (big_indian)
+                     ret_val[i]=((value_to_splitting & (0x00FF<<i*8))>>i*8);
+                   };
+
 /*
 		while (ret_val.size()>1 &&
 		          ret_val[ret_val.size()-1]==0) {
             ret_val.pop_back();
 		 };
-it`s right, but for crc calculation to many bytes reruened, if crc value < 255 ( 0x0f returns vector (f) with size 1) 
+it`s right, but for crc calculation to many bytes returned, if crc value < 255 ( 0x0f returns vector (f) with size 1)
 */
 		return  ret_val;
-   };
+       };
 
 	template<typename T>
-	static T type_from_bytes (bytes bytes_to_merging){
-			T ret_val=0;
-			bytes::size_type count=__min(bytes_to_merging.size(), sizeof(T));
-			for (bytes::size_type i=0; i<count; i++){
-				ret_val |=(bytes_to_merging[i] << (i*8) );
-            };
+	static T type_from_bytes (bytes bytes_to_merging, bool big_indian=true){
+               T ret_val=0;
+	       bytes::size_type count=std::min(bytes_to_merging.size(), sizeof(T));
+               if (big_indian) {
+                 for (bytes::size_type i=0; i<count; i++)
+                                      ret_val |=(bytes_to_merging[count-i-1] << (i*8) );
+                } else { // if (big_indian)
+                 for (bytes::size_type i=0; i<count; i++)
+                                                    ret_val |=(bytes_to_merging[i] << (i*8) );
+                }; //if (big_indian)
 
             return  ret_val;
     };

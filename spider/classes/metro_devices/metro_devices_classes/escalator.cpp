@@ -25,7 +25,6 @@
 using namespace std;
 
 #include "defines.h"
-#include <sys/select.h> //#define FD_SETSIZE
 #include "spider_exception.h"
 #include "system_settings.h"
 #include "system_settings_spider.h"
@@ -57,7 +56,6 @@ extern msg_dict_container *messages;
 extern log_records_container *main_log;
 
 //see main.cpp
-extern bool sending_commands_disabled;
 extern bool setting_start_time_disabled;
 
 //see staton_devices_properties_callbacks.cpp
@@ -71,36 +69,51 @@ metro_escalator::metro_escalator(
 		int id, 
 		int id_station,
 		int number,
+		int modbus_number,
 		int type,
 		int pref_direction,
 	   	int	 start_day_mode,
 	   	int	 start_hour,
 	   	int	 start_minute,
+	   	int	 start_direction,
         int channel,
 		bool enabled,
-		in_addr_t	ip) throw (spider_exception):
+		in_addr_t	ip,
+		double offline_or_exception_delay,
+		double new_conduction_notification_delay,
+		bool new_conduction_is_switched_off, 
+        bool new_log_packets) throw (spider_exception):
 
 	metro_device( id,
                    id_station,
                    number,
+                   modbus_number,
                    type,
                    start_day_mode,
                    start_hour,
                    start_minute,
                    enabled,
                    ip,
-                   channel),
+                   channel,
+					offline_or_exception_delay,
+					new_conduction_is_switched_off,
+					new_log_packets),
    arrow(NULL),
-   escalator_direction_combobox(NULL),
+   escalator_pref_direction_combobox(NULL),
+   escalator_start_direction_combobox(NULL),
    escalator_start_hour(NULL),
    escalator_start_minute(NULL),
 	tid(0),	
 	pref_direction(pref_direction),
+	start_direction(start_direction),
+    previous_direction(pref_direction),
+	conduction_notification_delay(new_conduction_notification_delay),
+	previous_stop_time(time(NULL)),
     A0_x2(true), //state accepted
 	A0_x5(false),  //offline
+	A0_x6(false),  //last request to device failed
     A0_x1(pref_direction), //predefined direction
     A0_state(A0_OFFLINE){};
-
 
 	metro_escalator::~metro_escalator() {
        if (tid!=0) {
@@ -304,11 +317,11 @@ void metro_escalator::A0(int event)  throw (spider_exception){
            break;
          };
          if (A0_x3 && A0_x5 && !A0_x2 &&
-             A0_x4 && !A0_x0) {
+             A0_x4 && !A0_x0 && !A0_x8() ) {
            A0_state=A0_READY_NOT_ACCEPTED;
            break;
          };
-         if ((!A0_x3 || (A0_x3 && A0_x2)) && 
+         if ((!A0_x3 || (A0_x3 && A0_x2) || (A0_x3 && A0_x8())) && 
              A0_x5 && A0_x4 && !A0_x0) {
            A0_state=A0_READY;
            break;
@@ -332,12 +345,13 @@ void metro_escalator::A0(int event)  throw (spider_exception){
          };
          if (!A0_x2 &&
               A0_x6 &&
-              !A0_x0) {
+              !A0_x0 &&
+			  !A0_x8()) {
            A0_state=A0_READY_NOT_ACCEPTED;
            break;
          };
 
-         if (A0_x2 &&
+         if ((A0_x2 || A0_x8()) &&
               A0_x6 &&
               !A0_x0) {
            A0_state=A0_READY;
@@ -362,13 +376,20 @@ void metro_escalator::A0(int event)  throw (spider_exception){
 
 //  cout<<"Escalator automate A0 state changed from "<<old_automat_state
 //         <<" to "<<A0_state<<endl;
-
 //  cout<<"A0_x0 "<<(A0_x0? "true": "false")<<endl;
 //  cout<<"A0_x2 "<<(A0_x2? "true": "false")<<endl;
 //  cout<<"A0_x3 "<<(A0_x3? "true": "false")<<endl;
 //  cout<<"A0_x4 "<<(A0_x4? "true": "false")<<endl;
 //  cout<<"A0_x5 "<<(A0_x5? "true": "false")<<endl;
 //  cout<<"A0_x6 "<<(A0_x6? "true": "false")<<endl;
+
+switch (old_automat_state) {
+    case A0_RUN:
+			A0_z11();
+          break;
+
+};
+
 
 //initializations on enter to new state
  switch (A0_state) {
@@ -383,19 +404,83 @@ void metro_escalator::A0(int event)  throw (spider_exception){
     case A0_STARTING:
           break;
     case A0_RUN:
+			A0_z10();
           break;
     case A0_STOPPING:
           break;
     case A0_OFFLINE:
+			A0_z9();
           break;
     case A0_EXCEPTION:
-          break;
+  		A0_z8(); 
+		break;
     default :
       ostringstream exception_description;
       exception_description<<"metro_escalator::A0(...) device id "<<get_id();
       exception_description<<" after change A0 has undefined state "<<A0_state;
       throw spider_exception(exception_description.str());        
    }; //switch (A0_state)
+};
+
+bool metro_escalator::A0_x8()
+{
+    system_settings_spider *sys_sett=system_settings_spider::get_instance();
+	   ostringstream infMessage;
+	   time_t time_now = time(NULL);
+       double time_diff = difftime(time_now, get_last_offline_or_exception_time());
+       infMessage<<"In metro_escalator::A0_x8() curr time is  : "<<time_now
+                       <<" get_last_offline_or_exception_time() "<<get_last_offline_or_exception_time()
+						<< " get_offline_or_exception_delay () " << get_offline_or_exception_delay ()
+						<< " diff in time "<< time_diff;
+        sys_sett->sys_message(system_settings::INFO_MSG,  infMessage.str());
+
+		return (time_diff <= get_offline_or_exception_delay ());
+}
+
+void metro_escalator::A0_z10()
+{
+   previous_direction=A0_x1;
+};
+
+void metro_escalator::A0_z8()
+{
+	int tmp_id;
+         tmp_id=main_log->get_records_autoincrement();
+         main_log->set_records_autoincrement(++tmp_id);
+
+          main_log->insert(log_record(tmp_id,
+                                     system_settings::MESSAGE_ID_STATION_OFFLINE,
+                                     system_settings::MESSAGE_TYPE_ERROR_MESSAGE,
+                                     get_station_id(),
+                                     get_id(),
+                                     time(NULL)));
+
+             main_log->prepare_to_display();
+
+		set_last_offline_or_exception_time(time(NULL));
+};
+
+void metro_escalator::A0_z9()
+{
+	int tmp_id;
+
+         tmp_id=main_log->get_records_autoincrement();
+         main_log->set_records_autoincrement(++tmp_id);
+
+          main_log->insert(log_record(tmp_id,
+                                     system_settings::MESSAGE_ID_DEVICE_OFFLINE,
+                                     system_settings::MESSAGE_TYPE_ERROR_MESSAGE,
+                                     get_station_id(),
+                                     get_id(),
+                                     time(NULL)));
+
+             main_log->prepare_to_display();
+		set_last_offline_or_exception_time(time(NULL));
+};
+
+void metro_escalator::A0_z11()
+{
+   set_previous_stop_time(time(NULL));
 };
 
 
@@ -477,7 +562,7 @@ void metro_escalator::create_device_widget(int x,
     		throw spider_exception("metro_escalator::create_device_window(...) can`t get  widget escalator_widget_panel_btn");
     };
 
-	itoa (	metro_device::get_number(),
+	itoa (metro_device::get_number(),
 	        &description[0],
 			10);
 	args.clear();
@@ -507,10 +592,17 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
 
     switch (A0_state) {
        case A0_NOT_READY:
+          if (A0_x3) {
                  PtSetArg(&args[0],
                                 Pt_ARG_LABEL_IMAGE,
                                 sys_sett_obj->get_image(system_settings_spider::BLOCK),
                                  0);
+                  } else {
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+                 };
        break;
        case A0_READY_NOT_ACCEPTED:
           if (A0_x3) {
@@ -530,7 +622,7 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                         case system_settings::DIRECTION_REVERSE:
                                 PtSetArg(&args[0],
                                               Pt_ARG_LABEL_IMAGE,
-                                              sys_sett_obj->get_image(system_settings_spider::RED_REVERSE),
+                                              sys_sett_obj->get_image(system_settings_spider::REVERSE),
                                               0);
                          break;
                         default:
@@ -540,32 +632,11 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                                 throw spider_exception(exception_description.str());
                             }; //switch (A0_x1)
               }else { // if (A0_x3)
-                  switch (A0_x1) {
-                       case system_settings::DIRECTION_UP:
-                             PtSetArg(&args[0],
-                                            Pt_ARG_LABEL_IMAGE,
-                                            sys_sett_obj->get_image(system_settings_spider::RED_S_UP),
-                                            0);
-                        break;
-                        case system_settings::DIRECTION_DOWN:
-                              PtSetArg(&args[0],
-                                             Pt_ARG_LABEL_IMAGE,
-                                             sys_sett_obj->get_image(system_settings_spider::RED_S_DOWN),
-                                             0);
-                        break;
-                        case system_settings::DIRECTION_REVERSE:
-                                PtSetArg(&args[0],
-                                              Pt_ARG_LABEL_IMAGE,
-                                              sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //ATTENTION! : that widget equal to widget in DU mode !
-                                              0);                //reverse direction now unused, so, be red 
-                         break;
-                        default:
-                                ostringstream exception_description;
-                                exception_description<<"metro_escalator::update_device_widget() device id "<<get_id();
-                                exception_description<<" A0_READY_NOT_ACCEPTED unknown escalator direction "<<A0_x1;
-                                throw spider_exception(exception_description.str());
-                            }; //switch (A0_x1)
-                    }; //if (A0_x3)
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+              }; //if (A0_x3)
       break;
       case A0_READY:
                      if (A0_x3) {
@@ -585,7 +656,7 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                              case system_settings::DIRECTION_REVERSE:
                                                  PtSetArg(&args[0],
                                                    Pt_ARG_LABEL_IMAGE,
-                                                  sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //reverse direction now unused, so, be red 
+                                                  sys_sett_obj->get_image(system_settings_spider::REVERSE),
                                                   0);
                                      break;
                             default:
@@ -595,34 +666,15 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                                    throw spider_exception(exception_description.str());
                           }; //switch (A0_x1)
                     } else { // if (A0_x3) {
-                          switch (A0_x1) {
-                              case system_settings::DIRECTION_UP:
-                                    PtSetArg(&args[0],
-                                                  Pt_ARG_LABEL_IMAGE,
-                                                  sys_sett_obj->get_image(system_settings_spider::YELLOW_S_UP),
-                                                  0);
-                                    break;
-                               case system_settings::DIRECTION_DOWN:
-                                     PtSetArg(&args[0],
-                                                   Pt_ARG_LABEL_IMAGE,
-                                                   sys_sett_obj->get_image(system_settings_spider::YELLOW_S_DOWN),
-                                                   0);
-                                     break;
-                               case system_settings::DIRECTION_REVERSE:
-                                      PtSetArg(&args[0],
-                                                     Pt_ARG_LABEL_IMAGE,
-                                                     sys_sett_obj->get_image(system_settings_spider::RED_REVERSE), //reverse direction now unused, so, be red  
-                                                     0);
-                                      break;
-                               default:
-                                  ostringstream exception_description;
-                                  exception_description<<"metro_escalator::update_device_widget() device id "<<get_id();
-                                   exception_description<<" A0_READY unknown escalator direction "<<A0_x1;
-                                   throw spider_exception(exception_description.str());
-                             }; //switch (A0_x1)
-                       }; //if (A0_x3)
+                         PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+
+                    }; //if (A0_x3)
       break;
       case A0_STARTING:
+               if (A0_x3) {
                         if (A0_x2) {
                            switch (A0_x1) {
                               case system_settings::DIRECTION_UP:
@@ -664,6 +716,12 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                                 throw spider_exception(exception_description.str());
                          }; //switch (A0_x1)
                 }; //if (A0_x2)
+             } else { //if (A0_x3)
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+                   };
        break;
        case A0_RUN:
               if (A0_x3) {
@@ -687,28 +745,14 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                                 throw spider_exception(exception_description.str());
                            }; //switch (A0_x1)
                      } else { //if (A0_x3) {
-                          switch (A0_x1) {
-                              case system_settings::DIRECTION_UP:
-                                    PtSetArg(&args[0],
-                                                Pt_ARG_LABEL_IMAGE,
-                                                sys_sett_obj->get_image(system_settings_spider::GREEN_S_UP),
-                                                0);
-                                   break;
-                              case system_settings::DIRECTION_DOWN:
-                                   PtSetArg(&args[0],
-                                                Pt_ARG_LABEL_IMAGE,
-                                                sys_sett_obj->get_image(system_settings_spider::GREEN_S_DOWN),
-                                                0);
-                                   break;
-                              default:
-                                   ostringstream exception_description;
-                                   exception_description<<"metro_escalator::update_device_widget() device id "<<get_id();
-                                   exception_description<<" A0_RUN unknown escalator direction "<<A0_x1;
-                                   throw spider_exception(exception_description.str());
-                             }; //switch (A0_x1)
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
                         }; //if (A0_x3) {
       break;
       case A0_STOPPING:
+                  if (A0_x3) {
                           switch (A0_x1) {
                               case system_settings::DIRECTION_UP:
                                     PtSetArg(&args[0],
@@ -728,6 +772,12 @@ void metro_escalator::update_device_widget() throw (spider_exception) {
                                   exception_description<<" A0_RUN unknown escalator direction "<<A0_x1;
                                   throw spider_exception(exception_description.str());
                            }; //switch (A0_x1)
+                  } else { //if (A0_x3)
+                  PtSetArg(&args[0],
+                                  Pt_ARG_LABEL_IMAGE,
+                                  sys_sett_obj->get_image(system_settings_spider::TU),
+                                  0);
+                  }; //if(A0_x3)
        break;
        case A0_EXCEPTION: 
     	      PtSetArg(&args[0],
@@ -780,62 +830,6 @@ void metro_escalator::decode_answer_from_device_to_data_block(){
       int old_A0_state=A0_state, old_A0_x1_state=A0_x1;
       bool old_A0_x3=A0_x3;
 
-// previos_request_to_device
-//============================================
-/*
-metro_device::buffer_data_type current_request_to_device=
-                        metro_device::get_current_request_to_device_buffer();
-if (metro_device::get_id()==2) {
- if (current_request_to_device.empty()) {
-      cout<<"current_request_to_device is EMPTY"<<endl;
-//   } else  if (current_request_to_device[1]!=4){ //if (previos_request_to_device.empty())
- }else {
-     cout<<"current_request_to_device :"<<endl;
-     vector<char> tmp_buffer(32);
-     for (metro_device::buffer_data_type::size_type i=0;
-     i<current_request_to_device.size();
-//       i<4; //only header
-       i++) {
-      itoa(current_request_to_device[i],
-              &tmp_buffer[0], 16);
-      if (i%8==0) cout<<endl;
-      cout<<"\t0x"<<&tmp_buffer[0];
-    }; //for (metro_device::buffer_data_type::size_type i=0;
-    cout<<endl;
-    cout<<endl;
-  };//if (current_request_to_device.empty())
-};
-*/
-//============================================
-
-
-// answer_from_device
-//============================================
-/*
-if (metro_device::get_id()==12) {
-if (answer_from_device.empty()) {
-      cout<<"answer_from_device is EMPTY"<<endl;
-//  } else if (answer_from_device [1]!=4) { //if (answer_from_device.empty())
-} else {
- cout<<"answer_from_device id  "<<metro_device::get_id()<<" : "<<endl;
-vector<char> tmp_buffer(32);
-for (metro_device::buffer_data_type::size_type i=0;
-       i<answer_from_device.size();
-//      i<4; //only header
-       i++) {
-      itoa(answer_from_device[i],
-              &tmp_buffer[0], 16);
-      if (i==3 ||
-          (i-3)%8==0) cout<<endl;
-      cout<<"\t0x"<<&tmp_buffer[0];
-    }; //for (metro_device::buffer_data_type::size_type i=0;
-    cout<<endl;
-    cout<<endl;
-};//if (answer_from_device.empty())
-
-}; //if (metro_device::get_id()==2)
-*/
-//============================================
 
 //  if (metro_device::get_id()==1 &&metro_device::get_failures_count()>0)
 //      cout<<"In escalator with id "<<metro_device::get_id()<<" failures count "<<metro_device::get_failures_count()<<" A0_state "<<A0_state<<endl;
@@ -866,7 +860,7 @@ for (metro_device::buffer_data_type::size_type i=0;
 //                              if (metro_device::get_id()==1) 
 //                                   cout<<"Increment failures in answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX] "<<endl;
                              };
-                      } else {
+                      } else if (answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX] ==4)  {
                                 A0_x6=true;
                                 metro_device::set_failures_count(0);
                      };
@@ -884,6 +878,18 @@ for (metro_device::buffer_data_type::size_type i=0;
                    }; //switch (answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX])
             }; // if (answer_from_device.empty()
            A0(7); // event 7 - data refreshed
+
+             if ((old_A0_x3!=A0_x3) && A0_x3 )  {//escalator switchet to TU
+                     switch (get_pref_direction()) {
+                         case system_settings::DIRECTION_UP:
+                         case system_settings::DIRECTION_DOWN:
+                              A0_x1=get_pref_direction();
+                             break;
+                         case system_settings::DIRECTION_REVERSE:
+                             //old direction
+                             break;
+                       }; //switch (get_pref_direction())
+                 }; // if ((old_A0_x3!=A0_x3) && A0_x3 )
 
            if (old_A0_state!=A0_state ||
                 old_A0_x3!=A0_x3 ||
@@ -944,22 +950,17 @@ return return_buffer;
 };
 
 metro_device::buffer_data_type metro_escalator::get_4_function_request(){
-system_settings_spider *sys_sett=system_settings_spider::get_instance();
-	vector<byte> buffer(0);
-	word		crc_value;
+	vector<byte> buffer;
 
-	buffer.push_back(get_number());   // escalator number
+	buffer.push_back(get_modbus_number());   // escalator number
 	buffer.push_back(4);                      // function number
 	buffer.push_back(0);
 	buffer.push_back(0);
 	buffer.push_back(0);
 	buffer.push_back(38);
 
-	crc_value = sys_sett->crc(buffer);
-
-	system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
 //	metro_device::set_request_to_device_buffer(buffer);
    	return buffer;
@@ -968,14 +969,13 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
 metro_device::buffer_data_type metro_escalator::get_setting_time_request(){
     system_settings *sys_sett=system_settings_spider::get_instance();
 	vector<byte> buffer(0);
-	word		crc_value;
     struct tm *tm_local;
     time_t time_now=time(NULL);
 
 	tm_local=localtime(&time_now);
 
   try{
-      buffer.push_back(get_number());   // escalator number
+      buffer.push_back(get_modbus_number());   // escalator number
       buffer.push_back(16);                      // function number
 
       buffer.push_back(00);                      // first register number high byte
@@ -995,18 +995,15 @@ metro_device::buffer_data_type metro_escalator::get_setting_time_request(){
       buffer.push_back(static_cast<byte>(tm_local->tm_year-100));
       buffer.push_back(static_cast<byte>(tm_local->tm_mon+1));
 
-       crc_value = sys_sett->crc(buffer);
 
-       system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(crc_value);
-       buffer.push_back(tmp_bytes[1]);
-       buffer.push_back(tmp_bytes[0]);
+       system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+       buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
       } catch (spider_exception spr_except) {
          sys_sett->sys_message(system_settings::ERROR_MSG,
                                                 "In metro_escalator::get_setting_time_request() raised exception "+spr_except.get_description());
          buffer=get_4_function_request();
       };
-
 
 //	metro_device::set_request_to_device_buffer(buffer);
    	return buffer;
@@ -1015,17 +1012,16 @@ metro_device::buffer_data_type metro_escalator::get_setting_time_request(){
 
 
 void metro_escalator::send_command(command cmd)throw (spider_exception){
-system_settings_spider* sys_sett=system_settings_spider::get_instance();
 vector<byte> buffer(0);
-word		crc_value;
 int old_A0_state=A0_state;
 ldword tmp_id;
 
 	if (cmd.get_device_id()!=get_id())
           throw spider_exception("metro_escalator::send_command(...) cmd.get_device_id()!=get_id() ");
 
-    if (sending_commands_disabled && 
-         cmd.get_command_code() !=system_settings::COMMAND_ACCEPT)
+    if (is_conduction_is_switched_off() && 
+         (cmd.get_command_code() !=system_settings::COMMAND_ACCEPT ||
+          cmd.get_command_code() !=system_settings::COMMAND_CHANCEL ))
                  return;
 
     switch (cmd.get_command_code()) {
@@ -1074,9 +1070,11 @@ ldword tmp_id;
 
           A0(5);
           break;
-	case (system_settings::COMMAND_ACCEPT):
+	case (system_settings::COMMAND_ACCEPT): 
+	case (system_settings::COMMAND_CHANCEL):
           A0(6);
           break;
+
       default:
         ostringstream exception_description;
         exception_description<<"metro_escalator::send_command unrecognized command ";
@@ -1084,19 +1082,19 @@ ldword tmp_id;
 		 throw spider_exception(exception_description.str());      
     };  //switch (cmd.get_command_code())
 
-  if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT) {
-	  buffer.push_back(get_number());	//escalator number
+  if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT &&
+       cmd.get_command_code()!=system_settings::COMMAND_CHANCEL) {
+	  buffer.push_back(get_modbus_number());	//escalator number
 	   buffer.push_back(6);		// modbus function
 	   buffer.push_back(0);
 	   buffer.push_back(0);
 	   buffer.push_back(0);
 	   buffer.push_back(cmd.get_command_code());
-       crc_value = sys_sett->crc(buffer);
-	   system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	   buffer.push_back(tmp_bytes[1]);
-	   buffer.push_back(tmp_bytes[0]);
 
-	     metro_device::set_request_to_device_buffer(buffer);
+	   system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	   buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
+
+	    metro_device::set_request_to_device_buffer(buffer);
     }; // if (cmd.get_command_code()!=system_settings::COMMAND_ACCEPT
 
     A0(7); // event 7 - data refreshed
@@ -1115,7 +1113,6 @@ void metro_escalator::decode_answer_from_device_4_function
    msg_dict_container::iterator msg_cont_iter;
 
    metro_devices_types_container::iterator dev_types_iter;
-   metro_device_type::data_unit_iterator type_data_unit_iter;
 
    vector<log_record> received_messages;
 
@@ -1124,36 +1121,36 @@ void metro_escalator::decode_answer_from_device_4_function
    escalator_data_block local_data_block=this->data_block;
    word begin_addr, registers_count=0, register_data_word=0, answer_messages_size=0, answer_last_message_remote_id=0;
    word mode_value, ready_value, direction_value, block_circut_status_value;
-   metro_device::buffer_data_type::reverse_iterator tmp_iter1, tmp_iter2;
+   metro_device::buffer_data_type::iterator tmp_iter1, tmp_iter2;
    ldword data_block_breaking_path_value;
    metro_device::buffer_data_type request_to_device = metro_device::get_current_request_to_device_buffer();
 
    if (request_to_device.empty())
               throw spider_exception("void metro_escalator::decode_answer_from_device_4_function :  prvios_request_to_device is empty ");
    
-   tmp_iter1=request_to_device.rend();
+   tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-              -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
+              system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
    advance(tmp_iter2,
-                -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
+                (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
                    system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
 
-   begin_addr=sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter2, tmp_iter1));
+   begin_addr=sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter1, tmp_iter2));
    begin_addr+=escalator_data_block::MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS;
 
-   tmp_iter1=request_to_device.rend();
+   tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-                  -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
+                  system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
    advance(tmp_iter2,
-                 -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
+                 (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                   system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
 
     registers_count=
-                   sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter2, tmp_iter1));
+                   sys_sett->type_from_bytes<word>(metro_device::buffer_data_type(tmp_iter1, tmp_iter2));
 
 	if (registers_count*2 !=answer[system_settings::MODBUS_DATA_BYTES_COUNT_INDEX]) {
         ostringstream exception_description;
@@ -1162,22 +1159,25 @@ void metro_escalator::decode_answer_from_device_4_function
         exception_description<<" but must "<<registers_count*2;
         if (answer.size()>4) 
               exception_description<<" first three bytes: 0="<<static_cast<int>(answer[0])<<" 1="<<static_cast<int>(answer[1])<<" 2="<<static_cast<int>(answer[2]);
+        if (request_to_device.size()>4) 
+              exception_description<<" first three bytes of request: 0="<<static_cast<int>(request_to_device[0])<<" 1="<<static_cast<int>(request_to_device[1])<<" 2="<<static_cast<int>(request_to_device[2]);
+
         throw spider_exception(exception_description.str());
 	};
 
 //move iteratiors to first register data
-   tmp_iter1=answer.rend();
+   tmp_iter1=answer.begin();
    tmp_iter2=tmp_iter1;
      advance(tmp_iter1,
-                   -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2));
+                   (system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+1));
      advance(tmp_iter2,
-                    -(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
+                    (system_settings::MODBUS_DATA_BYTES_COUNT_INDEX+3));
 
 //poehali!
   if (begin_addr<= 30001&&
          begin_addr+registers_count>30001) {
 			direction_value=
-			     sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1));
+			     sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
             local_data_block.set_parameter_value(
                                       escalator_data_block::INDEX_PARAM_STATE_VALUE,
                                        direction_value
@@ -1196,13 +1196,13 @@ void metro_escalator::decode_answer_from_device_4_function
 			    };
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
     if (begin_addr<= 30002&&
          begin_addr+registers_count>30002) {
            mode_value=
-                sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1));
+                sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2));
             local_data_block.set_parameter_value(
                               escalator_data_block::INDEX_PARAM_MODE_VALUE,
                                mode_value
@@ -1214,13 +1214,13 @@ void metro_escalator::decode_answer_from_device_4_function
                };
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30003&&
          begin_addr+registers_count>30003) {
             ready_value=
-                 sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
+                 sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
 
             local_data_block.set_parameter_value(
                                      escalator_data_block::INDEX_PARAM_READY_VALUE,
@@ -1228,12 +1228,12 @@ void metro_escalator::decode_answer_from_device_4_function
                                       );
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30004&&
          begin_addr+registers_count>30004) {
-            block_circut_status_value= sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1) );
+            block_circut_status_value= sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2) );
             local_data_block.set_signal_value(
                              escalator_data_block::INDEX_SIGNAL_BLOCK_CIRCUT_STATUS,
                              block_circut_status_value
@@ -1247,7 +1247,7 @@ void metro_escalator::decode_answer_from_device_4_function
 
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30005&&
@@ -1255,16 +1255,16 @@ void metro_escalator::decode_answer_from_device_4_function
 
             local_data_block.set_signal_value(
                              escalator_data_block::INDEX_SIGNAL_BREAKING_PATH_STATUS,
-                             sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1))
+                             sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2))
                              );
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30006&&
          begin_addr+registers_count>30006) {
             register_data_word=
-                   sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1));
+                   sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2));
 
               for(int i=0;i<3;i++)
                        local_data_block.set_signal_value(
@@ -1272,48 +1272,48 @@ void metro_escalator::decode_answer_from_device_4_function
                                                (register_data_word & (0xf<<i*4)) >>(i*4));
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30007&&
          begin_addr+registers_count>30007) {
-            answer_last_message_remote_id=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
-//			cout<<"answer_last_message_remote_id "<<answer_last_message_remote_id<<endl;
+            answer_last_message_remote_id=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
+			cout<<"answer_last_message_remote_id "<<answer_last_message_remote_id<<endl;
            if (answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
                     throw spider_exception ("In answer 3008 register answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE");
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30008&&
          begin_addr+registers_count>30008) {
-            answer_messages_size=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
-//			cout<<"answer_messages_size "<<answer_messages_size<<endl;
+            answer_messages_size=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
+			cout<<"answer_messages_size "<<answer_messages_size<<endl;
            if (answer_messages_size>system_settings::MAX_MESSAGES_COUNT)
                     throw spider_exception ("In answer 3007 register answer_messages_size>system_settings::MAX_MESSAGES_COUNT");
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30009&&
          begin_addr+registers_count>30009) {
              //reserved  - add code here 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30010&&
          begin_addr+registers_count>=30011) {
            if (begin_addr<=30010 && begin_addr+registers_count==30011)
                          throw spider_exception ("In answer 30010 register present but not 30011 - it must be answered both");
-            advance(tmp_iter2, -2); // 4 bytes must be readed
+            advance(tmp_iter2, 2); // 4 bytes must be readed
 
             local_data_block.set_parameter_value(
                         escalator_data_block::INDEX_PARAM_BREAKING_PATH_VALUE,
-                        sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter2, tmp_iter1) )
+                        sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter1, tmp_iter2) )
                         );
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30012&&
@@ -1321,27 +1321,27 @@ void metro_escalator::decode_answer_from_device_4_function
            if (begin_addr<=30012 && begin_addr+registers_count==30013)
                          throw spider_exception ("In answer 30012 register present but not 30013 - it must be answered both");
 
-            advance(tmp_iter2, -2); // 4 bytes must be readed
+            advance(tmp_iter2, 2); // 4 bytes must be readed
             local_data_block.set_parameter_value(
-                        escalator_data_block::INDEX_PARAM_RUNNING_PATH_VALUE,
-                        sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter2, tmp_iter1) )
-                        );
+                   escalator_data_block::INDEX_PARAM_RUNNING_PATH_VALUE,
+                   sys_sett->type_from_bytes<data_block::parameter_data_type>( system_settings::bytes (tmp_iter1, tmp_iter2) )
+                   );
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30014&&
          begin_addr+registers_count>30014) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30015&&
          begin_addr+registers_count>30015) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
 //block circuts
@@ -1354,7 +1354,7 @@ void metro_escalator::decode_answer_from_device_4_function
                 begin_addr+registers_count>current_register+register_offset) {
 
                  register_data_word=sys_sett->type_from_bytes<word>(
-                                                           system_settings::bytes (tmp_iter2, tmp_iter1)
+                                                           system_settings::bytes (tmp_iter1, tmp_iter2)
                                                            );
 
                   for(int i=0;i<8;i++) {
@@ -1363,7 +1363,7 @@ void metro_escalator::decode_answer_from_device_4_function
                                                (register_data_word & (0xC000>>i*2)) >>(14-i*2));
                     };
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
 			    };
 
            if (data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)!=
@@ -1374,7 +1374,6 @@ void metro_escalator::decode_answer_from_device_4_function
                  metro_devices_container::iterator devices_iter;
                  metro_device::buffer_data_type data_to_door;
                  system_settings::bytes tmp_bytes;
-                  word crc_value;
 
                  if (stations!=NULL && devices!=NULL) {
                           stations_iter=stations->find(metro_device::get_station_id());
@@ -1386,7 +1385,7 @@ void metro_escalator::decode_answer_from_device_4_function
                                           if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
                                                devices_iter->second->get_enabled()) {
                                              data_to_door.clear();
-                                             data_to_door.push_back(devices_iter->second->get_number()); //modbus device number
+                                             data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
                                              data_to_door.push_back(4); //function code
                                              data_to_door.push_back(2); //data bytes count
                                              data_to_door.push_back(0); //high byte
@@ -1395,12 +1394,10 @@ void metro_escalator::decode_answer_from_device_4_function
                                                      data_to_door.push_back(1);
                                                    } else  {
                                                      data_to_door.push_back(0);
-                                                   }
-	                                          crc_value = sys_sett->crc(data_to_door);
+                                                   };
 
-	                                        tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-                                            data_to_door.push_back(tmp_bytes[1]);
-                                            data_to_door.push_back(tmp_bytes[0]);
+	                                        tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
+                                            data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
                                             devices_iter->second->set_answer_from_device_buffer(data_to_door);
 
                                            MsgSendPulse(devices_iter->second->get_connection_id(),
@@ -1422,7 +1419,7 @@ void metro_escalator::decode_answer_from_device_4_function
          begin_addr+registers_count>30025) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
 
@@ -1431,7 +1428,7 @@ void metro_escalator::decode_answer_from_device_4_function
                 begin_addr+registers_count>30026) {
 
                  register_data_word=sys_sett->type_from_bytes<word>(
-                                                           system_settings::bytes (tmp_iter2, tmp_iter1)
+                                                           system_settings::bytes (tmp_iter1, tmp_iter2)
                                                            );
 
                   for(int i=0;i<8;i++) 
@@ -1440,7 +1437,7 @@ void metro_escalator::decode_answer_from_device_4_function
                                     (register_data_word & (0xC000>>i*2)) >>(14-i*2));
 
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
 
             };
 
@@ -1448,7 +1445,7 @@ void metro_escalator::decode_answer_from_device_4_function
            if (begin_addr<= 30027&&
                 begin_addr+registers_count>30027) {
                  register_data_word=sys_sett->type_from_bytes<word>(
-                                                           system_settings::bytes (tmp_iter2, tmp_iter1)
+                                                           system_settings::bytes (tmp_iter1, tmp_iter2)
                                                            );
 
 
@@ -1457,14 +1454,14 @@ void metro_escalator::decode_answer_from_device_4_function
                                                (register_data_word & (0xC000>>i*2)) >>(14-i*2));
 
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
             };
 
 //other
            if (begin_addr<= 30028&&
                 begin_addr+registers_count>30028) {
                  register_data_word=sys_sett->type_from_bytes<word>(
-                                                           system_settings::bytes (tmp_iter2, tmp_iter1)
+                                                           system_settings::bytes (tmp_iter1, tmp_iter2)
                                                            );
 
                   for(int i=0; i<8; i++) 
@@ -1472,28 +1469,28 @@ void metro_escalator::decode_answer_from_device_4_function
                                                (register_data_word & (0xC000>>i*2)) >>(14-i*2));
 
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
             };
 
      if (begin_addr<= 30029&&
          begin_addr+registers_count>30029) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30030&&
          begin_addr+registers_count>30030) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
      if (begin_addr<= 30031&&
          begin_addr+registers_count>30031) {
             //reserved : add code here
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     };
 
 //messages
@@ -1506,9 +1503,13 @@ void metro_escalator::decode_answer_from_device_4_function
                upper_last_id=answer_last_message_remote_id;
               };
 
+     cout<<"upper_last_id "<<upper_last_id<<endl;
+
      answer_first_message_remote_id=answer_last_message_remote_id-answer_messages_size+1;
      if (answer_first_message_remote_id<0)
            answer_first_message_remote_id+=system_settings::MAX_UPPER_MESSAGE_ID_VALUE;
+
+     cout<<"answer_first_message_remote_id "<<answer_first_message_remote_id<<endl;
 
      current_register=30032;
      ldword message_id;
@@ -1525,7 +1526,7 @@ void metro_escalator::decode_answer_from_device_4_function
     for (byte register_offset=0; register_offset<answer_messages_size; register_offset++){
            if (begin_addr+registers_count<current_register+register_offset) break;
 
-          register_data_word=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1) );
+          register_data_word=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2) );
           current_message_id=answer_first_message_remote_id+register_offset;
 
             if (current_message_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
@@ -1536,17 +1537,18 @@ void metro_escalator::decode_answer_from_device_4_function
                 upper_last_id<=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id)  {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
             if (answer_first_message_remote_id>answer_last_message_remote_id &&
                 answer_first_message_remote_id>=upper_last_id &&
                 upper_last_id<=answer_last_message_remote_id &&
-                ((current_message_id>answer_last_message_remote_id  && current_message_id>=answer_first_message_remote_id)||
-                current_message_id<=upper_last_id )) {
+                ((current_message_id>answer_last_message_remote_id  && 
+                   current_message_id>=answer_first_message_remote_id)||
+                   current_message_id<=upper_last_id )) {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
@@ -1556,7 +1558,7 @@ void metro_escalator::decode_answer_from_device_4_function
                 current_message_id>=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id) {
                    tmp_iter1=tmp_iter2;
-                   advance(tmp_iter2, -2);
+                   advance(tmp_iter2, 2);
                    continue;
                 };
 
@@ -1564,6 +1566,11 @@ void metro_escalator::decode_answer_from_device_4_function
             message_id=register_data_word;//in second byte may be block circut id or other information
             ldword tmp_id=main_log->get_records_autoincrement();
             main_log->set_records_autoincrement(++tmp_id);
+
+
+          cout<<"register_data_word "<<hex<<register_data_word;
+           cout <<" current_message_id "<<current_message_id<<endl;
+
 
         //resolwing message type id
         //by first by escalator type messages container
@@ -1573,7 +1580,7 @@ void metro_escalator::decode_answer_from_device_4_function
                         current_message_text=msg_cont_iter->second.get_text ();
                       };
 
-        //if message_type_id still equal to 0 try resolw message type id in global messages container
+        //if message_type_id still equal to 0 try resolve message type id in global messages container
             if (message_type_id==0) {
 				msg_cont_iter=messages->find(message_id&0xff);
 				if(msg_cont_iter!=messages->end()) {
@@ -1603,7 +1610,7 @@ void metro_escalator::decode_answer_from_device_4_function
 
                   metro_device::set_last_message_remote_id(current_message_id);
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
 	 }; // for (byte register_offset=0; register_offset<
 
 this->data_block=local_data_block;
@@ -1618,15 +1625,16 @@ this->data_block=local_data_block;
        }; // if (!received_messages.empty())
 
 //alerts
-  if (!received_messages.empty()) {
+  if (!received_messages.empty() &&
+      A0_x3) { //escalator on DU
         ostringstream message;
         string message_from_messages_container;
         int find_pos;
         vector<char> tmp_chars;
         vector<log_record>::reverse_iterator log_mess_iter=received_messages.rbegin();
         dword breaking_path_value;
-        byte block_circut_index;
-        string block_circut_name;
+        byte input_circut_index;
+        string input_circut_name;
         metro_stations_container *stations=metro_stations_container::get_instance();
         metro_stations_container::iterator stat_iter;
         if (stations==NULL)
@@ -1679,47 +1687,22 @@ this->data_block=local_data_block;
                     };//if (find_pos!=-1)
 
                     find_pos=static_cast<int>(message_from_messages_container.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
-
                     if (find_pos!=-1) {
-                      block_circut_index=static_cast<byte>((log_mess_iter->get_msg_id()&0xff00)>>8);
-//                      if (metro_device::get_id()==2)
-//                                cout<<" current_message_id "<<current_message_id<<"  block_circut_index "<<block_circut_index<<endl;
-                      block_circut_index+=6; //shift for signals, added from registers 3004, 3005,3006 and other
+                        input_circut_index=static_cast<byte>((log_mess_iter->get_msg_id()&0x00ff00)>>8);
+                   if (dev_types_iter!=dev_types_cont->end() &&
+                               dev_types_iter->second->circuts_size()>input_circut_index) {
+                               input_circut_name=(dev_types_iter->second->at_circut(input_circut_index)).get_hint();
+                      } else  { // if (iter_devices_types!=devices_types->end()) &&
+                                 input_circut_name="ERROR!!";
+                                 ostringstream mess;
+                                 mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() or circuts_size()>input_circut_index message id in log="<<current_message_id;
+                                 throw spider_exception(mess.str());
+                     }; // if (iter_devices_types!=devices_types->end())
 
-//==============================================
- {
-          vector<char> tmp_chars(20);
-          itoa(register_data_word, &tmp_chars[0],  16);
-             cout<<"message_id 0x"<<&tmp_chars[0]<<endl;
-             cout<<"block_circut_index "<<static_cast<int>(block_circut_index)<<endl;
-}
-//==============================================
-
-
-                      metro_devices_types_container *devices_types=metro_devices_types_container::get_instance();
-                      metro_devices_types_container::iterator iter_devices_types=devices_types->find(metro_device::get_type());
-    				  if (iter_devices_types!=devices_types->end()) {
-                             type_data_unit_iter=iter_devices_types->second->data_units_find(block_circut_index);
-                             //ATENTION:index of block circut equals to id, so send to find block circut index
-                             if (type_data_unit_iter->second->get_index()==block_circut_index) {
-                                        block_circut_name=type_data_unit_iter->second->get_name();
-                                    } else { //if (type_data_unit_iter.second.get_index()==block_circut_index)
-                                          block_circut_name="ERROR!!";
-                                          ostringstream mess;
-                                          mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but type_data_unit_iter->second->get_index()!=block_circut_index block_circut_index "
-                                                   <<block_circut_index<<" message id in log"<<current_message_id;
-                                           throw spider_exception(mess.str());
-                                   }; //if (type_data_unit_iter.second.get_index()==block_circut_index)
-                       } else  { // if (iter_devices_types!=devices_types->end())
-                                             block_circut_name="ERROR!!";
-                                             ostringstream mess;
-                                             mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() message id in log"<<current_message_id;
-                                             throw spider_exception(mess.str());
-                         }; // if (iter_devices_types!=devices_types->end())
 
                       message_from_messages_container.replace( find_pos,
 												   parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME].size(),
-												   block_circut_name);
+												   input_circut_name);
                     };//if (find_pos!=-1)
                 };
 
@@ -1729,7 +1712,9 @@ this->data_block=local_data_block;
                                                                        message.str(),
                                                                         true);
 					 sound& snd=sound::get_instance();
-                     snd.play(stat_iter->second.get_wav_file_name());
+					std::vector<string> *files = new std::vector<string> ();
+					files->push_back(stat_iter->second.get_wav_file_name());
+                     snd.play(files);
 
                  }; // if (log_mess_iter->get_msg_type()==escalator_data_block::ALERT_ERROR_MESSAGES_TYPE)
                  log_mess_iter++;
@@ -1738,60 +1723,72 @@ this->data_block=local_data_block;
 
 };
 
-command metro_escalator::get_device_pref_command() throw(spider_exception) {
- if (pref_direction==system_settings::DIRECTION_DOWN )
+command metro_escalator::get_device_start_command() throw(spider_exception) {
+system_settings_spider* sys_sett_obj=system_settings_spider::get_instance();
+if (sys_sett_obj==NULL)
+           throw spider_exception("metro_escalator::get_device_start_command() can`t get instance of system_settins_spider");
+
+system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+
+
+ if (start_direction==system_settings::DIRECTION_DOWN )
     return 	command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_DOWN,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "СПУСК" );
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_DOWN]);
 
- if (pref_direction==system_settings::DIRECTION_UP)
-    return 	command (metro_device::get_id(),
+ if (start_direction==system_settings::DIRECTION_UP)
+       return 	command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_UP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "ПОДЪЕМ"); 
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_UP]);
 
-  throw spider_exception("Cant get prf command - reverse escalator");
+  throw spider_exception("Cant get start command - reverse escalator");
 }
 
 
 vector<command>
-     metro_escalator::get_appropriated_commands(){
+     metro_escalator::get_appropriated_commands()  throw (spider_exception) {
      vector<command> commands_to_return; 
 
+     system_settings_spider* sys_sett_obj=system_settings_spider::get_instance();
+     if (sys_sett_obj==NULL)
+           throw spider_exception("metro_escalator::get_device_start_command() can`t get instance of system_settins_spider");
+
+     system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+
           if (A0_x3) {
-            if (pref_direction==system_settings::DIRECTION_DOWN ) {
-                  commands_to_return.push_back(
- 	                command (metro_device::get_id(),
-	                   metro_device::get_type(),
-	                   system_settings::COMMAND_DOWN,
-	                   metro_device::get_station_id(),
-	                   metro_device::get_number(),
-                       "СПУСК")
-                    );
-              } else  if (pref_direction==system_settings::DIRECTION_UP ) {
                 commands_to_return.push_back(
  	              command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_UP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "ПОДЪЕМ")
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_UP])
                   );
-             };
 
             commands_to_return.push_back(
  	           command (metro_device::get_id(),
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_STOP,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
-                     "СТОП")
+	                 metro_device::get_modbus_number(),
+                     directions_strings[system_settings::DIRECTION_STOP])
               );
+
+            commands_to_return.push_back(
+                command (metro_device::get_id(),
+	                   metro_device::get_type(),
+	                   system_settings::COMMAND_DOWN,
+	                   metro_device::get_station_id(),
+	                   metro_device::get_modbus_number(),
+                       directions_strings[system_settings::DIRECTION_DOWN])
+               );
+
         }; //if (A0_x3)
 
      if (A0_state==A0_READY_NOT_ACCEPTED)
@@ -1800,8 +1797,19 @@ vector<command>
 	                 metro_device::get_type(),
 	                 system_settings::COMMAND_ACCEPT, 
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "КВИТИРОВАТЬ")
+              );
+
+     if (A0_state==A0_STARTING ||
+          A0_state==A0_STOPPING )
+            commands_to_return.push_back(
+ 	           command (metro_device::get_id(),
+	                 metro_device::get_type(),
+	                 system_settings::COMMAND_CHANCEL, 
+	                 metro_device::get_station_id(),
+	                 metro_device::get_modbus_number(),
+                     "СБРОСИТЬ КОМАНДУ")
               );
 
     return commands_to_return;
@@ -1849,7 +1857,7 @@ try {
 
       PtGetResource(parent_widget, Pt_ARG_WIDTH, &internal_parent_widget_width, 0);
       parent_widget_width=*internal_parent_widget_width;
-      device_text<<"Эскалатор "<<metro_device::get_number()<<" команда эскалатору";
+      device_text<<"Эскалатор "<<metro_device::get_number()<<" режим работы ";
 
       //label with device description
 		args.clear();
@@ -1877,8 +1885,208 @@ try {
 		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
 		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
 		PtSetArg(&args[2], Pt_ARG_WIDTH, 120, 0);
-        widget_position.x=220;
-        widget_position.y=widgets_y_position;
+        widget_position.x=190;
+        widget_position.y=widgets_y_position-2;
+        PtSetArg(&args[3], Pt_ARG_POS,
+                       &widget_position, 0);
+         PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
+                         Pt_FALSE, Pt_EDITABLE);
+
+         current_widget=PtCreateWidget(PtComboBox,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+
+         if (current_widget==NULL)  throw spider_exception("combobox with appropriated commands is NULL");
+
+          system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
+          escalator_pref_direction_combobox=current_widget;
+
+           directions_strings[system_settings::DIRECTION_UP]+="   ";
+           directions_strings[system_settings::DIRECTION_DOWN]+="   ";
+           directions_strings[system_settings::DIRECTION_REVERSE]+="   ";
+
+			const char *items_pref_dir[3];
+			items_pref_dir[0]=directions_strings[system_settings::DIRECTION_UP].c_str();
+			items_pref_dir[1]=directions_strings[system_settings::DIRECTION_DOWN].c_str();
+			items_pref_dir[2]=directions_strings[system_settings::DIRECTION_REVERSE].c_str();
+
+            PtListAddItems(current_widget,
+									items_pref_dir,
+									3,
+									0);
+
+            if (pref_direction==system_settings::DIRECTION_UP||
+                 pref_direction==system_settings::DIRECTION_DOWN||
+                 pref_direction==system_settings::DIRECTION_REVERSE)
+                     PtSetResource(current_widget,
+									Pt_ARG_CBOX_SEL_ITEM,
+									pref_direction,
+									0);
+
+        PtRealizeWidget(current_widget);
+
+        //label  of start hour
+		args.clear();
+		args.resize(3);
+          widget_position.x=1;
+          widget_position.y=widgets_y_position+28;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
+                       "Запуск в", 0);
+         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
+                       Pt_Z_STRING,0);
+         current_widget=PtCreateWidget(PtLabel,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start hour is NULL");
+         PtRealizeWidget(current_widget);
+
+        //numeric input for start hour
+		args.clear();
+
+     if (setting_start_time_disabled) {
+		  args.resize(8);
+          widget_position.x=60;
+          widget_position.y=widgets_y_position+25;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
+                       metro_device::get_start_hour(), 0);
+         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
+                       0,0);
+         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
+                       23,0);
+         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
+                       "  ч ",0);
+         PtSetArg(&args[6], Pt_ARG_FLAGS,
+                       Pt_TRUE, Pt_BLOCKED);
+         PtSetArg(&args[7], Pt_ARG_FLAGS,
+                       Pt_TRUE, Pt_GHOST);
+          } else {
+		  args.resize(5);
+          widget_position.x=60;
+          widget_position.y=widgets_y_position+25;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
+                       metro_device::get_start_hour(), 0);
+         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
+                       0,0);
+         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
+                       23,0);
+         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
+                       "  ч ",0);
+         };
+         current_widget=PtCreateWidget(PtNumericInteger,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start hour is NULL");
+         escalator_start_hour=current_widget;
+         PtRealizeWidget(current_widget);
+
+        //label  of start minute
+		args.clear();
+		args.resize(3);
+          widget_position.x=115;
+          widget_position.y=widgets_y_position+28;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
+                       "  : ", 0);
+         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
+                       Pt_Z_STRING,0);
+         current_widget=PtCreateWidget(PtLabel,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start minute is NULL");
+         PtRealizeWidget(current_widget);
+
+        //numeric input for start minute
+		args.clear();
+     if (setting_start_time_disabled) {
+		   args.resize(8);
+          widget_position.x=130;
+          widget_position.y=widgets_y_position+25;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
+                       metro_device::get_start_minute(), 0);
+         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
+                       0,0);
+         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
+                       60,0);
+         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
+                       " мин    ",0);
+         PtSetArg(&args[5], Pt_ARG_WIDTH,
+                       50,0);
+         PtSetArg(&args[6], Pt_ARG_FLAGS,
+                       Pt_TRUE, Pt_BLOCKED);
+         PtSetArg(&args[7], Pt_ARG_FLAGS,
+                       Pt_TRUE, Pt_GHOST);
+           } else { //if (setting_start_time_disabled)
+
+		 args.resize(6);
+          widget_position.x=130;
+          widget_position.y=widgets_y_position+25;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
+                       metro_device::get_start_minute(), 0);
+         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
+                       0,0);
+         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
+                       59,0);
+         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
+                       " мин    ",0);
+         PtSetArg(&args[5], Pt_ARG_WIDTH,
+                       50,0);
+           }; //if (setting_start_time_disabled)
+
+         current_widget=PtCreateWidget(PtNumericInteger,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start hour is NULL");
+         escalator_start_minute=current_widget;
+
+         PtRealizeWidget(current_widget);
+
+        //label  of start command
+		args.clear();
+		args.resize(3);
+          widget_position.x=220;
+          widget_position.y=widgets_y_position+28;
+         PtSetArg(&args[0], Pt_ARG_POS,
+                     &widget_position, 0);
+         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
+                       "команда", 0);
+         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
+                       Pt_Z_STRING,0);
+         current_widget=PtCreateWidget(PtLabel,
+                                                     parent_widget,
+                                                     args.size(),
+                                                     &args[0]);
+         if (current_widget==NULL)
+                  throw spider_exception("label with start minute is NULL");
+         PtRealizeWidget(current_widget);
+
+       //combobox with commands
+		args.clear();
+		args.resize(5);
+		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
+		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
+		PtSetArg(&args[2], Pt_ARG_WIDTH, 120, 0);
+        widget_position.x=280;
+        widget_position.y=widgets_y_position+25;
         PtSetArg(&args[3], Pt_ARG_POS,
                        &widget_position, 0);
         PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
@@ -1892,8 +2100,8 @@ try {
                   throw spider_exception("combobox with appropriated commands is NULL");
 
 
-            system_settings::strings_container directions_strings=sys_sett_obj->get_directions_russ_strings();
-            escalator_direction_combobox=current_widget;
+            directions_strings=sys_sett_obj->get_directions_russ_strings();
+            escalator_start_direction_combobox=current_widget;
 
            directions_strings[system_settings::DIRECTION_UP]+="   ";
            directions_strings[system_settings::DIRECTION_DOWN]+="   ";
@@ -1907,11 +2115,11 @@ try {
 									2,
 									0);
 
-            if (pref_direction==system_settings::DIRECTION_UP||
-                 pref_direction==system_settings::DIRECTION_DOWN)
+            if (start_direction==system_settings::DIRECTION_UP||
+                 start_direction==system_settings::DIRECTION_DOWN)
                      PtSetResource(current_widget,
 									Pt_ARG_CBOX_SEL_ITEM,
-									pref_direction,
+									start_direction,
 									0);
 
         PtRealizeWidget(current_widget);
@@ -1919,8 +2127,8 @@ try {
         //label  of start mode
 		args.clear();
 		args.resize(3);
-          widget_position.x=350;
-          widget_position.y=widgets_y_position;
+          widget_position.x=405;
+          widget_position.y=widgets_y_position+28;
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
@@ -1941,8 +2149,8 @@ try {
 		PtSetArg(&args[0], Pt_ARG_FLAGS, Pt_FALSE, Pt_GHOST);
 		PtSetArg(&args[1], Pt_ARG_FLAGS, Pt_FALSE, Pt_BLOCKED);
 		PtSetArg(&args[2], Pt_ARG_WIDTH, 150, 0);
-        widget_position.x=430;
-        widget_position.y=widgets_y_position;
+        widget_position.x=490;
+        widget_position.y=widgets_y_position+25;
         PtSetArg(&args[3], Pt_ARG_POS,
                        &widget_position, 0);
         PtSetArg(&args[4], Pt_ARG_TEXT_FLAGS,
@@ -1982,141 +2190,7 @@ try {
 
         PtRealizeWidget(current_widget);
 
-        //label  of start hour
-		args.clear();
-		args.resize(3);
-          widget_position.x=5;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "Запуск в", 0);
-         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
-                       Pt_Z_STRING,0);
-         current_widget=PtCreateWidget(PtLabel,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-         if (current_widget==NULL)
-                  throw spider_exception("label with start hour is NULL");
-         PtRealizeWidget(current_widget);
-
-        //numeric input for start hour
-		args.clear();
-
-     if (setting_start_time_disabled) {
-		  args.resize(8);
-          widget_position.x=70;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
-                       metro_device::get_start_hour(), 0);
-         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
-                       0,0);
-         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
-                       23,0);
-         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
-         PtSetArg(&args[6], Pt_ARG_FLAGS,
-                       Pt_TRUE, Pt_BLOCKED);
-         PtSetArg(&args[7], Pt_ARG_FLAGS,
-                       Pt_TRUE, Pt_GHOST);
-          } else {
-		  args.resize(5);
-          widget_position.x=70;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
-                       metro_device::get_start_hour(), 0);
-         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
-                       0,0);
-         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
-                       23,0);
-         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
-         };
-         current_widget=PtCreateWidget(PtNumericInteger,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-         if (current_widget==NULL)
-                  throw spider_exception("label with start hour is NULL");
-         escalator_start_hour=current_widget;
-         PtRealizeWidget(current_widget);
-
-        //label  of start minute
-		args.clear();
-		args.resize(3);
-          widget_position.x=130;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "  : ", 0);
-         PtSetArg(&args[2], Pt_ARG_LABEL_TYPE,
-                       Pt_Z_STRING,0);
-         current_widget=PtCreateWidget(PtLabel,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-         if (current_widget==NULL)
-                  throw spider_exception("label with start minute is NULL");
-         PtRealizeWidget(current_widget);
-
-        //numeric input for start minute
-		args.clear();
-     if (setting_start_time_disabled) {
-		   args.resize(8);
-          widget_position.x=150;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
-                       metro_device::get_start_minute(), 0);
-         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
-                       0,0);
-         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
-                       60,0);
-         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
-         PtSetArg(&args[5], Pt_ARG_WIDTH,
-                       50,0);
-         PtSetArg(&args[6], Pt_ARG_FLAGS,
-                       Pt_TRUE, Pt_BLOCKED);
-         PtSetArg(&args[7], Pt_ARG_FLAGS,
-                       Pt_TRUE, Pt_GHOST);
-           } else { //if (setting_start_time_disabled)
-
-		 args.resize(6);
-          widget_position.x=150;
-          widget_position.y=widgets_y_position+25;
-         PtSetArg(&args[0], Pt_ARG_POS,
-                     &widget_position, 0);
-         PtSetArg(&args[1], Pt_ARG_NUMERIC_VALUE,
-                       metro_device::get_start_minute(), 0);
-         PtSetArg(&args[2], Pt_ARG_NUMERIC_MIN,
-                       0,0);
-         PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
-                       59,0);
-         PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
-         PtSetArg(&args[5], Pt_ARG_WIDTH,
-                       50,0);
-           }; //if (setting_start_time_disabled)
-
-         current_widget=PtCreateWidget(PtNumericInteger,
-                                                     parent_widget,
-                                                     args.size(),
-                                                     &args[0]);
-         if (current_widget==NULL)
-                  throw spider_exception("label with start hour is NULL");
-         escalator_start_minute=current_widget;
-
-         PtRealizeWidget(current_widget);
-
-       //button ok
+       //button save
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, 30,0);

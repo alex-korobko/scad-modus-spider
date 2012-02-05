@@ -170,7 +170,7 @@ if ( timer_commands->get_timer_commands_raw_list()!=NULL ) {
 
 try {
 		args.clear();
-		args.resize(13);
+		args.resize(15);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, dialog_wnd_height,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, dialog_wnd_width,0);
 		PtSetArg(&args[2], Pt_ARG_WINDOW_TITLE, dialog_title.c_str(),0);
@@ -204,6 +204,10 @@ try {
         PtSetArg(&args[12],  Pt_CB_WINDOW_CLOSING,
 			           &callbacks[0],
                          callbacks.size());
+		PtSetArg(&args[13], Pt_ARG_CURSOR_TYPE,
+  				       Ph_CURSOR_BIG_POINTER, 0);
+		PtSetArg(&args[14], Pt_ARG_CURSOR_COLOR,
+  				       0xf33ff5, 0);
 
 		dialog_window=PtCreateWidget(PtWindow,
                                                      spider_sys_sett->get_main_window(),

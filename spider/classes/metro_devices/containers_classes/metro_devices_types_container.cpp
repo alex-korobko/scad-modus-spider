@@ -1,3 +1,5 @@
+#include <iostream>
+
 using namespace std;
 
 #include <vector>
@@ -39,6 +41,63 @@ metro_devices_types_container* metro_devices_types_container::get_instance(){
     return metro_devices_types_container_instance;
 }; 
 
+void metro_devices_types_container::load_input_circut_for_message_parameters () throw(spider_exception){
+enum {NAME=0, HINT, TYPE, ENTRIES_COUNT};
+ostringstream exception_description;
+string entry_name, circut_name, circut_hint;
+int type_id=-1;
+const char *entry_name_c_str;
+vector<char> temp_str(512);
+vector<string> entries_names(ENTRIES_COUNT);
+
+entries_names[NAME]="name";
+entries_names[HINT]="hint";
+entries_names[TYPE]="type";
+
+entry_name_c_str=PxConfigNextString(&temp_str[0], 
+							                        temp_str.size()
+							                      );
+
+while(entry_name_c_str!=NULL){
+entry_name=entry_name_c_str;
+if (entry_name.compare(entries_names[NAME])==0) {
+	  circut_name=&temp_str[0];
+	} else if (entry_name.compare(entries_names[HINT])==0) {
+      circut_hint=&temp_str[0];
+	} else if (entry_name.compare(entries_names[TYPE])==0) {
+			type_id = atoi(&temp_str[0]);
+			if (type_id<=0){
+		       exception_description<<"Wrong type_id  "<<&temp_str[0];
+		       throw (spider_exception(exception_description.str()));
+			};
+    } else {
+	       exception_description<<"Unrecognized config entry  "<<entry_name;
+	       throw (spider_exception(exception_description.str()));
+	};
+	
+	entry_name_c_str=PxConfigNextString(&temp_str[0], 
+							                        temp_str.size());
+	}; //while(entry_name_c_str!=NULL)
+
+	iterator tmp_iter_device;
+	if (type_id<0){
+			tmp_iter_device=current_devices_type;
+		} else {
+			tmp_iter_device=this->find(type_id);
+		};
+
+	if ( tmp_iter_device==this->end()){
+            throw (spider_exception("Not found device_type for input_circut_for_message"));
+		};
+
+    tmp_iter_device->second->circuts_insert(
+                     tmp_iter_device->second->circuts_end(),
+                     device_input_circut_for_message(circut_name, circut_hint));
+
+};
+
+
+
 void metro_devices_types_container::load_message_parameters () throw (spider_exception)  {
 msg_types_container* msg_types_cont=msg_types_container::get_instance();
 
@@ -75,8 +134,7 @@ if (entry_name.compare(entries_names[ID])==0)
 
 	} else if (entry_name.compare(entries_names[TYPE])==0) {
 			int temp_int = atoi(&temp_str[0]);
-			if (temp_int>0)
-			{
+			if (temp_int>0){
 						type_id=temp_int;
 			} else {
 		       exception_description<<"Wrong type_id  "<<&temp_str[0];
@@ -159,9 +217,9 @@ void metro_devices_types_container::load_data_unit_parameters (data_unit_type un
                            throw(spider_exception) {
 system_settings_spider* sys_sett_obj=system_settings_spider::get_instance();
 
-enum {ID=0, INDEX, TYPE, BLOCK, VISIBILITY, NAME, ENTRIES_COUNT};
+enum {ID=0, INDEX, TYPE, BLOCK, VISIBILITY, NAME, HINT, ENTRIES_COUNT};
 ostringstream exception_description;
-string entry_name, data_unit_name;
+string entry_name, data_unit_name, data_unit_hint;
 const char *entry_name_c_str;
 vector<char> temp_str(512);
 vector<string> entries_names(ENTRIES_COUNT);
@@ -175,6 +233,7 @@ entries_names[TYPE]="type";
 entries_names[BLOCK]="block";
 entries_names[VISIBILITY]="visibility";
 entries_names[NAME]="name";
+entries_names[HINT]="hint";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
 							                        temp_str.size()
@@ -253,6 +312,8 @@ if (entry_name.compare(entries_names[ID])==0) {
 
 	} else if (entry_name.compare(entries_names[NAME])==0) {
 		data_unit_name=&temp_str[0];
+	} else if (entry_name.compare(entries_names[HINT])==0) {
+		data_unit_hint=&temp_str[0];
 	} else {
         exception_description<<"Unrecognized config entry  "<<entry_name;
         throw (spider_exception(exception_description.str()));
@@ -305,6 +366,7 @@ if (entry_name.compare(entries_names[ID])==0) {
 				                                                     new device_signal(data_unit_id,
                                                                                                    data_unit_index,
                                                                                                    data_unit_name,
+                                                                                                   data_unit_hint,
                                                                                                     visibility)
 																)
 				);
@@ -317,6 +379,7 @@ if (entry_name.compare(entries_names[ID])==0) {
 				                                                     new device_parameter(data_unit_id,
                                                                                                    data_unit_index,
                                                                                                    data_unit_name,
+                                                                                                   data_unit_hint,
                                                                                                     visibility)
 																)
 				);
@@ -518,20 +581,110 @@ if (entry_name.compare(entries_names[ID])==0)
 	};
 }
 
-void metro_devices_types_container::load (string file_name)  throw (spider_exception){
- 	enum {TYPE_SECTION=0, BLOCK_SECTION, SIGNAL_SECTION, PARAMETER_SECTION, MESSAGE_SECTION,  ENTRIES_COUNT};
+void metro_devices_types_container::load_device_type_file (string file_name)  throw (spider_exception){
+ 	enum {TYPE_SECTION=0, 
+                 BLOCK_SECTION,
+                 SIGNAL_SECTION,
+                 PARAMETER_SECTION,
+                 MESSAGE_SECTION,
+                 INPUT_CIRCUT_SECTION,
+                 ENTRIES_COUNT};
+
     ostringstream exception_description;
-	this->erase (this->begin(), this->end());
 	string	section_name;
 	const char *section_name_c_str;
 	vector<string> sections_names(ENTRIES_COUNT);
+	vector<string> appended_files_names;
 
 	sections_names[TYPE_SECTION]="type";
  	sections_names[BLOCK_SECTION]="block";
  	sections_names[PARAMETER_SECTION]="parameter";
  	sections_names[SIGNAL_SECTION]="signal";
   	sections_names[MESSAGE_SECTION]="message";
- 
+  	sections_names[INPUT_CIRCUT_SECTION]="input circut";
+
+	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE ){
+        exception_description<<"Can`t open config file "<<file_name;
+        cout<<"PxConfigOpen"<<endl;
+        throw spider_exception(exception_description.str());
+	};
+
+	try {
+        section_name_c_str=PxConfigNextSection();
+        while (section_name_c_str!=NULL) {
+        
+            section_name=section_name_c_str;
+
+			if (section_name.compare(sections_names[TYPE_SECTION])==0) {
+				load_type_parameters ();
+
+			} else if (section_name.compare(sections_names[BLOCK_SECTION])==0) {
+				load_block_parameters ();
+
+			} else if (section_name.compare(sections_names[SIGNAL_SECTION])==0) {
+				load_data_unit_parameters (SIGNAL);
+
+			} else if (section_name.compare(sections_names[PARAMETER_SECTION])==0) {
+				load_data_unit_parameters (PARAMETER);
+
+			} else if (section_name.compare(sections_names[MESSAGE_SECTION])==0) {
+				load_message_parameters ();
+
+			} else if (section_name.compare(sections_names[INPUT_CIRCUT_SECTION])==0) {
+                load_input_circut_for_message_parameters ();
+
+			} else {
+                exception_description<<"Unrecognized config section "<<section_name;
+                throw spider_exception(exception_description.str());
+			};
+			
+			section_name_c_str=PxConfigNextSection();
+           };	 // while (section_name_c_str!=
+       }catch (spider_exception spr_exc) {
+       		exception_description<<spr_exc.get_description();
+			if  (PxConfigClose()==Pt_FALSE){
+			      exception_description<<"\nCan`t close config file "<<file_name;
+				};
+ 	        throw spider_exception(exception_description.str());      
+       };
+
+	if  (PxConfigClose()==Pt_FALSE){
+           exception_description<<"Can`t close config file "<<file_name;
+           throw spider_exception(exception_description.str());
+	};
+
+}; 
+
+
+void metro_devices_types_container::load (string file_name)  throw (spider_exception){
+ 	enum {TYPE_SECTION=0, 
+                 BLOCK_SECTION, 
+                 SIGNAL_SECTION,
+                 PARAMETER_SECTION,
+                 MESSAGE_SECTION,
+                 INPUT_CIRCUT_SECTION,
+                 APPEND_FILE_SECTION,
+                 ENTRIES_COUNT};
+    ostringstream exception_description;
+	this->erase (this->begin(), this->end());
+	string	section_name;
+	const char *section_name_c_str;
+	vector<string> sections_names(ENTRIES_COUNT);
+	vector<string> appended_files_names;
+
+    string entry_name;
+    const char *entry_name_c_str;
+    vector<char> temp_str(512);
+
+
+	sections_names[TYPE_SECTION]="type";
+ 	sections_names[BLOCK_SECTION]="block";
+ 	sections_names[PARAMETER_SECTION]="parameter";
+ 	sections_names[SIGNAL_SECTION]="signal";
+  	sections_names[MESSAGE_SECTION]="message";
+  	sections_names[INPUT_CIRCUT_SECTION]="input circut";
+   	sections_names[APPEND_FILE_SECTION]="append file";
+
 	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)==Pt_FALSE ){
         exception_description<<"Can`t open config file "<<file_name;
         throw spider_exception(exception_description.str());
@@ -558,6 +711,27 @@ void metro_devices_types_container::load (string file_name)  throw (spider_excep
 			} else if (section_name.compare(sections_names[MESSAGE_SECTION])==0) {
 				load_message_parameters ();
 
+			} else if (section_name.compare(sections_names[INPUT_CIRCUT_SECTION])==0) {
+                load_input_circut_for_message_parameters ();
+
+			} else if (section_name.compare(sections_names[APPEND_FILE_SECTION])==0) {
+                   entry_name_c_str=PxConfigNextString(&temp_str[0], 
+							                        temp_str.size()
+							                      );
+
+                 while(entry_name_c_str!=NULL){
+                         entry_name=entry_name_c_str;
+                         if (entry_name.compare("file name")==0) {
+                              appended_files_names.push_back(&temp_str[0]);
+                            } else {
+                     	       exception_description<<"Unrecognized config entry  "<<entry_name;
+                               throw (spider_exception(exception_description.str()));
+                            };
+
+                              entry_name_c_str=PxConfigNextString(&temp_str[0], 
+							                           temp_str.size());
+                             }; //while(entry_name_c_str!=NULL)
+
 			} else {
                 exception_description<<"Unrecognized config section "<<section_name;
                 throw spider_exception(exception_description.str());
@@ -577,4 +751,8 @@ void metro_devices_types_container::load (string file_name)  throw (spider_excep
            exception_description<<"Can`t close config file "<<file_name;
            throw spider_exception(exception_description.str());
 	};
-}; 
+
+   for (vector<string>::size_type i=0; i<appended_files_names.size(); i++) 
+                                                 this->load_device_type_file (appended_files_names[i]);
+
+};
