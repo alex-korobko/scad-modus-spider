@@ -3,8 +3,7 @@ OBJECTS = generic_socket.o\
  client_socket.o
 
 ifdef UNIT_TESTING
-OBJECTS +=  socket_test.o\
- client_server_sockets_test.o\
+OBJECTS += client_server_sockets_test.o\
  all_socket_classes_tests.o
 endif
 

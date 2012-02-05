@@ -16,7 +16,7 @@ extern ApDialogLink_t SignalDlg;
 extern ApDialogLink_t ArchiveDlg;
 extern ApWindowLink_t ArchiveLog;
 extern ApDialogLink_t PrevCmdPoolDlg;
-extern ApWidget_t AbWidgets[ 154 ];
+extern ApWidget_t AbWidgets[ 155 ];
 
 extern ApMenuLink_t EscalatorMenu;
 

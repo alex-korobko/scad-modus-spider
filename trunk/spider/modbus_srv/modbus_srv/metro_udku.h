@@ -10,9 +10,6 @@ metro_device::command_data
          create_answer_to_socket_func_4
                (metro_device::command_data_container answer_from_com_port);
 
-metro_device::command_data
-     get_default_command_request_from_socket();
-
 int previos_escalator_condition_value;
 int previos_rkp_value;
 int previos_mu_tu_switcher_value;
@@ -82,9 +79,9 @@ enum {
 /*
 constructor and destructor
 */
-explicit metro_udku(int new_number) 
+metro_udku(int new_number, bool new_log_packets) 
                 throw (metro_device::metro_device_exception):
-    metro_device(new_number),
+    metro_device(new_number, new_log_packets),
     previos_escalator_condition_value(-1),
     previos_rkp_value(-1),
     previos_mu_tu_switcher_value(-1),
@@ -108,6 +105,11 @@ virtual command_data_container
 
 virtual command_data_container
             get_default_command_request_to_comport();
+
+
+virtual metro_device::command_data
+     get_default_command_request_from_socket();
+
 };
 
 #endif

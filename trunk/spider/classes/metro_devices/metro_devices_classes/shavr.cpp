@@ -25,7 +25,6 @@ using namespace std;
 #include <sstream>
 
 #include "defines.h"
-#include <sys/select.h> //#define FD_SETSIZE
 #include "spider_exception.h"
 #include "system_settings.h"
 #include "system_settings_spider.h"
@@ -58,29 +57,35 @@ class metro_devices_container;
 extern msg_dict_container *messages;
 extern log_records_container *main_log;
 
-extern bool sending_commands_disabled;
-
 metro_shavr::metro_shavr(
 		int id, 
 		int id_station,
 		int number,
+		int modbus_number,
 		int type,
         int	 start_day_mode,
         int	 start_hour,
         int	 start_minute,
 		int channel,
 		bool enabled,
-		in_addr_t	ip) throw (spider_exception):
+		in_addr_t	ip,
+		time_t offline_or_exception_delay,
+		bool new_conduction_is_switched_off,
+		bool new_log_packets) throw (spider_exception):
 	metro_device( id,
                    id_station,
                    number,
+                   modbus_number,
                    type,
                    start_day_mode,
                    start_hour,
                    start_minute,                 
                    enabled,
                    ip,
-                   channel),
+                   channel,
+				  offline_or_exception_delay,
+				   new_conduction_is_switched_off,
+					new_log_packets),
     A0_x5(false),  //offline 
     A0_state(A0_OFFLINE)
       	{};
@@ -91,19 +96,21 @@ metro_shavr::~metro_shavr(){
 void metro_shavr::A0(int event) 
           throw (spider_exception){
  int old_automat_state=A0_state;
- 
+
  switch (A0_state) {
-    case A0_OFFLINE:
+    case A0_OFFLINE: 
          if (A0_x1 &&
              !A0_x2) {
            A0_state=A0_EXCEPTION;
            break;
          };
+
          if (A0_x1 &&
              !A0_x3 && !A0_x4) {
            A0_state=A0_DISABLED_1_DISABLED_2;
            break;
          };
+
          if (A0_x1 &&
              A0_x3 && A0_x4) {
            A0_state=A0_ENABLED_1_ENABLED_2;
@@ -120,6 +127,7 @@ void metro_shavr::A0(int event)
            break;
          };
      break;
+
     case A0_EXCEPTION:
           if (!A0_x1) {
            A0_state=A0_OFFLINE;
@@ -258,6 +266,8 @@ void metro_shavr::A0(int event)
  }; //switch (A0_state)
 
  if (old_automat_state==A0_state) return;
+
+//cout<<"old A0_state="<<A0_state<<" A0_x1="<<A0_x1<<" A0_x2="<<A0_x2<<" A0_x3="<<A0_x3<<"A0_x4="<< A0_x4<<endl;
  
 //initializations on enter to new state
  switch (A0_state) {
@@ -302,12 +312,10 @@ PhRect_t metro_shavr::get_device_widget_extent()
 };
 
 void metro_shavr::send_command(command cmd)  throw (spider_exception){
-system_settings_spider *sys_sett=system_settings_spider::get_instance();
 vector<byte> buffer(0);
 vector<bool> escalators_running_state;
-word		crc_value;
 
-    if ( sending_commands_disabled) return;
+    if (is_conduction_is_switched_off()) return;
 
 	if (cmd.get_device_id()!=get_id())
           throw spider_exception("metro_shavr::send_command(...) cmd.get_device_id()!=get_id() ");
@@ -329,6 +337,7 @@ byte count=0;
                         try {
                            escalator_in_shavr=dynamic_cast<metro_escalator*>(devices_iter->second);
                            escalators_running_state[count]=escalator_in_shavr->is_escalator_run();
+                           escalators_running_state[count]=false;
                         }catch (bad_cast){
                              //do nothing
                         };
@@ -385,9 +394,10 @@ byte count=0;
               break;
      }; //switch (cmd.get_command_code())
 
-//begin: ATTENTION!! LAST checking about escalator runnint before command sending
+//end: ATTENTION!! LAST checking about escalator runnint before command sending
 
-	buffer.push_back(get_number());	//shavr number
+if (cmd.get_command_code()!=system_settings::COMMAND_CHANCEL) {
+	buffer.push_back(get_modbus_number());	//shavr number
 	buffer.push_back(5);		// modbus function
 
     switch (cmd.get_command_code()) {
@@ -498,13 +508,14 @@ byte count=0;
 		 throw spider_exception(exception_description.str());      
     };  //switch (cmd.get_command_code())
 
-	crc_value = sys_sett->crc(buffer);
-
-	system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
+	system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
     metro_device::set_request_to_device_buffer(buffer);
+ }  else {  // if (cmd.get_command_code()!=system_settings::COMMAND_CHANCEL)
+     A0_x5=false;
+ }; //if (cmd.get_command_code()!=system_settings::COMMAND_CHANCEL)
+
 
    A0(1);
    update_device_widget();
@@ -627,6 +638,7 @@ if (state_indicator_widget==NULL)
 if (command_indicator_widget==NULL)
 	throw spider_exception("metro_shavr::update_device_widget() pointer to command_indicator_widget is null");
 
+//cout<<"A0_state "<<A0_state<<endl;
 //updating widget state
 args.clear();
 args.resize(1);
@@ -1130,23 +1142,18 @@ return return_buffer;
 };
 
 metro_device::buffer_data_type metro_shavr::get_4_function_request(){
-system_settings_spider *sys_sett=system_settings_spider::get_instance();
 	vector<byte> buffer(0);
-	word		crc_value;
 
-	buffer.push_back(get_number());   // shavr number
+	buffer.push_back(get_modbus_number());   // shavr number
 	buffer.push_back(4);                      // function number
 	buffer.push_back(0);
 	buffer.push_back(7);
 	buffer.push_back(0);
 	buffer.push_back(76);
 
-	crc_value = sys_sett->crc(buffer);
+	system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+	buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
 
-	system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-	buffer.push_back(tmp_bytes[1]);
-	buffer.push_back(tmp_bytes[0]);
-	
 //	metro_device::set_request_to_device_buffer(buffer);
   	return buffer;
 };
@@ -1155,14 +1162,13 @@ metro_device::buffer_data_type metro_shavr::get_setting_time_request(){
 
 system_settings_spider *sys_sett=system_settings_spider::get_instance();
 	vector<byte> buffer(0);
-	word		crc_value;
     struct tm *tm_local;
     time_t time_now=time(NULL);
 
 	tm_local=localtime(&time_now);
 
     try{
-       buffer.push_back(get_number());   // shavr number
+       buffer.push_back(get_modbus_number());   // shavr number
        buffer.push_back(16);                      // function number
 
        buffer.push_back(00);                      // first register number high byte
@@ -1185,18 +1191,13 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
         buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_min)));
         buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_sec)));
 
-        crc_value = sys_sett->crc(buffer);
- 
-	    system_settings::bytes tmp_bytes=sys_sett->bytes_of_type<word>(crc_value);
-        buffer.push_back(tmp_bytes[1]);
-        buffer.push_back(tmp_bytes[0]);
-
+	    system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));
+        buffer.insert(buffer.end(), tmp_bytes.begin(), tmp_bytes.end());
       } catch (spider_exception spr_except) {
          sys_sett->sys_message(system_settings::ERROR_MSG,
                                                 "In metro_shavr::get_setting_time_request() raised exception "+spr_except.get_description());
          buffer=get_4_function_request();
       };
-
 
 //	metro_device::set_request_to_device_buffer(buffer);
    	return buffer;
@@ -1224,31 +1225,31 @@ void
 
    bool tmp_value;
 
-   metro_device::buffer_data_type::reverse_iterator tmp_iter1, tmp_iter2;
+   metro_device::buffer_data_type::iterator tmp_iter1, tmp_iter2;
    metro_device::buffer_data_type request_to_device = metro_device::get_current_request_to_device_buffer();
 
   if (request_to_device.empty())
         throw spider_exception ("Empty request for decoding in metro_shavr::decode_answer_from_device_4_function(...)");
 
-   tmp_iter1=request_to_device.rend();
+   tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
    advance(tmp_iter1,
-              -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
+              system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
    advance(tmp_iter2,
-              -(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
+              (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
                  system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
-   begin_addr=sys_sett_obj->type_from_bytes<word>(system_settings::bytes(tmp_iter2, tmp_iter1));
+   begin_addr=system_settings::type_from_bytes<word>(system_settings::bytes(tmp_iter1, tmp_iter2));
    begin_addr+=shavr_data_block::MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS;
 
-  tmp_iter1=request_to_device.rend();
+  tmp_iter1=request_to_device.begin();
   tmp_iter2=tmp_iter1;
    advance(tmp_iter1,
-                    -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
+                  system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
    advance(tmp_iter2,
-                    -(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
-                     system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
+                 (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
+                  system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
    registers_count=
-                   sys_sett_obj->type_from_bytes<word>(system_settings::bytes(tmp_iter2, tmp_iter1));
+                   system_settings::type_from_bytes<word>(system_settings::bytes(tmp_iter1, tmp_iter2));
 
 	if (registers_count*2 !=answer[system_settings::MODBUS_DATA_BYTES_COUNT_INDEX]) {
         ostringstream exception_description;
@@ -1262,7 +1263,7 @@ void
 
 //====================================================
 /*
-{
+if (get_id()==31){
 if ( answer.empty()) {
 cout<<"answer to shavr is EMPTY"<<endl;
  } else { //if ( answer.empty())
@@ -1279,19 +1280,19 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 //====================================================
 
 //move iteratiors to first register data
-     tmp_iter1=answer.rend();
+     tmp_iter1=answer.begin();
      tmp_iter2=tmp_iter1;
 
      advance(tmp_iter1,
-                 -(system_settings::MODBUS_HEADER_SIZE));
+                 system_settings::MODBUS_HEADER_SIZE);
      advance(tmp_iter2,
-                 -(system_settings::MODBUS_HEADER_SIZE+2));
+                 (system_settings::MODBUS_HEADER_SIZE+2));
 
 //poehali!
      if (begin_addr<= 30008 &&
          begin_addr+registers_count>=30008) {
 			register_value=
-			    sys_sett_obj->type_from_bytes<word>(system_settings::bytes ( tmp_iter2, tmp_iter1));
+			    sys_sett_obj->type_from_bytes<word>(system_settings::bytes ( tmp_iter1, tmp_iter2));
 
            for (int bits_shift=0; bits_shift<16; bits_shift++) {
                mask_value=1<<bits_shift;
@@ -1358,14 +1359,14 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
               }; // for (int bits_shift
 
             tmp_iter1=tmp_iter2;
-            advance(tmp_iter2, -2);
+            advance(tmp_iter2, 2);
     }; //if (begin_addr<= 30008
 
      register_counter=16;
      if (begin_addr<= 30009 &&
          begin_addr+registers_count>=30009) {
 			register_value=
-			    sys_sett_obj->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1));
+			    sys_sett_obj->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
 
            for (int bits_shift=0; bits_shift<16; bits_shift++) {
                mask_value=1<<bits_shift;
@@ -1377,25 +1378,27 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 		                  }; // if ((register_value & mask_value
 
 		            switch (bits_shift) {
-                      case shavr_data_block::INDEX_SIGNAL_FIRE_OFF_SYSTEM :
+                      case shavr_data_block::INDEX_SIGNAL_SMOKE_SENSOR :
+//ATTENTION!! Add code for smoke sensor alarm here - sound and message window
+//                         A2_x3=tmp_value;
                          if (tmp_value) {
 		                        local_data_block.set_signal_value(bits_shift+register_counter+1,
-		                                                   shavr_data_block::SIGNAL_VALUE_RED);
+		                                                   shavr_data_block::SIGNAL_VALUE_GREEN);
                             } else { // if (tmp_value)
  		                        local_data_block.set_signal_value(bits_shift+register_counter+1,
-		                                            shavr_data_block::SIGNAL_VALUE_BLUE);
+		                                            shavr_data_block::SIGNAL_VALUE_RED);
                             }; //if (tmp_value)
 
                          break;
                       case shavr_data_block::INDEX_SIGNAL_FIRE_ALARM :
-//ATTENTION!! Add code for fire alarm here - sound and messge window
+//ATTENTION!! Add code for fire alarm here - sound and message window
 //                         A2_x3=tmp_value;
                          if (tmp_value) {
 		                        local_data_block.set_signal_value(bits_shift+register_counter+1,
-		                                                   shavr_data_block::SIGNAL_VALUE_RED);
+		                                                   shavr_data_block::SIGNAL_VALUE_GREEN);
                             } else { // if (tmp_value)
  		                        local_data_block.set_signal_value(bits_shift+register_counter+1,
-		                                            shavr_data_block::SIGNAL_VALUE_BLUE);
+		                                            shavr_data_block::SIGNAL_VALUE_RED);
                             }; //if (tmp_value)
                          break;
                       case shavr_data_block::INDEX_SIGNAL_380V_ON_INPUT_1:
@@ -1464,7 +1467,6 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                  metro_devices_container::iterator devices_iter;
                  metro_device::buffer_data_type data_to_door;
                  system_settings::bytes tmp_bytes;
-                  word crc_value;
 
                  if (stations!=NULL && devices!=NULL) {
                           stations_iter=stations->find(metro_device::get_station_id());
@@ -1476,7 +1478,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                                           if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
                                                devices_iter->second->get_enabled()) {
                                              data_to_door.clear();
-                                             data_to_door.push_back(devices_iter->second->get_number()); //modbus device number
+                                             data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
                                              data_to_door.push_back(4); //function code
                                              data_to_door.push_back(2); //data bytes count
                                              data_to_door.push_back(0); //high byte
@@ -1486,11 +1488,10 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                                                   } else  {
                                                      data_to_door.push_back(1);
                                                   };
-	                                          crc_value = sys_sett_obj->crc(data_to_door);
 
-	                                        tmp_bytes=sys_sett_obj->bytes_of_type<word>(crc_value);
-                                            data_to_door.push_back(tmp_bytes[1]);
-                                            data_to_door.push_back(tmp_bytes[0]);
+	                                        tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
+                                            data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
+
                                             devices_iter->second->set_answer_from_device_buffer(data_to_door);
 
                                            MsgSendPulse(devices_iter->second->get_connection_id(),
@@ -1529,9 +1530,9 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
        if (begin_addr<= 30010+register_counter*2 &&
             begin_addr+registers_count>=30010+register_counter*2) {
                tmp_iter1=tmp_iter2;
-               advance(tmp_iter2, -4);
+               advance(tmp_iter2, 4);
                local_data_block.set_parameter_value(register_counter+1,
-                         sys_sett_obj->type_from_bytes<dword>(system_settings::bytes (tmp_iter2, tmp_iter1)));
+                         sys_sett_obj->type_from_bytes<dword>(system_settings::bytes (tmp_iter1, tmp_iter2)));
         } else { // if (begin_addr<= 300010+register_counter*2 &&
              break;
         };
@@ -1543,8 +1544,8 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
      if (begin_addr<= 30074&&
          begin_addr+registers_count>30074) {
              tmp_iter1=tmp_iter2;
-             advance(tmp_iter2, -2);
-            answer_last_message_remote_id=sys_sett_obj->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
+             advance(tmp_iter2, 2);
+            answer_last_message_remote_id=system_settings::type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
            if (answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
                     throw spider_exception ("In answer 3074 register answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE");
     };
@@ -1552,8 +1553,8 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
      if (begin_addr<= 30075&&
          begin_addr+registers_count>30075) {
              tmp_iter1=tmp_iter2;
-             advance(tmp_iter2, -2);
-            answer_messages_size=sys_sett_obj->type_from_bytes<word>( system_settings::bytes (tmp_iter2, tmp_iter1) );
+             advance(tmp_iter2, 2);
+            answer_messages_size=system_settings::type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
            if (answer_messages_size>system_settings::MAX_MESSAGES_COUNT)
                     throw spider_exception ("In answer 3075 register answer_last_message_remote_id>system_settings::MAX_MESSAGES_COUNT");
     };
@@ -1561,7 +1562,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 //messages
     //in initial state get_last_message_remote_id()==0, so all messages must be skiped
     int upper_last_id=metro_device::get_last_message_remote_id();
-    int answer_first_message_remote_id, current_message_id;
+    int answer_first_message_remote_id, current_message_id=0;
 
      if (upper_last_id<0) { //decode first packet after program starting
                metro_device::set_last_message_remote_id(answer_last_message_remote_id);
@@ -1588,7 +1589,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 	 for (byte register_offset=0; register_offset<answer_messages_size; register_offset++){
             if (begin_addr+registers_count<current_register+register_offset) break;
 
-           register_data_word=sys_sett_obj->type_from_bytes<word>(system_settings::bytes (tmp_iter2, tmp_iter1) );
+           register_data_word=system_settings::type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2) );
 
             current_message_id=answer_first_message_remote_id+register_offset;
             if (current_message_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
@@ -1599,7 +1600,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                 upper_last_id<=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id)  {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
@@ -1609,7 +1610,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                 ((current_message_id>answer_last_message_remote_id  && current_message_id>=answer_first_message_remote_id)||
                 current_message_id<=upper_last_id )) {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, -2);
+                     advance(tmp_iter2, 2);
                      continue;
                   };
 
@@ -1619,7 +1620,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                 current_message_id>=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id) {
                    tmp_iter1=tmp_iter2;
-                   advance(tmp_iter2, -2);
+                   advance(tmp_iter2, 2);
                    continue;
                 };
 
@@ -1658,7 +1659,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 
                   metro_device::set_last_message_remote_id(current_message_id);
                   tmp_iter1=tmp_iter2;
-                  advance(tmp_iter2, -2);
+                  advance(tmp_iter2, 2);
 	 }; // for (byte register_offset=0; register_offset<
 
    this->data_block=local_data_block;
@@ -1681,11 +1682,10 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
         vector<char> tmp_chars;
         vector<log_record>::reverse_iterator log_mess_iter=received_messages.rbegin();
         dword breaking_path_value;
-        byte block_circut_index;
         string block_circut_name;
         metro_stations_container *stations=metro_stations_container::get_instance();
         metro_stations_container::iterator stat_iter;
-        metro_device_type::data_unit_iterator type_data_unit_iter;
+
         if (stations==NULL)
                   throw spider_exception("Can`t get instance of metro_stations_container");
          stat_iter=stations->find(metro_device::get_station_id());
@@ -1699,7 +1699,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                      message.str("Станция ");
                      message_from_messages_container="";
 
-                     message<<stat_iter->second.get_stl_name_string()<<" Эскалатор "<<metro_device::get_number()<<"\n";
+                     message<<stat_iter->second.get_stl_name_string()<<" ШАВР "<<metro_device::get_number()<<"\n";
 
                     system_settings::strings_container parameters_names=
                                            sys_sett_obj->get_parameters_in_messages_strings();
@@ -1731,7 +1731,9 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 														   parameters_names[system_settings::PARAMETER_NAME_BREAKING_PATH_VALUE].size(),
 														   &tmp_chars[0]);
                     };//if (find_pos!=-1)
+/*
 
+//shavr have not block circuts
                     find_pos=static_cast<int>(message_from_messages_container.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
                     if (find_pos!=-1) {
                       block_circut_index=static_cast<byte>((log_mess_iter->get_msg_id()&0xff00)>>8);
@@ -1743,6 +1745,13 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
                                 throw spider_exception(message.str());
                            } else { // if (block_circut_index==0)
                                type_data_unit_iter=dev_types_iter->second->data_units_find(block_circut_index);
+                             if (type_data_unit_iter==dev_types_iter->second->data_units_end()) {
+                                          block_circut_name="ERROR!!";
+                                          ostringstream mess;
+                                          mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but not found block_circut_index "
+                                                   <<block_circut_index<<" message id in log"<<current_message_id;
+                                           throw spider_exception(mess.str());
+                                           };
                                //ATENTION:index of block circut equals to id, so send to find block circut index
                              if (type_data_unit_iter->second->get_index()==block_circut_index) {
                                            block_circut_name=type_data_unit_iter->second->get_name();
@@ -1759,14 +1768,16 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 														   parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME].size(),
 														   block_circut_name);
                     };//if (static_cast<int>(message_text.find(parameters_names[system_settings::PARAMETER_NAME_
-                  
+*/
 //-----------------------------------end message text generation-----------------------------------
                        message<<message_from_messages_container;
                         sys_sett_obj->message_window(system_settings::ERROR_MSG,
                                                                        message.str(),
                                                                         true);
 					 sound& snd=sound::get_instance();
-                     snd.play(stat_iter->second.get_wav_file_name());
+					std::vector<string> *files  = new std::vector<string> ();
+					files->push_back(stat_iter->second.get_wav_file_name());
+                     snd.play(files);
                  }; // if (log_mess_iter->get_msg_type()==escalator_data_block::ALERT_ERROR_MESSAGES_TYPE)
                  log_mess_iter++;
                }; // while(log_mess_iter==received_messages.rend())
@@ -1775,21 +1786,19 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
 };
 
 command 
-     metro_shavr::get_device_pref_command() throw(spider_exception) {
-  throw spider_exception("Shavr not support timer_command");
+     metro_shavr::get_device_start_command() throw(spider_exception) {
+  throw spider_exception("shavr not support start command");
 }
 
 vector<command> 
-     metro_shavr::get_appropriated_commands(){
+     metro_shavr::get_appropriated_commands()  throw (spider_exception){
  vector<command> commands_to_return;
 vector<bool> escalators_running_state;
 escalators_running_state.insert(escalators_running_state.end(),4, true);
 
 system_settings_spider *sys_sett=system_settings_spider::get_instance();
-if (sys_sett==NULL) {
-        cout<<"In metro_shavr::get_appropriated_commands() can`t get instance of system_settings_spider"<<endl;
-        return commands_to_return;
-      };
+if (sys_sett==NULL) 
+        throw spider_exception ("In metro_shavr::get_appropriated_commands() can`t get instance of system_settings_spider");
 
 //cout<<"in metro_shavr::get_appropriated_commands"<<endl;
 //cout<<"A0_x10 "<<(A0_x10?"true":"false")<<endl;
@@ -1811,10 +1820,8 @@ if (sys_sett==NULL) {
 
 metro_devices_container *devices=metro_devices_container::get_instance();
 metro_devices_container::iterator devices_iter;
-if (devices==NULL) {
-          sys_sett->sys_message(system_settings::ERROR_MSG, "In metro_shavr::get_appropriated_commands() can`t get instance of metro_devices_container");
-          return commands_to_return;
-       };
+if (devices==NULL) 
+          throw spider_exception ("In metro_shavr::get_appropriated_commands() can`t get instance of metro_devices_container");
 
 related_devices_ids::iterator related_devices_iter=devices_ids_begin();
 metro_escalator *escalator_in_shavr;
@@ -1825,7 +1832,8 @@ byte count=0;
                if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR) {
                         try {
                            escalator_in_shavr=dynamic_cast<metro_escalator*>(devices_iter->second);
-                           escalators_running_state[count]=escalator_in_shavr->is_escalator_run();
+//                           escalators_running_state[count]=escalator_in_shavr->is_escalator_run();
+                           escalators_running_state[count]=false;
                         }catch (bad_cast){
                              //do nothing
                         };
@@ -1833,8 +1841,7 @@ byte count=0;
             } else {
                ostringstream message;
                message<<"In metro_shavr::get_appropriated_commands() not found device with id "<<*related_devices_iter;
-               sys_sett->sys_message(system_settings::ERROR_MSG, message.str());
-               return commands_to_return;
+               throw spider_exception(message.str());
             };
         count++;
         related_devices_iter++;
@@ -1846,9 +1853,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_1_TO_INPUT_1,
+	                 system_settings::TURN_OFF_ESC_1_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 1 от ввода 1")
               );
 
@@ -1858,9 +1865,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_1_TO_INPUT_2,
+	                 system_settings::TURN_OFF_ESC_1_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 1 от ввода 2")
               );
 
@@ -1871,9 +1878,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_1_TO_INPUT_1,
+	                 system_settings::TURN_ON_ESC_1_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 1 к вводу 1")
               );
 
@@ -1884,21 +1891,21 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_1_TO_INPUT_2,
+	                 system_settings::TURN_ON_ESC_1_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 1 к вводу 2")
               );
 
- if (!escalators_running_state[1] &&
+ if ( !escalators_running_state[1] &&
        A0_x12 &&
        A0_x20) // escalator 2 connected to input 1 and connection of escalator 2 to input 1 can be switched by telemetry
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_2_TO_INPUT_1,
+	                 system_settings::TURN_OFF_ESC_2_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 2 от ввода 1")
               );
  if (!escalators_running_state[1] &&
@@ -1907,9 +1914,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_2_TO_INPUT_2,
+	                 system_settings::TURN_OFF_ESC_2_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 2 от ввода 2")
               );
 
@@ -1920,9 +1927,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_2_TO_INPUT_1,
+	                 system_settings::TURN_ON_ESC_2_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 2 к вводу 1")
               );
 
@@ -1933,9 +1940,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_2_TO_INPUT_2,
+	                 system_settings::TURN_ON_ESC_2_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 2 к вводу 2")
               );
 
@@ -1946,9 +1953,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_3_TO_INPUT_1,
+	                 system_settings::TURN_OFF_ESC_3_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 3 от ввода 1")
               );
  if (!escalators_running_state[2] &&
@@ -1957,9 +1964,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_3_TO_INPUT_2,
+	                 system_settings::TURN_OFF_ESC_3_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 3 от ввода 2")
               );
 
@@ -1970,9 +1977,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_3_TO_INPUT_1,
+	                 system_settings::TURN_ON_ESC_3_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 3 к вводу 1")
               );
 
@@ -1983,9 +1990,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_3_TO_INPUT_2,
+	                 system_settings::TURN_ON_ESC_3_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 3 к вводу 2")
               );
 
@@ -1996,9 +2003,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_4_TO_INPUT_1,
+	                 system_settings::TURN_OFF_ESC_4_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 4 от ввода 1")
               );
  if (!escalators_running_state[3] &&
@@ -2007,9 +2014,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_OFF_ESC_4_TO_INPUT_2,
+	                 system_settings::TURN_OFF_ESC_4_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ОТКЛЮЧИТЬ Эск 4 от ввода 2")
               );
 
@@ -2020,9 +2027,9 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_4_TO_INPUT_1,
+	                 system_settings::TURN_ON_ESC_4_TO_INPUT_1,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 4 к вводу 1")
               );
  if (!escalators_running_state[3] &&
@@ -2032,12 +2039,21 @@ byte count=0;
      commands_to_return.push_back(
  	        command (metro_device::get_id(),
 	                 metro_device::get_type(),
-	                 system_settings::system_settings::TURN_ON_ESC_4_TO_INPUT_2,
+	                 system_settings::TURN_ON_ESC_4_TO_INPUT_2,
 	                 metro_device::get_station_id(),
-	                 metro_device::get_number(),
+	                 metro_device::get_modbus_number(),
                      "ПОДКЛЮЧИТЬ Эск 4 к вводу 2")
               );
 
+    if (A0_x5) 
+        commands_to_return.push_back(
+ 	        command (metro_device::get_id(),
+	                 metro_device::get_type(),
+	                 system_settings::COMMAND_CHANCEL,
+	                 metro_device::get_station_id(),
+	                 metro_device::get_modbus_number(),
+                     "СБРОСИТЬ КОМАНДУ")
+              );
 
  return commands_to_return;
 };

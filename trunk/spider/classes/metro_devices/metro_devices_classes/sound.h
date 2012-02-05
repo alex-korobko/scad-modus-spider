@@ -30,13 +30,37 @@ sound(const sound&) {};
 sound& operator=(const sound& s) { return const_cast<sound&>(s);};
 ~sound() {};
 
+ class sound_exception {
+       private:
+          string test_exc_descr;
+
+        public:
+           explicit sound_exception (string description) : 
+                   test_exc_descr (description) {};
+
+            string get_description () {return test_exc_descr;};
+       };
+
+class sound_mutex_locker {
+	private:
+ 		static pthread_mutex_t  playing_process_mutex;
+	public:
+		sound_mutex_locker() {
+			pthread_mutex_lock(&playing_process_mutex);
+		}
+
+		~sound_mutex_locker() {
+			pthread_mutex_unlock(&playing_process_mutex);
+		}
+};
+
 //private static metods
  static long find_tag (FILE * fp, string tag);
  static bool  check_hdr(FILE * fp);
- static void* player(void* arg);
+ static void* player(void* arg); 
 
  public:
-	bool play(string filename);
+	bool play(vector<string> *filename);
 
 //public static metods
     static sound& get_instance() {

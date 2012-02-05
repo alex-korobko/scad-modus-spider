@@ -24,9 +24,10 @@ using namespace std;
 #include <sstream>
 
 //local headers
-#include "../system_settings_classes/defines.h"
+#include "defines.h"
 #include "comport_exception.h"
 #include "comport.h"
+#include "program_settings.h"
 
 comport::comport (
     		int  port_number,
@@ -168,7 +169,10 @@ comport::~comport() throw (comport_exception){
 		}
 };
 
-void comport::send(comport_data_block data_to_send) throw (comport_exception){
+void comport::send(comport_data_block data_to_send, 
+								bool flush_io_buffers_after_send = false,
+								unsigned int rts_delay = 5000) throw (comport_exception){
+	static int  delay_messages_counter = 0;
 	ostringstream exception_message;
 	int count_of_sended_bytes;
 	const byte parity_bits_delay_koeff=3; //delay for parity bits, so on $-)
@@ -180,9 +184,17 @@ void comport::send(comport_data_block data_to_send) throw (comport_exception){
 		throw comport_exception(exception_message.str());
 	};
 
+	if (rts_delay >0) {
+    		set_rts_state(comport::RTS_SET_1);	
+    		usleep(rts_delay);
+		};
 	count_of_sended_bytes=write(m_port_handle,
                                                      &data_to_send[0],
                                                      data_to_send.size());
+	if (rts_delay > 0) {
+   		usleep(rts_delay);
+   		set_rts_state(comport::RTS_SET_0);	
+	};
 
 	if (static_cast<comport_data_block::size_type >(count_of_sended_bytes)!=data_to_send.size()) {
 		exception_message<<"Can`t  write "<<data_to_send.size()<<" bytes to "<<m_dev_port;
@@ -191,17 +203,41 @@ void comport::send(comport_data_block data_to_send) throw (comport_exception){
 		throw comport_exception(exception_message.str());
 	};
 
-	if (m_delay_useconds==0) {
+  if (m_delay_useconds==0) {
 	   echo_interval=  static_cast<useconds_t> (
                                   (m_data_bits+m_stop_bits+parity_bits_delay_koeff)*1000000
                                   *data_to_send.size()*m_comport_koeff/m_baud_rate
                                    );
 	} else {
-	echo_interval=m_delay_useconds;
+		echo_interval=m_delay_useconds;
 	};
 
-	usleep(echo_interval);
+if (delay_messages_counter >64) {
+	delay_messages_counter = 0;
+   ostringstream description;
+   description<<"Curr delay is " <<echo_interval<<" mkS predef delay is "<<m_delay_useconds<<" mkS";
+   program_settings::get_instance()->sys_message(program_settings::INFO_MSG, description.str());
 };
+	delay_messages_counter++;
+
+	usleep(echo_interval);
+    if (flush_io_buffers_after_send) {
+/*
+	   ostringstream description;
+	   description<<"Flush after send";
+	   program_settings::get_instance()->sys_message(program_settings::INFO_MSG, description.str());
+*/
+	     if (tcflush(m_port_handle, TCIOFLUSH)<0) {
+			exception_message<<"Can`t flush input and output streams "<<strerror(errno);
+			 if (close(m_port_handle)!=0)
+ 					exception_message<<"  Can`t close "<<m_dev_port<<" : "<<strerror(errno);
+             m_port_handle =-1;		
+			throw comport_exception(exception_message.str());
+    };
+}; // if (flush_io_buffers_after_send)
+
+};
+
 /*
 void comport::flush_input_buffer() throw (comport_exception){
 
@@ -238,22 +274,29 @@ void comport::flush_input_output_buffer() throw (comport_exception){
 };
 */
 
-
-    int  comport::recv(comport::comport_data_block &buffer_to_recieve,
+int  comport::recv(comport::comport_data_block &buffer_to_recieve,
                      int bytes_count,
-	                 bool flush_io_buffers=false) 
-                      throw (comport_exception){
+	                 bool flush_io_buffers=false,
+				     unsigned int recieve_timeout = 10) 
+                      throw (comport_exception)
+{
     comport_data_block recived_data(bytes_count), all_recieved_data;
    comport_data_block::iterator iter_on_received_data;
 	ostringstream exception_message;	     
-	int  bytes_readed, bytes_readed_summary=0;
+	int  bytes_read, bytes_read_summary=0;
 
 	//impossible
 	if (m_port_handle < 0) {
 		exception_message<<"Port "<<m_dev_port<<" not initialized";
 		throw comport_exception(exception_message.str());
 	};
-    if (flush_io_buffers)
+
+    if (flush_io_buffers) {
+/*
+   ostringstream description;
+   description<<"Flush before recieve";
+   program_settings::get_instance()->sys_message(program_settings::INFO_MSG, description.str());
+*/
      if (tcflush(m_port_handle, TCIOFLUSH)<0) {
 	exception_message<<"Can`t flush input and output streams "<<strerror(errno);
 	 if (close(m_port_handle)!=0)
@@ -261,41 +304,49 @@ void comport::flush_input_output_buffer() throw (comport_exception){
                 m_port_handle =-1;		
 		throw comport_exception(exception_message.str());
     };
+  }; // if (flush_io_buffers) {
 
+  while(bytes_read_summary<bytes_count) {
 
-  while(bytes_readed_summary<bytes_count) {
-    bytes_readed = readcond(m_port_handle,
+    bytes_read = readcond(m_port_handle,
                             &recived_data[0],
                             bytes_count,
                             bytes_count,
-                            3, //timeout  if 3*1/10 sec (300 mks)
-                            6); //expire if 6*1/10 sec (600 mks)
+                            0, 
+                            recieve_timeout); //expire if recieve_timeout*1/10 sec
 
-    	if (bytes_readed<0) {
+    	if (bytes_read<0) {
  		exception_message<<"Can`t  read from "<<m_dev_port<<" : "<<strerror(errno);
 		throw comport_exception(exception_message.str());
     	};
-       if (bytes_readed==0) break;
 
-         bytes_readed_summary+=bytes_readed;
+       if (bytes_read==0) {
+			break;
+    	};
+
+
+         bytes_read_summary+=bytes_read;
          iter_on_received_data=recived_data.begin();
-         advance(iter_on_received_data, bytes_readed);
+         advance(iter_on_received_data, bytes_read);
 
-         buffer_to_recieve.insert(buffer_to_recieve.end(), recived_data.begin() , iter_on_received_data);
+	     buffer_to_recieve.insert(buffer_to_recieve.end(), recived_data.begin() , iter_on_received_data);
+		usleep(1000); //sleep for 1mS until new data arrives
     };
 
-     if (bytes_readed_summary!=bytes_count) {
- 		exception_message<<"Too many bytes recieved: must be "<<bytes_count<<" but "<<bytes_readed_summary;
+     if (bytes_read_summary!=bytes_count) {
+ 		exception_message<<"Too little bytes recieved: must be "<<bytes_count<<" but "<<bytes_read_summary;
 		throw comport_exception(exception_message.str());
      };
 
-    return bytes_readed_summary;
+    return bytes_read_summary;
 };    
 
 
     
 void comport::set_rts_state (byte rts_state) throw (comport_exception) {
-	ostringstream exception_message;	     
+//TODO it seems not to be right way to set RTS
+//I've seen in examples  that _CTL_RTS sets the RTS line to low - search in help by _CTL_RTS_CHG , check_RTS 
+ostringstream exception_message;	     
 	int data, ret_val;
 
 	//impossible

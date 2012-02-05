@@ -22,14 +22,17 @@ public:
 	    byte data_bits,
 	    byte stop_bits,
 	    int delay_useconds=0,
-            float comport_koeff=1.0)  throw (comport_exception);
+        float comport_koeff=1.0)  throw (comport_exception);
 
     virtual ~comport() throw (comport_exception);
 
-    void send(comport_data_block data_to_send) throw (comport_exception);
+    void send(comport_data_block data_to_send , 
+					bool flush_io_buffers_after_send = false,
+					unsigned int rts_delay = 5000) throw (comport_exception);
     int recv( comport::comport_data_block &buffer_to_recieve,
                    int bytes_count,
-                   bool flush_io_buffers=false) throw (comport_exception);
+                   bool flush_io_buffers=false,
+				   unsigned int recieve_timeout = 10) throw (comport_exception);
 
     void set_rts_state (byte rts_state) throw (comport_exception);
     byte get_rts_state () throw (comport_exception);

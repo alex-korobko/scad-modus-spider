@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/neutrino.h>
 #include <sys/syspage.h>
+#include <sys/mount.h>
 #include <inttypes.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -69,7 +70,7 @@ void archive_log_raw_list_draw_function( PtWidget_t *widget,
             unsigned nitems,
             PhRect_t *where );
 
-void main_log_raw_list_draw_function( PtWidget_t *widget,
+void log_raw_list_draw_function( PtWidget_t *widget,
             PtGenListItem_t *item,
             unsigned index,
             unsigned nitems,
@@ -195,16 +196,220 @@ prepare_devices_list_in_filter_window (log_rec_cont, selected_idexes);
 
 } catch (spider_exception spr_exc) {
       spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In selection_on_stations_list(...) "+spr_exc.get_description());
-      return Pt_HALT;
+      return Pt_CONTINUE;
 };
 
 return Pt_CONTINUE;
+};
+
+
+void save_report_to_floppy_disk(PtWidget_t *widget)
+{
+char const *btns[] = { "&ОК", "О&тмена"};
+
+system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+if (spider_sys_sett==NULL) {
+  cout<<"Can`t get instance of system_settings_spider"<<endl;
+  return;
+};
+
+const char* font_for_alert_text=NULL;
+
+if (spider_sys_sett->small_font_prepared())
+   font_for_alert_text=spider_sys_sett->get_small_font();
+
+switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Создание отчета", NULL,
+           "Для создания отчета вставьте пустую дискету в дисковод и нажмите кнопку ОК",
+            font_for_alert_text,
+           2, btns, NULL, 1, 2, Pt_BLOCK_ALL ) ) {
+
+    case 2:
+        /* discard reporting*/
+        return ; 
+}
+
+FILE *file_report=NULL;
+log_records_container *log_rec_cont=NULL;
+
+try {
+   PtGetResource(widget,Pt_ARG_POINTER, &log_rec_cont, 0);
+
+   if (log_rec_cont==NULL)
+       throw spider_exception("log_rec_cont==NULL");
+
+
+    ostringstream file_name;
+    time_t			current_time;
+    struct tm		local_time;
+
+    current_time=time(NULL);
+    localtime_r(&current_time, &local_time);
+
+   if ( mount( "/dev/fd0", 
+           "/fs/floppy", 
+           0, 
+           "dos", 
+           NULL, 
+           0)==-1)
+           throw spider_exception("Can`t mount floppy drive");
+
+   file_name<<"/fs/floppy/report_"<<(local_time.tm_year+1900)<<"_"
+                                      <<((local_time.tm_mon+1)<10?"0":"")
+                                      <<(local_time.tm_mon+1)<<"_"
+                                      <<(local_time.tm_mday<10?"0":"")
+                                      <<local_time.tm_mday<<"-"
+                                      <<((local_time.tm_hour<10)?"0":"")
+                                      <<local_time.tm_hour<<"-"
+                                      <<((local_time.tm_min<10)?"0":"")
+                                      <<local_time.tm_min<<"-"
+                                      <<((local_time.tm_sec<10)?"0":"")
+                                      <<local_time.tm_sec<<".html";
+
+    file_report = fopen( file_name.str().c_str(), "w+" );
+    if( file_report == NULL ) 
+       throw spider_exception("file_report == NULL");
+
+   try {
+      log_rec_cont->create_report(file_report);
+    } catch (spider_exception spr_exc) {
+       spider_sys_sett->message_window(system_settings::ERROR_MSG, 
+                 "Не удалось создать отчет!\nПроизошла ошибка:\n"+spr_exc.get_description());
+    }; // catch (spider_exception spr_exc) //for log_rec_cont->create_report(...)
+
+
+       if (fclose(file_report)!=0)
+           throw spider_exception(string(" fclose(file_report) is failed :")+strerror(errno));
+
+     file_report=NULL;
+
+   if ( umount( "/fs/floppy", 
+           _MOUNT_FORCE)==-1)
+           throw spider_exception("Can`t umount floppy drive");
+
+} catch (spider_exception spr_exc) {
+      string exc_descr(spr_exc.get_description());
+       if (file_report!=NULL) 
+             if (fclose(file_report)!=0) {
+                      exc_descr+=" fclose(file_report) is failed :";
+                      exc_descr+=strerror(errno);
+               }; // if (fclose(file_report)!=0)
+
+   if ( umount( "/fs/floppy", 
+           _MOUNT_FORCE)==-1)
+           throw spider_exception("Can`t umount floppy drive");
+
+      spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_floppy(...) "+exc_descr);
+      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Файл отчета создать не удалось!", false);
+	  return;
+};
+
+	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл отчета успешно создан", false);
+};
+
+void save_report_to_ftp_directory( PtWidget_t *widget )
+{
+system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+if (spider_sys_sett==NULL) {
+  cout<<"Can`t get instance of system_settings_spider"<<endl;
+  return ;
+};
+
+FILE *file_report=NULL;
+log_records_container *log_rec_cont=NULL;
+
+try {
+   PtGetResource(widget,Pt_ARG_POINTER, &log_rec_cont, 0);
+
+   if (log_rec_cont==NULL)
+       throw spider_exception("log_rec_cont==NULL");
+
+    ostringstream file_name;
+    time_t			current_time;
+    struct tm		local_time;
+
+    current_time=time(NULL);
+    localtime_r(&current_time, &local_time);
+
+
+   file_name<<spider_sys_sett->get_report_import_directory()<<"/report_"<<(local_time.tm_year+1900)<<"_"
+                                      <<((local_time.tm_mon+1)<10?"0":"")
+                                      <<(local_time.tm_mon+1)<<"_"
+                                      <<(local_time.tm_mday<10?"0":"")
+                                      <<local_time.tm_mday<<"-"
+                                      <<((local_time.tm_hour<10)?"0":"")
+                                      <<local_time.tm_hour<<"-"
+                                      <<((local_time.tm_min<10)?"0":"")
+                                      <<local_time.tm_min<<"-"
+                                      <<((local_time.tm_sec<10)?"0":"")
+                                      <<local_time.tm_sec<<".html";
+
+    file_report = fopen( file_name.str().c_str(), "w+" );
+    if( file_report == NULL ) 
+       throw spider_exception("file_report == NULL");
+
+   try {
+      log_rec_cont->create_report(file_report);
+    } catch (spider_exception spr_exc) {
+       spider_sys_sett->message_window(system_settings::ERROR_MSG, 
+                 "Не удалось создать отчет!\nПроизошла ошибка:\n"+spr_exc.get_description());
+    }; // catch (spider_exception spr_exc) //for log_rec_cont->create_report(...)
+
+
+       if (fclose(file_report)!=0)
+           throw spider_exception(string(" fclose(file_report) is failed :")+strerror(errno));
+
+     file_report=NULL;
+
+} catch (spider_exception spr_exc) {
+      string exc_descr(spr_exc.get_description());
+       if (file_report!=NULL) 
+             if (fclose(file_report)!=0) {
+                      exc_descr+=" fclose(file_report) is failed :";
+                      exc_descr+=strerror(errno);
+               }; // if (fclose(file_report)!=0)
+
+      spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_ftp_directory(...) "+exc_descr);
+      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Файл отчета создать не удалось!", false);
+      return;
+};
+
+	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл отчета успешно создан", false);
 };
 
 int
 activate_report_button_in_log_window( PtWidget_t *widget, 
                                                                         ApInfo_t *apinfo, 
                                                                         PtCallbackInfo_t *cbinfo ){
+char const *btns[] = { "&На дискету", "&В директорию", "О&тмена"};
+
+system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+if (spider_sys_sett==NULL) {
+  cout<<"Can`t get instance of system_settings_spider"<<endl;
+  return( Pt_CONTINUE);
+};
+
+const char* font_for_alert_text=NULL;
+string info_message = "Вы можете создать отчет на дискету\nили в директорию\n";
+info_message += spider_sys_sett->get_report_import_directory();
+
+if (spider_sys_sett->small_font_prepared())
+   font_for_alert_text=spider_sys_sett->get_small_font();
+
+switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Создание отчета", NULL,
+           info_message.c_str(),
+            font_for_alert_text,
+           3, btns, NULL, 2, 3, Pt_BLOCK_ALL ) ) {
+    case 1:
+			save_report_to_floppy_disk(widget);
+			break;
+    case 2:
+			save_report_to_ftp_directory(widget);
+			break;
+    case 3:
+        /* discard reporting*/
+        return Pt_CONTINUE; 
+};
+
 return Pt_CONTINUE;
 };
 
@@ -224,7 +429,7 @@ tm  time_to_filtered;
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
   cout<<"Can`t get instance of system_settings_spider"<<endl;
-  return( Pt_HALT);
+  return( Pt_CONTINUE);
 };
 
 log_records_container *log_rec_cont=NULL;
@@ -404,7 +609,7 @@ try {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
 								"Конечная дата фильтрации должна быть позже, чем начальная",
                                  true);
-				return Pt_HALT;
+				return Pt_CONTINUE;
 			};
 
 
@@ -414,7 +619,7 @@ try {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG,
                                                "Не выбран ни один тип сообщения",
                                                 true);
-				return Pt_HALT;
+				return Pt_CONTINUE;
 			};
 
 	if ( log_rec_cont->filter.get_filter_state() &&
@@ -423,7 +628,7 @@ try {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
                                                  "Не выбрана ни одна станция",
                                                   true);
-				return Pt_HALT;
+				return Pt_CONTINUE;
 			};
 
 	if (log_rec_cont->filter.get_filter_state() &&
@@ -432,13 +637,13 @@ try {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
                                    "Не выбрано ни одно из устройств на станциях",
                                     true);
-				return Pt_HALT;
+				return Pt_CONTINUE;
 			};
 
 //set filtering
 	log_rec_cont->set_filtering();
 	log_rec_cont->prepare_to_display();
-
+    log_rec_cont->set_filter_window(NULL);
 } catch (spider_exception spr_exc) {
       spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_button_ok_in_filter_log_window(...) "+spr_exc.get_description());
       return Pt_HALT;
@@ -453,7 +658,7 @@ activate_button_chancel_in_filter_log_window( PtWidget_t *widget,
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
   cout<<"Can`t get instance of system_settings_spider"<<endl;
-  return( Pt_HALT);
+  return( Pt_CONTINUE);
 };
 
 log_records_container *log_rec_cont=NULL;
@@ -463,6 +668,7 @@ PtGetResource(widget,Pt_ARG_POINTER, &log_rec_cont, 0);
    if (log_rec_cont==NULL)
        throw spider_exception("log_rec_cont==NULL");
 
+   log_rec_cont->set_filter_window(NULL);
    log_rec_cont->set_toggle_button_filter_turn_off(NULL);
    log_rec_cont->set_toggle_button_filter_all_times(NULL);
    log_rec_cont->set_toggle_button_filter_all_messages_types(NULL);
@@ -768,8 +974,11 @@ PtGetResource(widget, Pt_ARG_POINTER, &log_rec_cont, 0);
 if (log_rec_cont==NULL)
        throw spider_exception("log_rec_cont==NULL");
 
+if (log_rec_cont->get_filter_window()!=NULL)
+     close_window(log_rec_cont->get_filter_window(), NULL, NULL);
+
 args.clear();
-args.resize(12);
+args.resize(15);
 PtSetArg(&args[0], Pt_ARG_HEIGHT, dialog_wnd_height,0);
 PtSetArg(&args[1], Pt_ARG_WIDTH, dialog_wnd_width,0);
 PtSetArg(&args[2], Pt_ARG_WINDOW_TITLE, dialog_title.c_str(),0);
@@ -782,18 +991,28 @@ PtSetArg(&args[5], Pt_ARG_WINDOW_RENDER_FLAGS,
 PtSetArg(&args[6], Pt_ARG_WINDOW_RENDER_FLAGS,
                   Pt_FALSE, Ph_WM_RENDER_MENU);
 PtSetArg(&args[7], Pt_ARG_WINDOW_RENDER_FLAGS,
+                  Pt_TRUE, Ph_WM_RENDER_ASDIALOG);
+PtSetArg(&args[8], Pt_ARG_WINDOW_RENDER_FLAGS,
                   Pt_FALSE, Ph_WM_RENDER_COLLAPSE );
-PtSetArg(&args[8], Pt_ARG_WINDOW_MANAGED_FLAGS,
-                  Pt_FALSE, Ph_WM_MAX );
 PtSetArg(&args[9], Pt_ARG_WINDOW_MANAGED_FLAGS,
-                  Pt_FALSE, Ph_WM_MENU  );
+                  Pt_FALSE, Ph_WM_MAX );
 PtSetArg(&args[10], Pt_ARG_WINDOW_MANAGED_FLAGS,
-                  Pt_FALSE, Ph_WM_CLOSE  );
+                  Pt_FALSE, Ph_WM_MENU  );
 PtSetArg(&args[11], Pt_ARG_WINDOW_MANAGED_FLAGS,
+                  Pt_FALSE, Ph_WM_CLOSE  );
+PtSetArg(&args[12], Pt_ARG_WINDOW_MANAGED_FLAGS,
                   Pt_FALSE, Ph_WM_COLLAPSE );
+PtSetArg(&args[13], Pt_ARG_CURSOR_TYPE,
+  				Ph_CURSOR_BIG_POINTER, 0);
+PtSetArg(&args[14], Pt_ARG_CURSOR_COLOR,
+  				0xf33ff5, 0);
+
+parent_panel=PtGetParent(widget, PtWindow);
+if (parent_panel==NULL)
+             throw spider_exception("parent window is NULL");
 
 dialog_window=PtCreateWidget(PtWindow,
-                                                    spider_sys_sett->get_main_window(),
+                                                    parent_panel,
                                                     args.size(),
                                                     &args[0]);
 if (dialog_window==NULL)
@@ -1775,7 +1994,7 @@ if (dialog_window==NULL)
                             Pt_FALSE, Pt_BLOCKED);
                  };
 
-         //ATTENTION!! If Pt_ARG_ITEMS is NULL redriwing of items not worked - bug??
+         //ATTENTION!! If Pt_ARG_ITEMS is NULL re-driwing of items not worked - bug??
          const  char* test_chars[]={"-"};
          PtSetArg(&args[6], Pt_ARG_ITEMS,
                          test_chars, 1);
@@ -1789,6 +2008,7 @@ if (dialog_window==NULL)
         if (station_devices_list==NULL)
             throw spider_exception("stations devices list is NULL");
 
+   log_rec_cont->set_filter_window(dialog_window);
    log_rec_cont->set_toggle_button_filter_turn_off(toggle_button_filter_turn_off);
    log_rec_cont->set_toggle_button_filter_all_times(toggle_button_filter_all_times);
    log_rec_cont->set_toggle_button_filter_all_messages_types(toggle_button_filter_all_messages_types);
@@ -1821,6 +2041,7 @@ activate_exit_button_in_main_log_window( PtWidget_t *widget,
                                                               ApInfo_t *apinfo, 
                                                               PtCallbackInfo_t *cbinfo ){
      main_log->set_widget(NULL);
+     main_log->set_filter_window(NULL);
 return( Pt_CONTINUE);
 };
 
@@ -1829,6 +2050,7 @@ activate_exit_button_in_archive_log_window( PtWidget_t *widget,
                                                               ApInfo_t *apinfo, 
                                                               PtCallbackInfo_t *cbinfo ){
      archive_log->set_widget(NULL);
+     archive_log->set_filter_window(NULL);
 return( Pt_CONTINUE);
 };
 
@@ -1845,7 +2067,7 @@ PhPoint_t widget_position;
 PtFileSelectionInfo_t info;
 string dialog_title("Архив журналов сообщений") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=850,
+                      dialog_wnd_width=1000,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;
@@ -1874,17 +2096,38 @@ if ( PtFileSelection( main_window,
                      NULL, 
                      &info, 
                     Pt_FSR_NO_NEW | Pt_FSR_NO_NEW_BUTTON | Pt_FSR_NO_DELETE | Pt_FSR_NO_UP_BUTTON |
-                     Pt_FSR_DONT_SHOW_DIRS | Pt_FSR_NO_SEEK_KEY | Pt_FSR_NO_FSPEC | Pt_FSR_NO_ROOT_DISPLAY  )!=0)
-           return( Pt_HALT);
+                     Pt_FSR_DONT_SHOW_DIRS | Pt_FSR_NO_SEEK_KEY | Pt_FSR_NO_FSPEC | Pt_FSR_NO_ROOT_DISPLAY  )!=0) {
 
- if ( info.ret == Pt_FSDIALOG_BTN2 ) 
-           return( Pt_HALT);
 
+       return( Pt_CONTINUE);
+};
+
+ //cursor`s color & size keeping
+  		  args.clear();
+		  args.resize(2);
+		PtSetArg(&args[0], Pt_ARG_CURSOR_TYPE,
+  				       Ph_CURSOR_BIG_POINTER, 0);
+		PtSetArg(&args[1], Pt_ARG_CURSOR_COLOR,
+  				       0xf33ff5, 0);
+        PtSetResources(main_window, args.size(), &args[0]);
+
+
+ if ( info.ret == Pt_FSDIALOG_BTN2 )  return( Pt_CONTINUE);
+
+try {
 archive_log->load(info.path);
+} catch (spider_exception spr_exc) {
+    spider_sys_sett->message_window(
+             system_settings::ERROR_MSG,
+             "Ошибка чтения архива");
+    spider_sys_sett->sys_message(system_settings::ERROR_MSG, 
+         "In activate_main_log_button_in_main_window: "+spr_exc.get_description());
+     return( Pt_CONTINUE);
+};
 
 try {
 		args.clear();
-		args.resize(13);
+		args.resize(15);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, dialog_wnd_height,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, dialog_wnd_width,0);
 		PtSetArg(&args[2], Pt_ARG_WINDOW_TITLE, dialog_title.c_str(),0);
@@ -1908,6 +2151,10 @@ try {
                       Pt_FALSE, Ph_WM_COLLAPSE );
 		PtSetArg(&args[12], Pt_ARG_POINTER,
                         archive_log, 0);
+		PtSetArg(&args[13], Pt_ARG_CURSOR_TYPE,
+  				       Ph_CURSOR_BIG_POINTER, 0);
+		PtSetArg(&args[14], Pt_ARG_CURSOR_COLOR,
+  				       0xf33ff5, 0);
 
 /*
 //that`s present in activate close window button
@@ -1956,7 +2203,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                        &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_RAWLIST_DRAW_F,
-                       archive_log_raw_list_draw_function, 0);
+                       log_raw_list_draw_function, 0);
 		PtSetArg(&args[4], Pt_ARG_LIST_FLAGS,
                       Pt_TRUE, Pt_LIST_SCROLLBAR_ALWAYS);
 		PtSetArg(&args[5], Pt_ARG_LIST_FLAGS,
@@ -2106,7 +2353,7 @@ try {
 
         archive_log->set_filtration_state_indicator(current_button);
 
-/*
+
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, buttons_panel_height-8,0);
@@ -2132,7 +2379,7 @@ try {
                                                      &args[0]);
          if (current_button==NULL)
                   throw spider_exception("button \"Report\" in buttons_panel is NULL");
-*/
+
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, buttons_panel_height-8,0);
@@ -2190,7 +2437,7 @@ vector<PtArg_t> args;
 PhPoint_t widget_position;
 string dialog_title("Журнал сообщений") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=850,
+                      dialog_wnd_width=1000,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;
@@ -2208,7 +2455,7 @@ if (main_log->get_widget()!=NULL) {
 
 try {
 		args.clear();
-		args.resize(13);
+		args.resize(15);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, dialog_wnd_height,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, dialog_wnd_width,0);
 		PtSetArg(&args[2], Pt_ARG_WINDOW_TITLE, dialog_title.c_str(),0);
@@ -2232,6 +2479,11 @@ try {
                       Pt_FALSE, Ph_WM_COLLAPSE );
 		PtSetArg(&args[12], Pt_ARG_POINTER,
                         main_log, 0);
+       PtSetArg(&args[13], Pt_ARG_CURSOR_TYPE,
+  				        Ph_CURSOR_BIG_POINTER, 0);
+        PtSetArg(&args[14], Pt_ARG_CURSOR_COLOR,
+  				         0xf33ff5, 0);
+
 
 		dialog_window=PtCreateWidget(PtWindow,
                                                      spider_sys_sett->get_main_window(),
@@ -2265,7 +2517,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                        &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_RAWLIST_DRAW_F, 
-                       main_log_raw_list_draw_function, 0);
+                       log_raw_list_draw_function, 0);
 		PtSetArg(&args[4], Pt_ARG_LIST_FLAGS,
                       Pt_TRUE, Pt_LIST_SCROLLBAR_ALWAYS);
 		PtSetArg(&args[5], Pt_ARG_LIST_FLAGS,
@@ -2415,7 +2667,7 @@ try {
 
           main_log->set_filtration_state_indicator(current_button);
 
-/*
+	
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, buttons_panel_height-8,0);
@@ -2441,7 +2693,7 @@ try {
                                                      &args[0]);
          if (current_button==NULL)
                   throw spider_exception("button \"Report\" in buttons_panel is NULL");
-*/
+
 
 		args.clear();
 		args.resize(6);

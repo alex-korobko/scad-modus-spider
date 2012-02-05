@@ -25,7 +25,6 @@
 using namespace std;
 
 #include "defines.h"
-#include <sys/select.h> //#define FD_SETSIZE
 #include "spider_exception.h"
 #include "system_settings.h"
 #include "system_settings_spider.h"
@@ -36,60 +35,109 @@ using namespace std;
 
 #include "router.h"
 
-bool router::test_connection_to_test_host(struct in_addr test_host){
-     struct timeval connection_timeout, recive_send_timeout;
 
-     vector<byte> request_to_server(1);
-     vector<byte> answer_from_server;
-     answer_from_server.reserve(request_to_server.size());
-
-    connection_timeout.tv_sec=system_settings::CONNECT_TO_DEVICE_TIMEOUT;
-    connection_timeout.tv_usec=0;
-
-    recive_send_timeout.tv_sec=system_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT;
-   	recive_send_timeout.tv_usec=0;
-    request_to_server[0]=0xff;
-
-      try{
-       client_socket  socket_dev(test_host.s_addr,
-                                                  system_settings::ECHO_TCP_PORT,
-                                                  connection_timeout,
-                                                  recive_send_timeout);
-         socket_dev.initialize();
-         socket_dev.send(request_to_server);
-         answer_from_server.clear();
-         socket_dev.recv(answer_from_server, request_to_server.size());
-            if (answer_from_server!=request_to_server)
-                    return false;
-          return true;
-      } catch (socket_exception sock_exc) {
-            system_settings *sys_sett=system_settings_spider::get_instance();
-             sys_sett->sys_message(system_settings::ERROR_MSG, "In router::test_connection_to_test_host raised exception: "+
-                                                                                                  sock_exc.get_description());
-           return false;
-      };
-        return true; //only for compiler happeing
+ router::router() throw (runtime_error)
+    :routing_enabled(false){
+    if((sock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1) {
+           throw runtime_error(string("In router::router() socket(PF_ROUTE, ...) error: ")+
+                                               strerror(errno));
+        };
 };
 
-void router::change_route(
-                               struct in_addr destination, 
-                               struct in_addr mask,
-                               struct in_addr gateway) {
-      system_settings *sys_sett=system_settings_spider::get_instance();
-      if (sys_sett==NULL)
-            cout<<"In router::change_route sys_sett==NULL"<<endl;
+router::~router(){
+  	shutdown (sock, 2);
+    close(sock);
+};
 
-      int sock;
+
+bool router::test_connection_to_test_host(struct in_addr test_host) {
+     system_settings::bytes request_to_server(1);
+     system_settings::bytes answer_from_server;
+     answer_from_server.reserve(request_to_server.size());
+    request_to_server[0]=0xff;
+    int return_code;
+    uint64_t delay_nanoseconds(3); //3 seconds
+    delay_nanoseconds*=1000000000;
+
+    int sock(0);
+
+   struct sockaddr_in sock_addr;
+
+    sock_addr.sin_addr = test_host;
+    sock_addr.sin_port = htons(system_settings::ECHO_TCP_PORT);
+    sock_addr.sin_family = AF_INET;
+
+     try{
+      sock= socket( AF_INET, 
+                       SOCK_DGRAM, 
+                       0);
+
+     if (sock<=0)
+          throw  socket_exception(string("Socket creation failed: ")+strerror(errno));
+
+    TimerTimeout(CLOCK_REALTIME,_NTO_TIMEOUT_REPLY,
+                            NULL, &delay_nanoseconds, NULL);
+
+     return_code = ::sendto( sock, 
+								  &request_to_server[0],
+								  request_to_server.size(),
+								  0,
+                                 (sockaddr*) &( sock_addr),
+                                 sizeof ( sock_addr));
+
+      if (return_code<0)
+          throw  socket_exception(string("Sendto failed: ")+strerror(errno));
+
+     if (return_code!=static_cast<int>(request_to_server.size()))
+          throw  socket_exception("Sended too many bytes ");
+
+      answer_from_server.clear();
+      answer_from_server.resize(request_to_server.size());
+      
+     TimerTimeout(CLOCK_REALTIME, _NTO_TIMEOUT_REPLY,
+                            NULL, &delay_nanoseconds, NULL);
+
+    socklen_t socklen=sizeof ( sock_addr);
+
+     return_code = ::recvfrom( sock, 
+								  &answer_from_server[0],
+								  answer_from_server.size(),
+								  0,
+                                 (sockaddr*) &( sock_addr),
+                                 &socklen);
+
+      if (return_code<0)
+          throw  socket_exception(string("Recieve failed: ")+strerror(errno));
+
+     if (return_code!=static_cast<int>(request_to_server.size()))
+            throw  socket_exception("Recieved too many bytes ");
+
+      if (request_to_server!=answer_from_server)
+            throw  socket_exception("Request not equal to answer ");
+
+      } catch (socket_exception sock_exc) {
+            system_settings_spider *sys_sett_obj=system_settings_spider::get_instance();
+            ostringstream except_descr;
+            except_descr<<"In router::test_connection_to_test_host test host "<<inet_ntoa(test_host)<<
+                                       " raised exception: "<<sock_exc.get_description()<<endl;
+            sys_sett_obj->sys_message(system_settings::ERROR_MSG, except_descr.str());
+            if (sock>0)
+                close(sock);
+            return false;
+      };
+       if (sock>0)
+              close(sock);
+        return true;
+};
+
+void router::change_route (
+                               struct in_addr destination,
+                               struct in_addr mask,
+                               struct in_addr gateway) throw (runtime_error) {
       struct rt_msghdr *rtm;
       struct sockaddr_in *dst, *gate, *msk;
       struct internal_route my_rt;
 
-      if((sock = socket(PF_ROUTE, SOCK_RAW, 0)) == -1) {
-           sys_sett->sys_message(system_settings::ERROR_MSG, 
-                                               string("In router::change_route socket(PF_ROUTE, ...) error: ")+
-                                               strerror(errno));
-           return ;
-        };
       memset(&my_rt, 0x00, sizeof(my_rt));
 
       rtm  = &my_rt.rt;
@@ -104,7 +152,7 @@ void router::change_route(
       rtm->rtm_seq = 1234;
       rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
       rtm->rtm_pid = getpid();
-      
+
       dst->sin_len    = sizeof(sockaddr_in);
       dst->sin_family = AF_INET;
       dst->sin_addr=destination;
@@ -117,27 +165,18 @@ void router::change_route(
       gate->sin_family = AF_INET;
       gate->sin_addr=gateway;
 
-
-      if(write(sock, rtm, rtm->rtm_msglen) < 0){
+      if(write(sock, rtm, rtm->rtm_msglen) < 0)
                 if( errno == EEXIST) {
                        rtm->rtm_type = RTM_CHANGE;
-                        if(write(sock, rtm, rtm->rtm_msglen) < 0){
-                                sys_sett->sys_message(system_settings::ERROR_MSG, string("In write(...,RTM_CHANGE) error: ")+strerror(errno));
-                         } else {
-                             cout<<"route changed"<<endl;
-                          };
+                       if(write(sock, rtm, rtm->rtm_msglen) < 0)
+                              throw runtime_error (string("In write(...) RTM_CHANGE error: ")+strerror(errno));
                   } else {
-                      sys_sett->sys_message(system_settings::ERROR_MSG, string("In write(...,RTM_ADD) error: ")+strerror(errno));
+                      throw runtime_error (string("In write(...) RTM_ADD error: ")+strerror(errno));
                   };
-               } else {
-                   cout<<"route added"<<endl;
-               };
-
-  	shutdown (sock, 0);
 };
 
 
-void router::load_route() throw (spider_exception) {
+void router::load_route() throw (runtime_error) {
  	enum {DESTINATION, MASK, TEST_HOST, ENTRIES_COUNT};
 
 ostringstream exception_description;
@@ -153,7 +192,7 @@ entries_names[DESTINATION]="destination";
 entries_names[MASK]="mask";
 entries_names[TEST_HOST]="test host";
 
-entry_name_c_str=PxConfigNextString(&temp_str[0], 
+entry_name_c_str=PxConfigNextString(&temp_str[0],
                                                                    temp_str.size() );
 
 while(entry_name_c_str!=NULL){
@@ -164,7 +203,7 @@ entry_name=entry_name_c_str;
                     route_to_add.destination=net_device;
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw spider_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
  } else  if (entry_name.compare(entries_names[MASK])==0) {
@@ -173,7 +212,7 @@ entry_name=entry_name_c_str;
                     route_to_add.mask=net_device;
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw spider_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
  } else  if (entry_name.compare(entries_names[TEST_HOST])==0) {
@@ -182,12 +221,12 @@ entry_name=entry_name_c_str;
                     route_to_add.test_hosts.push_back(net_device);
                   } else {
                    exception_description<<"Uncorrect server address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw spider_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                };
 
 	} else {
            exception_description<<"Unrecognized config entry  "<<entry_name;
-           throw spider_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
 	};
 	
 	entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -201,17 +240,17 @@ if (dest_present &&
         push_back_routes(route_to_add);
       } else  if (!dest_present){
            exception_description<<"In load_route() not present destination";
-           throw spider_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       } else if (!mask_present) {
            exception_description<<"In load_route() not present mask";
-           throw spider_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       } else if (!test_host_present) {
            exception_description<<"In load_route() not present test host";
-           throw spider_exception(exception_description.str());
+           throw runtime_error(exception_description.str());
       };
 };
 
-void router::load_routing() throw (spider_exception) {
+void router::load_routing() throw (runtime_error) {
  enum {ROUTING_MANIPULATING=0, GATEWAY, ENTRIES_COUNT};
 
 ostringstream exception_description;
@@ -239,7 +278,7 @@ entry_name=entry_name_c_str;
                               routing_enabled=false;
                            } else { //if (value_example.compare(value_example)==0)
                               exception_description<<"Uncorrect routing mainpulaing value  "<<&temp_str[0]<<" supported only enabled, disabled";
-                              throw spider_exception(exception_description.str());
+                              throw runtime_error(exception_description.str());
                            }; //if (value_example.compare(value_example)==0)
                }; //if (value_example.compare(value_example)==0)
 
@@ -248,12 +287,12 @@ entry_name=entry_name_c_str;
                       push_back_gateways(net_device);
                   } else { //if (inet_aton( &temp_str[0],  &net_device )
                    exception_description<<"Uncorrect gateway address  "<<&temp_str[0]<<" now supported addresses in form xxx.xxx.xxx.xxx";
-                   throw spider_exception(exception_description.str());
+                   throw runtime_error(exception_description.str());
                }; //if (inet_aton( &temp_str[0],  &net_device )
 
          } else {
             exception_description<<"Unrecognized config entry  "<<entry_name;
-            throw spider_exception(exception_description.str());
+            throw runtime_error(exception_description.str());
          };
 
 	entry_name_c_str=PxConfigNextString(&temp_str[0], 
@@ -263,7 +302,7 @@ entry_name=entry_name_c_str;
 };
 
 
-void router::load (string file_name) throw (spider_exception) {
+void router::load (string file_name) throw (runtime_error) {
 	ostringstream exception_description;
 
 	string	section_name;
@@ -272,10 +311,8 @@ void router::load (string file_name) throw (spider_exception) {
 
 	sections_names[ROUTING]="routing";
 	sections_names[ROUTE]="route";	
-	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)!=Pt_TRUE ){
-        exception_description<<"Can`t open config file "<<file_name;
-		throw spider_exception(exception_description.str());
-	};
+	if (PxConfigOpen( file_name.c_str(), PXCONFIG_READ)!=Pt_TRUE )
+		throw runtime_error("Can`t open config file "+file_name);
 
      try {
                     section_name_c_str=PxConfigNextSection();
@@ -287,22 +324,21 @@ void router::load (string file_name) throw (spider_exception) {
                        } else if (section_name.compare(sections_names[ROUTE])==0) {
                                load_route();
                         } else {
-                           exception_description<<"Unrecognized config section "<<section_name;
-                           throw spider_exception(exception_description.str());
+                           throw runtime_error("Unrecognized config section "+section_name);
                         };
                       section_name_c_str=PxConfigNextSection();
                     };
-	}catch  (spider_exception dev_exc) {
-           exception_description<<dev_exc.get_description();
-           if  (PxConfigClose()!=Pt_TRUE) {
-               exception_description<<"\nCan`t close file "<<file_name;
-           };
-           throw spider_exception(exception_description.str());
+	}catch  (runtime_error dev_exc) {
+	          string message(dev_exc.what());
+           if  (PxConfigClose()!=Pt_TRUE) 
+               message+=("\nCan`t close file "+file_name);
+
+           throw runtime_error(message);
  	};
 
      if  (PxConfigClose()!=Pt_TRUE) {
         exception_description<<"Can`t close file "<<file_name;
-        throw spider_exception(exception_description.str());
+        throw runtime_error(exception_description.str());
       };
 };
 

@@ -1,11 +1,25 @@
 #ifndef __DEVICES_TYPES__
 #define  __DEVICES_TYPES__
 
+class device_input_circut_for_message {
+  private:
+	string		name;
+	string		hint;
+  public:
+  device_input_circut_for_message (
+       string  new_name,
+       string  new_hint ) : name(new_name), hint(new_hint){};
+
+  string get_name() {return name;};
+  string get_hint() {return hint;};
+};
+
 class device_data_unit {
 private:
     int device_data_unit_id;
 	int	 device_data_unit_index;
 	string		name;
+	string		hint;
     bool visibility;
 	PtWidget_t*	widget;
 
@@ -17,10 +31,12 @@ public:
 	device_data_unit (int new_id,
 	                            int new_index, 
 								string new_name,
+								string new_hint,
                                 bool new_visibility): 
 								device_data_unit_id(new_id),
 								device_data_unit_index (new_index),
 								name(new_name),
+								hint(new_hint),
                                 visibility(new_visibility)
 	{widget=NULL;};
 
@@ -32,6 +48,7 @@ get_ and set_ metods for private data members
 int  get_id() {return(device_data_unit_id);};
 int  get_index() {return(device_data_unit_index);};
 string  get_name() {return(name);};
+string  get_hint() {return(hint);};
 bool get_visibility() {return (visibility);};
 
 PtWidget_t* get_widget() { return (widget);};
@@ -56,10 +73,12 @@ public:
                           int new_id,
 	                      int new_index, 
 						  string new_name,
+						  string new_hint,
                           bool new_visibility) :
 			device_data_unit ( new_id,
 	                            new_index, 
 								new_name,
+								new_hint,
                                 new_visibility) {};
 
 
@@ -92,10 +111,12 @@ public:
                                 int new_id,
 	                            int new_index, 
 								string new_name,
+                                string new_hint,
                                 bool new_visibility):
              device_data_unit (new_id,
                                         new_index,
                                         new_name, 
+                                        new_hint,
                                         new_visibility) {};
 
 
@@ -194,9 +215,15 @@ private:
 	typedef blocks_container::value_type pair_blocks;
 	typedef blocks_container::size_type  size_blocks;
 
+	typedef vector<device_input_circut_for_message> circuts_for_message_container;
+	typedef circuts_for_message_container::iterator iterator_circuts_for_message;
+	typedef circuts_for_message_container::value_type value_type_circuts_for_message;
+	typedef circuts_for_message_container::size_type  size_circuts_for_message;
+
 	data_unit_container  type_data_units;
 	blocks_container	type_blocks;
-	
+    circuts_for_message_container circuts_for_messages;
+
 	metro_device_type() ;
 	
 	class  widget_create : public unary_function<int, void>  {
@@ -222,7 +249,6 @@ private:
 									};
 			
 	void operator() (int  data_unit_id);
-				
 	};
 
 class  panel_create : public unary_function<pair_blocks, void>  {
@@ -305,6 +331,21 @@ wrapper metods for STL container for data units
 	
 	bool data_units_empty() const { return (type_data_units.empty()); }
 	data_unit_size data_units_size() const { return (type_data_units.size()); } 
+
+
+/*
+wrapper metods for STL circuts_for_message_container circuts_for_messages;
+*/
+    iterator_circuts_for_message circuts_begin() { return circuts_for_messages.begin();}
+    iterator_circuts_for_message circuts_end() { return circuts_for_messages.end();}
+	
+	void circuts_erase (iterator_circuts_for_message circut_to_removing) { circuts_for_messages.erase(circut_to_removing);}
+	iterator_circuts_for_message circuts_insert (iterator_circuts_for_message iter_circuts, const value_type_circuts_for_message& new_circut_for_message )  { return  circuts_for_messages.insert(iter_circuts, new_circut_for_message); };
+
+    device_input_circut_for_message& at_circut (const size_circuts_for_message index_of_circut) { return circuts_for_messages [index_of_circut];};
+
+	bool circuts_empty() const { return (circuts_for_messages.empty()); }
+	size_circuts_for_message circuts_size() const { return (circuts_for_messages.size()); } 
 
 /*
 other metods

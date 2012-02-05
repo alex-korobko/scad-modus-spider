@@ -35,14 +35,14 @@ public:
            device_number(command_to_copy.device_number),
            command_description(command_to_copy.command_description) {};
 
-    int get_device_id(){ return device_id;}
-    int get_device_type_id(){ return device_type_id;}
-    int get_command_code(){ return command_code;}
-    int get_device_number(){return device_number; }
-	int get_station(){	return station_id;}
-   string get_command_description() { return command_description;};
+    const int& get_device_id() const { return device_id;}
+    const int& get_device_type_id() const { return device_type_id;}
+    const int& get_command_code() const { return command_code;}
+    const int& get_device_number() const {return device_number; }
+	const int& get_station() const {	return station_id;}
+    const string& get_command_description()  const  { return command_description;};
     void set_item_color(const PgColor_t& color_of_item){item_color=color_of_item;}
-    PgColor_t& get_item_color(){return  item_color;}
+    const PgColor_t& get_item_color()  const {return  item_color;}
 
     bool operator == (command command_to_equal);
 	

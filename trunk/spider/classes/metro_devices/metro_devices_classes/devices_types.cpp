@@ -25,7 +25,6 @@ using namespace std;
 
 #include "emulation.h"
 #include "defines.h"
-#include <sys/select.h> //#define FD_SETSIZE
 #include "spider_exception.h"
 #include "system_settings.h"
 #include "system_settings_spider.h"
@@ -38,6 +37,30 @@ using namespace std;
 #include "msg_dict_container.h"
 
 #include "devices_types.h"
+
+
+static PtWidget_t * inflate_data_block_balloon( PtWidget_t *window,
+                             PtWidget_t *widget,
+                             int position,
+                             char *text,
+                             char *font,
+                             PgColor_t fill_color,
+                             PgColor_t text_color ) {
+	device_data_unit *data_unit=NULL;
+	PtGetResource(widget, Pt_ARG_POINTER, &data_unit, 0);
+	if (data_unit!=NULL){
+		 string data_unit_hint=data_unit->get_hint();
+		if (data_unit_hint.size()>0) 
+         return PtInflateBalloon( window,
+                             widget,
+                             position,
+                             data_unit_hint.c_str(),
+                             font,
+                             fill_color,
+                             text_color );
+     }; //if (pointer_to_void!=NULL)
+         return NULL;
+};
 
 PhImage_t* device_signal::signal_image(data_block *data_blk,
                                                              system_settings_spider *sys_sett,
@@ -275,11 +298,6 @@ string device_parameter::parameter_text_of_value(data_block *data,
        return parameter_text.str();
 };
 
-#ifndef __EMULATION__
-
-/*
- That`s metods compiles when making spider
-*/
 void device_signal::create_widget(
               ApDBase_t *widgets_dbase,
               PtWidget_t* parent,
@@ -291,15 +309,22 @@ void device_signal::create_widget(
 	PtWidget_t *res_widget;
 	string name;
 
+     system_settings_spider *sys_sett=system_settings_spider::get_instance();
+
 	name=device_data_unit::get_name();
 
     args.clear();
-    args.resize(5);
+    args.resize(10);
 	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, name.c_str(), 0);
 	PtSetArg(&args[1], Pt_ARG_LABEL_TYPE, Pt_TEXT_IMAGE, 0);
 	PtSetArg(&args[2], Pt_ARG_TEXT_IMAGE_SPACING,	 5, 0);
 	PtSetArg(&args[3], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
 	PtSetArg(&args[4], Pt_ARG_HEIGHT,	 system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT, 0);
+	PtSetArg(&args[5], Pt_ARG_LABEL_FLAGS, Pt_TRUE, Pt_SHOW_BALLOON);
+	PtSetArg(&args[6], Pt_ARG_BALLOON_POSITION, Pt_BALLOON_RIGHT, 0);
+	PtSetArg(&args[7], Pt_ARG_POINTER, this, 0);
+	PtSetArg(&args[8], Pt_ARG_LABEL_BALLOON, inflate_data_block_balloon, 0);
+	PtSetArg(&args[9], Pt_ARG_TEXT_FONT, sys_sett->get_large_font(), 0);
 
 	widget_pos.x=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN*(column+1)+
 		  system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH*column;
@@ -353,8 +378,10 @@ void device_parameter::create_widget(
 	PtWidget_t *parameter_widget;
 	string widget_text;
 
+     system_settings_spider *sys_sett=system_settings_spider::get_instance();
+
     args.clear();
-    args.resize(24);
+    args.resize(29);
 	PtSetArg(&args[0], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
 	PtSetArg(&args[1], Pt_ARG_HEIGHT,	 system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT, 0);
     PtSetArg(&args[2], Pt_ARG_COLOR,	 system_settings_spider::INDICATOR_DISABLED_TEXT, 0);
@@ -392,8 +419,12 @@ void device_parameter::create_widget(
 		  system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH*column;
 	widget_pos.y=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN*(row+1)+
 	      system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT*row;
-	PtSetArg(&args[23], Pt_ARG_POS, &widget_pos,0);
-
+	PtSetArg(&args[23], Pt_ARG_POS, &widget_pos, 0);
+	PtSetArg(&args[24], Pt_ARG_LABEL_FLAGS, Pt_TRUE, Pt_SHOW_BALLOON);
+	PtSetArg(&args[25], Pt_ARG_BALLOON_POSITION, Pt_BALLOON_INPLACE, 0);
+	PtSetArg(&args[26], Pt_ARG_POINTER, this, 0);
+	PtSetArg(&args[27], Pt_ARG_LABEL_BALLOON, inflate_data_block_balloon, 0);
+	PtSetArg(&args[28], Pt_ARG_TEXT_FONT, sys_sett->get_large_font(), 0);
 
 	parameter_widget=PtCreateWidget(PtLabel,
                                                                 parent,
@@ -456,231 +487,6 @@ void device_parameter::update_widget(data_block *data_blk,
 	PtSetResources(device_data_unit::get_widget(), args.size(), &args[0]);
 };
 
-#else
-/*
-That`s metods compiles when making station_emulator
-*/
-
-//About callbacks implemenation see in_code_attached_callbacks.cpp
-int activate_signal_widget (PtWidget_t *widget,
-                                         ApInfo_t *apinfo,
-                                         PtCallbackInfo_t *cbinfo);
-
-int activate_parameter_widget (PtWidget_t *widget,
-                                         ApInfo_t *apinfo,
-                                         PtCallbackInfo_t *cbinfo);
-
-
-void device_signal::create_widget(
-              ApDBase_t *widgets_dbase,
-              PtWidget_t* parent,
-              data_block *data,
-              int column,
-              int row) throw (spider_exception){
-	vector<PtArg_t> args;
-	PhPoint_t widget_pos;
-	PtWidget_t *res_widget;
-	string name;
-
-    PtCallback_t tmp_callback;
-    vector<PtCallback_t> callbacks;
-    tmp_callback.event_f=activate_signal_widget;
-    tmp_callback.data=NULL;
-    callbacks.push_back(tmp_callback);
-
-
-	name=device_data_unit::get_name();
-    int signal_index=device_data_unit::get_index();
-
-	widget_pos.x=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN+
-		  system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH*column;
-	widget_pos.y=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN+
-	      system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT*row;
-
-    args.clear();
-    args.resize(10);
-	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, name.c_str(), 0);
-	PtSetArg(&args[1], Pt_ARG_LABEL_TYPE, Pt_TEXT_IMAGE, 0);
-	PtSetArg(&args[2], Pt_ARG_TEXT_IMAGE_SPACING,	 5, 0);
-	PtSetArg(&args[3], Pt_ARG_USER_DATA, &signal_index, sizeof(signal_index));    
-	PtSetArg(&args[4], Pt_ARG_POINTER, data, 0);
-	PtSetArg(&args[5], Pt_CB_MENU, &callbacks[0], callbacks.size());
-	PtSetArg(&args[6], Pt_ARG_FLAGS, Pt_TRUE, Pt_MENUABLE);
-	PtSetArg(&args[7], Pt_ARG_FLAGS, Pt_FALSE, Pt_ALL_BUTTONS);
-	PtSetArg(&args[8], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
-	PtSetArg(&args[9], Pt_ARG_HEIGHT,	 system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT, 0);
-
-	 res_widget = ApCreateDBWidget(widgets_dbase, 
-	                                                    "block_grey_led",
-	                                                    parent,
-	                                                    &widget_pos,
-	                                                    args.size(),
-	                                                    &args[0]);
-
-	if (res_widget==NULL)
-          throw spider_exception("device_signal::create_widget can`t create widget");
-
-	device_data_unit::set_widget(res_widget);
-}
-
-void device_signal::update_widget
-                (data_block *data_blk,
-                 system_settings_spider *sys_sett,
-                 bool online_and_no_errors) throw (spider_exception) {
-	vector<PtArg_t> args(1);
-
-    if (! device_data_unit::get_visibility()) return;
-
-    if (online_and_no_errors) {
-        PtSetArg(&args[0], 
-                       Pt_ARG_LABEL_IMAGE,
-                       device_signal::signal_image(data_blk, sys_sett, get_index()),
-                       0);
-    } else {
-        PtSetArg(&args[0], 
-                       Pt_ARG_LABEL_IMAGE,
-                       sys_sett->get_image(system_settings_spider::BLOCK_GREY_LED),
-                       0);
-    };
-
-	PtSetResources(device_data_unit::get_widget(), args.size(), &args[0]);
-};
-
-
-void device_parameter::create_widget(
-              ApDBase_t *widgets_dbase,
-              PtWidget_t* parent,
-              data_block *data,
-              int column,
-              int row) throw (spider_exception){
-     vector<PtArg_t> args;
-	PhPoint_t widget_pos;
-	PtWidget_t *parameter_widget, *res_widget;
-	string widget_text;
-
-	
-	widget_pos.x=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN+
-		  system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH*column;
-	widget_pos.y=system_settings_spider::DEVICE_PANEL_INDICATORS_MARGIN+
-	      system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT*row;
-
-
-    PtCallback_t tmp_callback;
-    vector<PtCallback_t> callbacks;
-    tmp_callback.event_f=activate_parameter_widget;
-    tmp_callback.data=NULL;
-    callbacks.push_back(tmp_callback);
-
-    int parameter_index=device_data_unit::get_index();
-
-    args.clear();
-    args.resize(4);
-	PtSetArg(&args[0], Pt_ARG_USER_DATA, &parameter_index, sizeof(parameter_index));    
-	PtSetArg(&args[1], Pt_ARG_POINTER, data, 0);
-	PtSetArg(&args[2], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
-	PtSetArg(&args[3], Pt_ARG_HEIGHT,	 system_settings_spider::DEVICE_PANEL_INDICATOR_HEIGHT, 0);
-
-
-	parameter_widget=ApCreateDBWidget(widgets_dbase,
-                                                         "parameter_wnd",
-                                                         parent,
-                                                         &widget_pos,
-                                                         args.size(),
-                                                         &args[0]);
-	if (res_widget==NULL)
-          throw spider_exception("parameter_widget::create_widget can`t create widget");
-
-	args.clear();
-	args.resize(2);
-	widget_text=device_data_unit::get_name();
-	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, widget_text.c_str(),0);
-	PtSetArg(&args[1], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
-
-	res_widget=ApCreateDBWidget(widgets_dbase,
-                                                         "parameter_title",
-                                                         parameter_widget,
-                                                         NULL,
-                                                         args.size(),
-                                                         &args[0]);
-	if (res_widget==NULL)
-          throw spider_exception("device_parameter::create_widget can`t create widget");
-
-	args.clear();
-	args.resize(7);
-	PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "",0);
-	PtSetArg(&args[1], Pt_ARG_USER_DATA, &parameter_index, sizeof(parameter_index));    
-	PtSetArg(&args[2], Pt_ARG_POINTER, data, 0);
-	PtSetArg(&args[3], Pt_CB_MENU, &callbacks[0], callbacks.size());
-	PtSetArg(&args[4], Pt_ARG_FLAGS, Pt_TRUE, Pt_MENUABLE);
-	PtSetArg(&args[5], Pt_ARG_FLAGS, Pt_FALSE, Pt_ALL_BUTTONS);
-	PtSetArg(&args[6], Pt_ARG_WIDTH,	 system_settings_spider::DEVICE_PANEL_INDICATOR_WIDTH, 0);
-	
-	res_widget=ApCreateDBWidget(widgets_dbase,
-                                                         "parameter_value",
-                                                         parameter_widget,
-                                                         NULL,
-                                                         args.size(),
-                                                         &args[0]);
-	if (res_widget==NULL)
-          throw spider_exception("device_parameter::create_widget can`t create widget");
-
-	device_data_unit::set_widget(res_widget);
-}
-
-void device_parameter::update_widget(data_block *data_blk,
-                 system_settings_spider *sys_sett,
-                 bool online_and_no_errors) throw (spider_exception) {
-	vector<PtArg_t> args;
-	string parameter_text;
-
-    if (! device_data_unit::get_visibility()) return;
-
-    if (online_and_no_errors) {
-        args.resize(3);
-        if (device_parameter::value_is_norma(data_blk, get_index())) {
-                   PtSetArg(&args[0], 
-                                 Pt_ARG_COLOR,
-                                 system_settings_spider::INDICATOR_ENABLED_NORMA_TEXT,
-                                 0);
-                   PtSetArg(&args[1],
-                                  Pt_ARG_FILL_COLOR,
-                                  system_settings_spider::INDICATOR_ENABLED_NOT_NORMA_FILL,
-                                  0);
-         } else {
-                   PtSetArg(&args[0], 
-                                 Pt_ARG_COLOR,
-                                 system_settings_spider::INDICATOR_ENABLED_NOT_NORMA_TEXT,
-                                 0);
-                   PtSetArg(&args[1],
-                                  Pt_ARG_FILL_COLOR,
-                                  system_settings_spider::INDICATOR_ENABLED_NOT_NORMA_FILL,
-                                  0);
-         };
-
-          parameter_text=device_parameter::parameter_text_of_value(data_blk, sys_sett, this);
-          PtSetArg(&args[2],
-                        Pt_ARG_TEXT_STRING,
-                        parameter_text.c_str(),
-                         0);
-
-
-    } else {
-        args.resize(2);
-        PtSetArg(&args[0], 
-                       Pt_ARG_COLOR,
-                       system_settings_spider::INDICATOR_DISABLED_FILL,
-                       0);
-        PtSetArg(&args[1],
-                       Pt_ARG_FILL_COLOR,
-                       system_settings_spider::INDICATOR_DISABLED_FILL,
-                       0);
-      };
-
-	PtSetResources(device_data_unit::get_widget(), args.size(), &args[0]);
-   };
-
-#endif
-
 void metro_device_type::widget_create::operator() (int  data_unit_id){
 	data_unit_iterator tmp_data_unit=	data_units_of_type->find(data_unit_id);
 
@@ -695,9 +501,7 @@ void metro_device_type::widget_create::operator() (int  data_unit_id){
          column++;
          row=0;
       };
-
 }
-
 
 void metro_device_type::panel_create::operator() (pair_blocks  block_pair) {
 	vector<PtArg_t> args(3);

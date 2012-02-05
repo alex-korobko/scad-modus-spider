@@ -16,6 +16,7 @@ private:
 	time_t record_time;   
 
 	log_record();
+
 public:
 	log_record(ldword new_id, 
                       ldword  new_msg_id,
@@ -64,6 +65,7 @@ private:
 	time_t	stop_time;	
 
 	bool all_times, all_devices, all_stations, all_msg_types,  filter_state;
+
 public:
 //Constructor and destructor
 	log_filter();
@@ -137,7 +139,7 @@ typedef  contain_log_rec::iterator iterator;
 typedef  contain_log_rec::size_type size_type;
 
 contain_log_rec container_log_rec;
-PtWidget_t	 *wnd, *filtration_state_indicator;
+PtWidget_t	 *wnd, *filtration_state_indicator, *filter_window;
 PtWidget_t *toggle_button_filter_turn_off, *toggle_button_filter_all_times,
                    *toggle_button_filter_all_messages_types, *toggle_button_filter_all_stations, 
                    *toggle_button_filter_all_devices,
@@ -146,10 +148,10 @@ PtWidget_t *toggle_button_filter_turn_off, *toggle_button_filter_all_times,
                     *messages_types_list, *stations_list, *station_devices_list;
 
 
-
 PtGenListItem_t *first;
 tm last_saved_time;
 ldword records_count; //needed for automaic id generation
+ldword lines_for_visualization_count; //lines in raw list for messages - may be more than records_count
 iterator iter_end;
 
 //Class functor for finding by log_record.get_id with Strict Weak Ordering
@@ -180,6 +182,12 @@ bool operator () (log_record first_log_rec, log_record second_log_rec) const {
 
 stw_sorter log_rec_sorter;
 void sort_all ();
+static string parse_html_chars(string string_to_parsing);
+
+ldword get_lines_for_visualization_count() { return lines_for_visualization_count;};
+void set_lines_for_visualization_count(ldword new_lines_for_visualization_count) {lines_for_visualization_count=new_lines_for_visualization_count;};
+
+ldword calculate_message_lines(iterator log_record);
 
 public :
 //data members
@@ -200,6 +208,9 @@ void set_widget(PtWidget_t *new_wnd);
 
 PtWidget_t* get_filtration_state_indicator() {return filtration_state_indicator;}
 void set_filtration_state_indicator(PtWidget_t *new_filtration_state_indicator);
+
+PtWidget_t* get_filter_window() {return filter_window;}
+void set_filter_window(PtWidget_t *new_filter_window) { filter_window=new_filter_window;};
 
 PtWidget_t* get_toggle_button_filter_turn_off() {return toggle_button_filter_turn_off;}
 void set_toggle_button_filter_turn_off(PtWidget_t *new_toggle_button_filter_turn_off) { toggle_button_filter_turn_off=new_toggle_button_filter_turn_off;};
@@ -261,8 +272,9 @@ void log_records_container::load (string file_name) throw (spider_exception);
 void save (string file_name) throw (spider_exception);
 
 void set_filtering();
-
 bool rotate() throw(spider_exception);
+
+void  create_report(FILE *file_report) throw(spider_exception);
 };
 
 #endif

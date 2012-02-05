@@ -22,37 +22,37 @@ ApPictureLink_t interface = {
 ApDialogLink_t LogFilterDlg = {
 	"LogFilterDlg.wgtd",
 	&AbContext,
-	AbLinks_LogFilterDlg, 95, 9
+	AbLinks_LogFilterDlg, 96, 9
 	};
 
 ApDialogLink_t DeviceConfig = {
 	"DeviceConfig.wgtd",
 	&AbContext,
-	AbLinks_DeviceConfig, 115, 13
+	AbLinks_DeviceConfig, 116, 13
 	};
 
 ApDialogLink_t SignalDlg = {
 	"SignalDlg.wgtd",
 	&AbContext,
-	AbLinks_SignalDlg, 129, 2
+	AbLinks_SignalDlg, 130, 2
 	};
 
 ApDialogLink_t ArchiveDlg = {
 	"ArchiveDlg.wgtd",
 	&AbContext,
-	AbLinks_ArchiveDlg, 140, 2
+	AbLinks_ArchiveDlg, 141, 2
 	};
 
 ApWindowLink_t ArchiveLog = {
 	"ArchiveLog.wgtw",
 	&AbContext,
-	AbLinks_ArchiveLog, 144, 6
+	AbLinks_ArchiveLog, 145, 6
 	};
 
 ApDialogLink_t PrevCmdPoolDlg = {
 	"PrevCmdPoolDlg.wgtd",
 	&AbContext,
-	AbLinks_PrevCmdPoolDlg, 149, 5
+	AbLinks_PrevCmdPoolDlg, 150, 5
 	};
 
 static ApItem_t ApItems_EscalatorMenu[ 4 ] = {
@@ -70,7 +70,7 @@ ApMenuLink_t EscalatorMenu = {
 	ApItems_EscalatorMenu,
 	& AbContext,
 	AbLinks_EscalatorMenu,
-	154, 3, 3
+	155, 3, 3
 	};
 
 

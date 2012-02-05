@@ -1,4 +1,5 @@
-OBJECTS= system_settings.o\
+OBJECTS=  dispatchers_persons_container.o\
+ system_settings.o\
  system_settings_spider.o\
  sound.o\
  generic_socket.o\
@@ -30,6 +31,8 @@ OBJECTS+=threads_functions.o\
  commands_pool_window_callbacks.o\
  timer_commands_callbacks.o\
  station_devices_properties_callbacks.o\
+ smena_window_callbacks.o\
  draw_functions.o\
+ dictionary_callbacks.o\
  main.o
 

@@ -46,9 +46,8 @@ modbus register 30009
         4 Voltage 220 V is present on UPS output
         3 Voltage 380 V is present on input 2
         2 Voltage 380 V is present on input 1
-        1 Fire alarm (pogarnaya signalizaciya) is turned ON
-        0 Flame off system (sistema pogarotusheniya) is turned ON
-
+        1 Fire alarm (pogarnaya signalizaciya) is turned ON if 0
+        0 Smoke sensor (datchik dima) is turned ON if 0
 
 modbus register 30010-30011
          frequency value of input 1
@@ -182,7 +181,7 @@ typedef struct shavr_data_block : public data_block{
 	INDEX_SIGNAL_ESCALATOR_4_CONNECTED_TO_INPUT_2,	
     INDEX_SIGNAL_ESCALATOR_4_TELEMETR_INPUT_2,	
 	
-	INDEX_SIGNAL_FIRE_OFF_SYSTEM=0,
+	INDEX_SIGNAL_SMOKE_SENSOR=0,
 	INDEX_SIGNAL_FIRE_ALARM=1,
     INDEX_SIGNAL_380V_ON_INPUT_1=2,
 	INDEX_SIGNAL_380V_ON_INPUT_2=3,

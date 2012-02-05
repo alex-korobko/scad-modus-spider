@@ -33,8 +33,39 @@ system_settings_spider::system_settings_spider() :
     main_window(NULL),
     map_container(NULL),
     images(IMAGES_COUNT),
-    start_wav_file_name("sounds/wp_start.wav") {};
+	start_wav_file_name("sounds/wp_start.wav"),
+	report_import_directory("/home/kor/tmp/")
+ {};
 
+
+void system_settings_spider::load_settings() throw (spider_exception) 
+{
+enum {REPORT_DIR=0,  ENTRIES_COUNT};
+ostringstream exception_description;
+string entry_name;
+const char *entry_name_c_str;
+vector<char> temp_str(512);
+vector<string> entries_names(ENTRIES_COUNT);
+
+entries_names[REPORT_DIR]="report_directory";
+
+entry_name_c_str=PxConfigNextString(&temp_str[0],temp_str.size());
+
+while(entry_name_c_str!=NULL){
+entry_name=entry_name_c_str;
+if (entry_name.compare(entries_names[REPORT_DIR])==0) {
+			report_import_directory = &temp_str[0];
+	} else {
+           exception_description<<"Unrecognized config entry  "<<entry_name;
+            throw spider_exception(exception_description.str());
+	};
+	
+	entry_name_c_str=PxConfigNextString(&temp_str[0], 
+							                        temp_str.size()
+							                      );
+	};
+
+};
 
 void system_settings_spider::prepare_visualization(
            ApDBase_t* new_widget_dbase) throw (spider_exception){
@@ -42,185 +73,220 @@ void system_settings_spider::prepare_visualization(
 		widget_dbase=new_widget_dbase;
 		PhImage_t *img_ptr;
         
-        img_ptr=ApGetImageRes(widget_dbase, "arrow_green_up");
+       img_ptr=ApGetImageRes(widget_dbase, "arrow_green_up");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_UP");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREEN_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_green_up_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_UP_COMMAND");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREEN_UP_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_green_down");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_DOWN");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
        images[GREEN_DOWN]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_green_down_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_DOWN_COMMAND");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREEN_DOWN_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_green_up_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_S_UP");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREEN_S_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_green_down_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_S_DOWN");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREEN_S_DOWN]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_up");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_UP");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_up_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_UP_COMMAND");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_UP_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_down");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_DOWN");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_DOWN]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_down_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_DOWN_COMMAND");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_DOWN_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_up_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_S_UP");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_S_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_red_down_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_S_DOWN");
+//        img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[RED_S_DOWN]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_up");
 		if (img_ptr==NULL)
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_UP");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_up_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_UP_COMMAND");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_UP_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_down");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_DOWN");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_DOWN]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_down_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_DOWN_COMMAND");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_DOWN_COMMAND]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_up_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_S_UP");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_S_UP]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "arrow_yellow_down_small");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image YELLOW_S_DOWN");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[YELLOW_S_DOWN]=*img_ptr;
 
-		img_ptr=ApGetImageRes(widget_dbase, "green_reverse");
-		if (img_ptr==NULL)
-		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREEN_REVERSE");
-        images[GREEN_REVERSE]=*img_ptr;
-
-		img_ptr=ApGetImageRes(widget_dbase, "red_reverse");
+		img_ptr=ApGetImageRes(widget_dbase, "reverse");
 		if (img_ptr==NULL) 
-		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image RED_REVERSE");
-         images[RED_REVERSE]=*img_ptr;
+		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image REVERSE");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
+         images[REVERSE]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "block");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image BLOCK");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[BLOCK]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "exception");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image EXCEPTION");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
          images[EXCEPTION]=*img_ptr;
 
+		img_ptr=ApGetImageRes(widget_dbase, "tu");
+		if (img_ptr==NULL) 
+		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image TU");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
+         images[TU]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "offline");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image OFFLINE");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
          images[OFFLINE]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "grey_off");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image GREY_FLAT");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[GREY_FLAT]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "shavr_disabled_1_disabled_2");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image SHAVR_DISABLED_1_DISABLED_2");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[SHAVR_DISABLED_1_DISABLED_2]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "shavr_disabled_1_enabled_2");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image SHAVR_DISABLED_1_ENABLED_2");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[SHAVR_DISABLED_1_ENABLED_2]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "shavr_enabled_1_disabled_2");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image SHAVR_ENABLED_1_DISABLED_2");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[SHAVR_ENABLED_1_DISABLED_2]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "shavr_enabled_1_enabled_2");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image SHAVR_ENABLED_1_ENABLED_2");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
          images[SHAVR_ENABLED_1_ENABLED_2]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "shavr_command");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image SHAVR_COMMAND");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
          images[SHAVR_COMMAND]=*img_ptr;
          
 		img_ptr=ApGetImageRes(widget_dbase, "block_green_led");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image BLOCK_GREEN_LED");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[BLOCK_GREEN_LED]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "block_red_led");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image BLOCK_RED_LED");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[BLOCK_RED_LED]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "block_grey_led");
 		if (img_ptr==NULL)
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image BLOCK_GREY_LED");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[BLOCK_GREY_LED]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "block_blue_led");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image BLOCK_BLUE_LED");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[BLOCK_BLUE_LED]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "errorMsg");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image MSG_ERROR");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[MSG_ERROR]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "infoMsg");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image MSG_INFO");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[MSG_INFO]=*img_ptr;
 
 		img_ptr=ApGetImageRes(widget_dbase, "warnMsg");
 		if (img_ptr==NULL) 
 		         throw spider_exception("system_settings_spider::prepare_visualization can`t get image MSG_WARN");
+//       img_ptr->flags=Ph_RELEASE_IMAGE | Ph_RELEASE_PALETTE |Ph_RELEASE_TRANSPARENCY_MASK | Ph_RELEASE_GHOST_BITMAP;
         images[MSG_WARN]=*img_ptr;
 
 		font_for_messages_large.resize(MAX_FONT_TAG);

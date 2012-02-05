@@ -1,5 +1,6 @@
 using namespace std;
 
+#include <set>
 #include <vector>
 #include <string>
 #include <hash_map>
@@ -30,6 +31,11 @@ using namespace std;
 #include "system_settings_spider.h"
 
 #include "command.h"
+#include "line.h"
+#include "metro_lines_container.h"
+#include "station.h"
+#include "metro_stations_container.h"
+
 #include "timer_command_container.h"
 
 timer_command_container* timer_command_container::timer_command_container_instance=NULL;
@@ -55,13 +61,28 @@ bool timer_command_container::
            (timer_command first_timer_command,
             timer_command second_timer_command) const {
 
-	if (first_timer_command.get_timer_hour()<second_timer_command.get_timer_hour()) 
-		{
+   metro_stations_container *stations=metro_stations_container::get_instance();
+   metro_stations_container::iterator iter_stat=stations->find(first_timer_command.get_command().get_station());
+   int first_station_id=0;
+   if (iter_stat!=stations->end())
+       first_station_id= iter_stat->second.get_id();
+   
+   iter_stat=stations->find(second_timer_command.get_command().get_station());
+   int second_station_id=0;
+   if (iter_stat!=stations->end())
+        second_station_id=iter_stat->second.get_id();
+
+    if (first_station_id<second_station_id)  return true;
+    if (first_station_id==second_station_id &&
+         first_timer_command.get_command().get_device_number()<second_timer_command.get_command().get_device_number()) return true;
+
+/*
+	if (first_timer_command.get_timer_hour()<second_timer_command.get_timer_hour()) {
 			return true;
 		} else	if (first_timer_command.get_timer_hour()==second_timer_command.get_timer_hour() &&
 						first_timer_command.get_timer_minute()<second_timer_command.get_timer_minute()) 
 						return true; 
-
+*/
 	return false;	
 };
 

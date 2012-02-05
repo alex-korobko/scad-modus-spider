@@ -14,6 +14,12 @@ int A0_state;
 void A0(int event) 
           throw (spider_exception);
 
+void A0_z1();
+void A0_z2();
+
+bool A0_x5();
+bool A0_x4();
+
 public:
    enum {
          A0_OFFLINE=0,
@@ -35,10 +41,14 @@ metro_door(
         int id, 
 		int id_station,
 		int number,
+		int modbus_number,
 		int type,
 		int channel,
 		bool enabled,
-		in_addr_t	new_ip ) throw (spider_exception);
+		in_addr_t	new_ip,
+		time_t offline_or_exception_delay,
+		bool new_conduction_is_switched_off,
+		bool new_log_packets ) throw (spider_exception);
 
 virtual ~metro_door();
 
@@ -68,8 +78,8 @@ virtual void decode_answer_from_device_to_data_block();
 virtual buffer_data_type get_request_for_send_to_device();
 virtual ::data_block* get_data_block() { return &data_block;};
 
-virtual command get_device_pref_command() throw (spider_exception);
-virtual vector<command> get_appropriated_commands() ;
+virtual command get_device_start_command() throw (spider_exception);
+virtual vector<command> get_appropriated_commands() throw (spider_exception);
 
 virtual void create_properties_widgets(PtWidget_t *parent_widget);
 };

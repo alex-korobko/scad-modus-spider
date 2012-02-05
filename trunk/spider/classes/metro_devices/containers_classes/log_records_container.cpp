@@ -19,6 +19,7 @@ using namespace std;
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <iostream.h>
 
 #include "defines.h"
 #include "spider_exception.h"
@@ -185,6 +186,7 @@ log_records_container::log_records_container(): records_count(0) {
 		wnd=NULL;
         filtration_state_indicator=NULL;
         first=NULL;
+        filter_window=NULL;
         toggle_button_filter_turn_off=NULL;
         toggle_button_filter_all_times=NULL;
         toggle_button_filter_all_messages_types=NULL;
@@ -250,6 +252,11 @@ void log_records_container::erase(iterator iter_beg, iterator iter_end) {
 		iter_end=container_log_rec.end();		
 };
 
+ldword log_records_container::calculate_message_lines(log_records_container::iterator log_record) {
+//ATTENTION! Add code for calculation from draw function
+    return 1;
+ };
+
 void log_records_container::prepare_to_display(){
     system_settings_spider *sys_sett_spr=system_settings_spider::get_instance();
 	PtGenListItem_t *last,
@@ -261,7 +268,8 @@ void log_records_container::prepare_to_display(){
            };
 	PtGenListRemoveItems(wnd, NULL,NULL);
 
-	unsigned short size=this->size();
+//	int size=this->get_lines_for_visualization_count();
+	int size=this->size();
 
   //ATTENTION: In PtGenListAddItems free memory  of first already present??
     while (first!=NULL) {
@@ -299,11 +307,11 @@ void log_records_container::prepare_to_display(){
 
 	PtGenListAddItems(wnd, first, NULL);
 
-	 unsigned short *visible_count, top_item_pos;
-	 PtGetResource(wnd, Pt_ARG_VISIBLE_COUNT, &visible_count, 0);
-
-	if (*visible_count<size){
-			top_item_pos=size-*visible_count+1;
+	 unsigned short *visible_count_itern, visible_count, top_item_pos;
+	 PtGetResource(wnd, Pt_ARG_VISIBLE_COUNT, &visible_count_itern, 0);
+    visible_count=*visible_count_itern;
+	if (visible_count<size){
+			top_item_pos=size-visible_count+1;
 			 PtSetResource(wnd, Pt_ARG_TOP_ITEM_POS,  &top_item_pos, 0);
 		};
 }
@@ -780,7 +788,7 @@ bool log_records_container::rotate() throw(spider_exception){
 	localtime_r(&curTime, &localTime);
 	if (localTime.tm_mon != last_saved_time.tm_mon){
 
-		itoa(last_saved_time.tm_mon, &tmp_chars[0], 10);
+		itoa(last_saved_time.tm_mon+1, &tmp_chars[0], 10);
 		file_name=&tmp_chars[0];
 		file_name+="_";		
 		itoa((last_saved_time.tm_year + 1900), &tmp_chars[0], 10);
@@ -802,4 +810,430 @@ bool log_records_container::rotate() throw(spider_exception){
 	return true;
 }; 
 
+
+void  log_records_container::create_report(FILE *file_report) throw(spider_exception){
+int writed_elements_num;
+string str_to_write;
+str_to_write="<html><head>\n<META HTTP-EQUIV=\"content-type\" CONTENT=\"text/html; charset=UTF-8\"></head><body>";
+str_to_write+="\n<center><h1>Журнал работы системы телеметрии</h1></center><br>\n";
+str_to_write+="\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n<tr><td>\n";
+str_to_write+="\n<table width=\"60%\" align=\"right\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">\n";
+writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+       throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+if (filter.get_filter_state()) {
+          if (!filter.get_all_times()) {
+                 vector<char> tmp_chars(20);
+                 time_t tmp_time;
+
+                 str_to_write="<tr><td valign=\"top\"><b>Период :</b></td><td>с ";
+                 tmp_time=filter.get_start_time();
+                 strftime(&tmp_chars[0], tmp_chars.size(), "%d-%m-%Y ", localtime( &tmp_time));	
+                 str_to_write+=&tmp_chars[0];
+                 strftime(&tmp_chars[0], tmp_chars.size(), "%H:%M:%S", localtime( &tmp_time ));		
+                 str_to_write+=&tmp_chars[0];
+                 str_to_write+=" по ";
+                 tmp_time=filter.get_stop_time();
+                 strftime(&tmp_chars[0], tmp_chars.size(), " %d-%m-%Y ", localtime( &tmp_time));
+                 str_to_write+=&tmp_chars[0];
+                 strftime(&tmp_chars[0], tmp_chars.size(), "%H:%M:%S", localtime( &tmp_time ));		
+                 str_to_write+=&tmp_chars[0];
+                 str_to_write+="</td></tr>\n";
+
+                  writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+                if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+                   throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+              };//if (!filter.get_all_times())
+
+        if (!filter.get_all_msg_types()) {
+              str_to_write="<tr><td valign=\"top\"><b>Выбраны типы сообщений:</b></td><td> ";
+
+              if (!filter.msg_types_empty()) {
+                     vector<char> tmp_chars(20);
+                     log_filter::iterator filt_iter=filter.msg_types_begin();
+                     msg_types_container *msg_types=msg_types_container::get_instance();
+                     msg_types_container::iterator msg_types_iter;
+                     while(filt_iter!=filter.msg_types_end()) {
+                          msg_types_iter=msg_types->find(*filt_iter);
+                          if (msg_types_iter!=msg_types->end()) {
+                                   itoa(msg_types_iter->second.get_type_color(), &tmp_chars[0], 16);
+                                   str_to_write+="&nbsp;&nbsp;<font color=\"";
+                                   str_to_write+=&tmp_chars[0];
+                                   str_to_write+="\">";
+                                   str_to_write+=log_records_container::parse_html_chars(msg_types_iter->second.get_type_description());
+                                   str_to_write+="</font>";
+                                   }else { //if (msg_types_iter!=msg_types->end())
+                                   str_to_write+=" ERROR ";
+                                 }; //if (msg_types_iter!=msg_types->end())
+                         filt_iter++;
+                       }; //while(filt_iter!=filter.msg_types_end())
+                 } else { //if (!filter.msg_types_empty())
+                   str_to_write+="Ни один из типов сообщений не выбран!";
+                 }; // if (!filter.msg_types_empty())
+
+              str_to_write+="</td></tr>\n";
+
+              writed_elements_num=fwrite(str_to_write.c_str(),
+                             sizeof(string::traits_type::char_type),
+                             str_to_write.size(),
+                             file_report);
+
+             if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+                  throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+             } else { //if (!filter.get_all_msg_types())
+                    str_to_write="<tr><td valign=\"top\"><b>Выбраны типы сообщений:</b></td><td> ";
+                     vector<char> tmp_chars(20);
+                     msg_types_container *msg_types=msg_types_container::get_instance();
+                     msg_types_container::iterator msg_types_iter=msg_types->begin();
+                     while(msg_types_iter!=msg_types->end()) {
+                                   itoa(msg_types_iter->second.get_type_color(), &tmp_chars[0], 16);
+                                   str_to_write+="&nbsp;&nbsp;<font color=\"";
+                                   str_to_write+=&tmp_chars[0];
+                                   str_to_write+="\">";
+                                   str_to_write+=log_records_container::parse_html_chars(msg_types_iter->second.get_type_description());
+                                   str_to_write+="</font>";
+                                  msg_types_iter++;
+                       };
+              str_to_write+="</td></tr>\n";
+
+              writed_elements_num=fwrite(str_to_write.c_str(),
+                             sizeof(string::traits_type::char_type),
+                             str_to_write.size(),
+                             file_report);
+
+             if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+                  throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+              }; //if (!filter.get_all_msg_types())
+
+
+        if (!filter.get_all_stations()) {
+              str_to_write="<tr><td valign=\"top\"><b>Выбраны станции:</b></td><td> ";
+              log_filter::iterator filt_iter=filter.stations_begin();
+              metro_stations_container *stations=metro_stations_container::get_instance();
+              metro_stations_container::iterator stations_iter;
+              while(filt_iter!=filter.stations_end()){
+                  stations_iter=stations->find(*filt_iter);
+                  if (stations_iter!=stations->end()) {
+                        str_to_write+="&nbsp;";
+                        str_to_write+=log_records_container::parse_html_chars(stations_iter->second.get_stl_name_string());
+                        str_to_write+="&nbsp;";
+                     } else { //if (stations_iter!=stations->end())
+                        str_to_write+="&nbsp;Станция не найдена&nbsp;";
+                     };  //if (stations_iter!=stations->end())
+                  filt_iter++;
+               }; //while(filt_iter!=filter.stations_end())
+              str_to_write+="</td></tr>\n";
+
+              str_to_write+="<tr><td valign=\"top\"><b>Выбраны устройства:</b></td><td> ";
+              if (!filter.get_all_devices()){
+                log_filter::iterator filt_iter=filter.devices_begin();
+                metro_devices_container *devices=metro_devices_container::get_instance();
+                metro_devices_container::iterator devices_iter;
+                metro_devices_types_container *devices_types=metro_devices_types_container::get_instance();
+                metro_devices_types_container::iterator devices_types_iter;
+                while(filt_iter!=filter.devices_end()){
+                   devices_iter=devices->find(*filt_iter);
+                   if (devices_iter!=devices->end()) {
+                         stations_iter=stations->find(devices_iter->second->get_station_id());
+                         if (stations_iter!=stations->end()) { 
+                             str_to_write+="&nbsp; &nbsp;";
+                             str_to_write+=log_records_container::parse_html_chars(stations_iter->second.get_stl_name_string());
+                             str_to_write+=" - ";
+                           } else { //if (stations_iter!=stations->end())
+                                str_to_write+="&nbsp;Станция не найденa&nbsp;";
+                           }; //if (stations_iter!=stations->end())
+                           devices_types_iter=devices_types->find(devices_iter->second->get_type());
+                          if (devices_types_iter!=devices_types->end()) {
+                                str_to_write+=log_records_container::parse_html_chars(devices_types_iter->second->get_name());
+                               if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
+                                   devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) {
+                                          vector<char> tmp_chars(20);
+                                          itoa(devices_iter->second->get_number(), &tmp_chars[0], 10);
+                                          str_to_write+="&nbsp;";
+                                          str_to_write+=&tmp_chars[0];
+                                    };
+                             } else { //if (devices_types_iter!=devices_types->end())
+                                str_to_write+="&nbsp;Тип не найден&nbsp;";
+                             }; //if (devices_types_iter!=devices_types->end())
+                             str_to_write+="&nbsp; &nbsp;";
+                     } else { //if (devices_iter!=devices->end())
+                         str_to_write+="&nbsp;Устройство не найдено&nbsp;";
+                     };//if (devices_iter!=devices->end())
+                   filt_iter++;
+                  }; //while(filt_iter!=filter.devices_end())
+
+               } else { //if (!filter.get_all_devices())
+                  str_to_write+="Выбраны все устройства ";
+               }; //if (!filter.get_all_devices())
+
+              str_to_write+="</td></tr>\n";
+
+              writed_elements_num=fwrite(str_to_write.c_str(),
+                             sizeof(string::traits_type::char_type),
+                             str_to_write.size(),
+                             file_report);
+
+             if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+                  throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+         }; //if (!filter.get_all_stations())
+
+       }; //if (filter.get_filter_state())
+
+str_to_write="\n</table><br>\n";
+str_to_write+="\n</td></tr>\n<tr><td>&nbsp;</td></tr>\n<tr><td>\n";
+writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+       throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+str_to_write="\n<br><br><table width=\"100%\" cellspacing=\"0\" cellpadding=\"2\" border=\"1\">\n";
+str_to_write+="\n<tr><td valign=\"top\" align=\"center\" width=\"10%\"><b>Дата</b></td><td valign=\"top\" align=\"center\"  width=\"10%\"><b>Время</b></td>\n";
+str_to_write+="\n<td valign=\"top\" align=\"center\"  width=\"15%\"><b>Станция</b></td><td valign=\"top\" align=\"center\"  width=\"15%\"><b>Устройство</b></td><td valign=\"top\" align=\"center\"><b>Сообщение</b></td></tr>\n";
+
+writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+       throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+
+
+if (size()!=0) {
+iterator log_records_iter=begin();
+ldword current_message_id;
+int tmp_msg_id, msg_type, device_id, find_pos;
+vector<char> tmp_chars(20);
+string color_string, message_text, device_text, station_text, block_circut_name;
+time_t record_time;
+dword breaking_path_value;
+byte block_circut_index;
+
+system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+
+system_settings::strings_container parameters_names=
+               spider_sys_sett->get_parameters_in_messages_strings();
+
+metro_stations_container *stations=metro_stations_container::get_instance();
+metro_stations_container::iterator stations_iter;
+
+msg_dict_container::iterator msg_dict_iter;
+
+msg_types_container *msg_types=msg_types_container::get_instance();
+msg_types_container::iterator msg_types_iter;
+
+metro_devices_container *devices=metro_devices_container::get_instance();
+metro_devices_container::iterator devices_iter;
+
+metro_devices_types_container *devices_types=metro_devices_types_container::get_instance();
+metro_devices_types_container::iterator devices_types_iter;
+
+while (log_records_iter!=end()) {
+   current_message_id=log_records_iter->get_msg_id();
+   tmp_msg_id=static_cast<int>(current_message_id & 0x00FF);
+   msg_type=0, device_id=0;
+   device_text="";
+   station_text="";
+   message_text="";
+
+   msg_type=log_records_iter->get_msg_type();
+   msg_types_iter=msg_types->find(msg_type);
+    if (msg_types_iter==msg_types->end()){
+				ostringstream mess;
+				mess<<"Not found msg_type "<<msg_type<<" for reporting log_items";
+				spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+																	mess.str());
+               throw spider_exception(mess.str());
+			}; //if (msg_types_iter==msg_types->end())
+
+    itoa(msg_types_iter->second.get_type_color(), &tmp_chars[0], 16);
+    color_string=&tmp_chars[0];
+
+    str_to_write="\n<tr><td align=\"center\" width=\"10%\"><font color=\"";
+    str_to_write+=color_string;
+    str_to_write+="\">";
+
+    record_time=log_records_iter->get_record_time();
+	strftime(&tmp_chars[0], tmp_chars.size(), "%d-%m-%Y", localtime( &record_time));	
+    str_to_write+=&tmp_chars[0];
+    str_to_write+="\n</font></td><td align=\"center\" width=\"10%\"><font color=\"";
+    str_to_write+=color_string;
+    str_to_write+="\">";
+
+	strftime(&tmp_chars[0], tmp_chars.size(), "%H:%M:%S", localtime( &record_time ));		
+    str_to_write+=&tmp_chars[0];
+    str_to_write+="\n</font></td><td align=\"center\" width=\"15%\"><font color=\"";
+    str_to_write+=color_string;
+    str_to_write+="\">";
+
+	stations_iter=stations->find(log_records_iter->get_station_id());
+     if (stations_iter!=stations->end()){
+				station_text=stations_iter->second.get_stl_name_string();
+			};
+
+     if (station_text.empty()) {
+            str_to_write+="&nbsp;";
+        } else {
+            str_to_write+=log_records_container::parse_html_chars(station_text);
+        };
+
+    str_to_write+="\n</font></td><td align=\"center\" width=\"15%\"><font color=\"";
+    str_to_write+=color_string;
+    str_to_write+="\">";
+
+    if (tmp_msg_id!=0) {	// it`s real id of message
+			device_id=log_records_iter->get_device_id();
+			if (device_id>0){
+                devices_types_iter=devices_types->end(); //for block circut name definition - see below in that function
+				devices_iter=devices->find(device_id);
+				if (devices_iter!=devices->end()) {
+						devices_types_iter=devices_types->find(devices_iter->second->get_type());
+                          if (devices_types_iter!=devices_types->end()) {
+                                 msg_dict_iter=devices_types_iter->second->type_messages.find(tmp_msg_id);
+                                 if (msg_dict_iter!=devices_types_iter->second->type_messages.end())
+                                          message_text=msg_dict_iter->second.get_text();
+                                device_text+=devices_types_iter->second->get_name();
+                              if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
+                                  devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU){
+                                    itoa(devices_iter->second->get_number(), &tmp_chars[0], 10);
+                                    device_text+=" ";
+                                    device_text+=&tmp_chars[0];
+                                  };
+							} else { // devices_types_iter=devices_types->end()
+                               ostringstream mess;
+                               mess<<"Not found device type "<<devices_iter->second->get_type()<<" device id "<<device_id<<" for re-drawing log_items";
+                               spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+																			mess.str());
+                                throw spider_exception(mess.str());
+                            };
+					} else { //insert here code to finding in other metro devices containers  -  using GLOBAL id`s identificators
+						ostringstream mess;
+						mess<<"Not found device id "<<device_id<<" for re-drawing log_items";
+						spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+																			mess.str());
+                         throw spider_exception(mess.str());
+					}; // if (devices_iter!=devices->end())
+			}; // if (device_id>0)
+
+			if (message_text.empty()){
+				msg_dict_iter=messages->find(tmp_msg_id);
+					if (msg_dict_iter!=
+						messages->end()) {
+					 		message_text=msg_dict_iter->second.get_text();
+					 	} else { // if (msg_dict_iter! =
+							ostringstream mess;
+							mess<<"Not found message id "<<tmp_msg_id<<" for re-drawing log_items";
+							spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+																				mess.str());
+                         throw spider_exception(mess.str());
+					 	}; // if (tmp_msg_iter!=
+				}; // if (message_text.empty())
+
+              if (!message_text.empty()) {
+                    find_pos=static_cast<int>(message_text.find(parameters_names[system_settings::PARAMETER_NAME_BREAKING_PATH_VALUE]));
+                    if (find_pos!=-1) {
+                      breaking_path_value=static_cast<dword>(current_message_id>>32);
+                      tmp_chars.clear();
+                      tmp_chars.resize(12);
+                      itoa (breaking_path_value, &tmp_chars[0], 10);
+                      message_text.replace( find_pos,
+														   parameters_names[system_settings::PARAMETER_NAME_BREAKING_PATH_VALUE].size(),
+														   &tmp_chars[0]);
+                    };//if (static_cast<int>(message_text.find(parameters_names[system_settings::PARAMETER_NAME_
+
+                    find_pos=static_cast<int>(message_text.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
+                    if (find_pos!=-1) {
+                      block_circut_index=static_cast<byte>((current_message_id&0x00ff00)>>8);
+                      if (device_id<=0) {
+                           block_circut_name="ERROR!!";
+                           ostringstream mess;
+                           mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but device_id==0 message id in log"<<current_message_id;
+                           spider_sys_sett->sys_message(system_settings::ERROR_MSG, mess.str());
+                      } else { //if (device_id<=0)
+                          if (devices_types_iter!=devices_types->end() &&
+                               devices_types_iter->second->circuts_size()>block_circut_index) {
+                                block_circut_name=(devices_types_iter->second->at_circut(block_circut_index)).get_hint();
+                              } else  { // if (iter_devices_types!=devices_types->end())
+                                 block_circut_name="ERROR!!";
+                                 ostringstream mess;
+                                 mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() or circuts_size()>block_circut_index message id in log"<<current_message_id;
+                                 spider_sys_sett->sys_message(system_settings::ERROR_MSG,
+                                                                                  mess.str());
+                             }; // if (iter_devices_types!=devices_types->end())
+                  }; // if (device_id<=0)
+
+                      message_text.replace( find_pos,
+														   parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME].size(),
+														   block_circut_name);
+                    };//if (static_cast<int>(message_text.find(parameters_names[system_settings::PARAMETER_NAME_
+
+              }; //if (!message_text.empty())
+   		  }; // if (tmp_msg_id!=0)
+
+        if (device_text.empty()){
+            str_to_write+="&nbsp;";
+          } else {
+            str_to_write+=log_records_container::parse_html_chars(device_text);
+          };
+
+    str_to_write+="\n</font></td><td align=\"center\"><font color=\"";
+    str_to_write+=color_string;
+    str_to_write+="\">";
+
+        if (message_text.empty()){
+            str_to_write+="&nbsp;";
+          } else {
+            str_to_write+=log_records_container::parse_html_chars(message_text);
+          };
+    str_to_write+="\n</font></td></tr>";
+
+  writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+       throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+   log_records_iter++;
+   }; //while (log_records_iter!=end())
+}; // if (size()!=0)
+str_to_write="\n</table>\n</td></tr></table>\n</body></html>\n";
+
+writed_elements_num=fwrite(str_to_write.c_str(),
+                                sizeof(string::traits_type::char_type),
+                                 str_to_write.size(),
+                                 file_report);
+
+if (writed_elements_num!=static_cast<int>(str_to_write.size()))
+       throw spider_exception(string(" In log_records_container::create_report(...) fwrite error ")+strerror(errno));
+
+};
+
+string log_records_container::parse_html_chars(string string_to_parsing){
+int find_pos;
+find_pos=static_cast<int>(string_to_parsing.find("\""));
+while (find_pos!=-1) {
+          string_to_parsing.replace( find_pos, 
+                                              1,//size
+  										   "&quot;");
+          find_pos=static_cast<int>(string_to_parsing.find("\""));
+        };
+
+return string_to_parsing;
+};
 

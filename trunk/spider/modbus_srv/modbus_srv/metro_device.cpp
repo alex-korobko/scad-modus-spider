@@ -23,11 +23,12 @@ using namespace std;
 #include "program_settings.h"
 #include "metro_device.h"
 
-metro_device::metro_device(int new_device_number) 
+metro_device::metro_device(int new_device_number, bool new_log_packets) 
  throw (metro_device::metro_device_exception) :
      device_number(new_device_number),
      upper_message_id(0),
-     messages(0) {
+     messages(0),
+	 log_packets(new_log_packets) {
 
 ostringstream exception_description;
 int  ret_val;
@@ -50,21 +51,9 @@ if (ret_val!=EOK) {
      throw metro_device::metro_device_exception(exception_description.str());
 	};
 
-ret_val=pthread_mutex_init (&answer_to_socket_mutex, NULL);
+ret_val=pthread_mutex_init (&default_answer_to_socket_mutex, NULL);
 if (ret_val!=EOK) {
-	exception_description<<"Can`t initialize answer_to_socket_mutex : "<<strerror(ret_val);
-     throw metro_device::metro_device_exception(exception_description.str());
-	};
-
-ret_val=pthread_mutex_init (&request_to_com_port_mutex, NULL);
-if (ret_val!=EOK) {
-	exception_description<<"Can`t initialize request_to_com_port_mutex : "<<strerror(ret_val);
-     throw metro_device::metro_device_exception(exception_description.str());
-	};
-
-ret_val=pthread_mutex_init (&request_from_socket_mutex, NULL);
-if (ret_val!=EOK) {
-	exception_description<<"Can`t initialize request_from_socket_mutex : "<<strerror(ret_val);
+	exception_description<<"Can`t initialize default_answer_to_socket_mutex : "<<strerror(ret_val);
      throw metro_device::metro_device_exception(exception_description.str());
 	};
 
@@ -73,10 +62,9 @@ if (ret_val!=EOK) {
 metro_device::~metro_device() {
    pthread_cond_destroy(&data_transfer_process_cond_var);
    pthread_mutex_destroy(&data_transfer_process_mutex);
+
+   pthread_mutex_destroy(&default_answer_to_socket_mutex);
    pthread_mutex_destroy(&sockets_to_device_queue_mutex);
-   pthread_mutex_destroy(&answer_to_socket_mutex);
-   pthread_mutex_destroy(&request_to_com_port_mutex);
-   pthread_mutex_destroy(&request_from_socket_mutex);
 };
 
 void metro_device::add_messages_fifo

@@ -6,9 +6,9 @@ include ../indIpath
 include ../indLpath
 include ../indVpath
 
-BUILD_TYPE=RELEASE
+#BUILD_TYPE=RELEASE
 
-#BUILD_TYPE=DEBUG
+BUILD_TYPE=DEBUG
 
 ifdef BUILD_TYPE
 BUILD_RELEASE = -O3 -w8 -fomit-frame-pointer

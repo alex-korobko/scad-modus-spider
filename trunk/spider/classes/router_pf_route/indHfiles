@@ -1,3 +1,4 @@
 HEADERS=generic_socket.h\
 client_socket.h\
+program_settings.h\
 router.h

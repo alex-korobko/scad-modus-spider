@@ -11,6 +11,7 @@ ifndef DEBUG_MODE
 DEBUG = -g -w8
 endif
 
+VPATH=../:../support_classes:../router_classes
 
 CXX = qcc
 CXXFLAGS = -V gcc_ntox86 -fexceptions -Bdynamic $(DEBUG) $(MYLIBS) $(MYIPATH) $(MYLPATH)

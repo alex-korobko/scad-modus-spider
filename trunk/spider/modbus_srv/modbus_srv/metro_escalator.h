@@ -10,13 +10,13 @@ metro_device::command_data
          create_answer_to_socket_func_4
                (metro_device::command_data_container answer_from_com_port) ;
 
-metro_device::command_data
-     get_default_command_request_from_socket
-                             ();
 
 public:
 
 enum {
+		ESCALATOR_FIRST_REGISTER = 0,
+		ESCALATOR_REGISTERS_COUNT= 38,
+
        MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS=30001,
        MODBUS_INPUT_REGISTERS_END_ADDRESS=30051,
 
@@ -38,8 +38,8 @@ enum {
 /*
 constructor and destructor
 */
-explicit metro_escalator(int new_number) throw (metro_device::metro_device_exception) :
-        metro_device(new_number) {};
+metro_escalator(int new_number, bool new_log_packets) throw (metro_device::metro_device_exception) :
+        metro_device(new_number, new_log_packets) {};
 virtual ~metro_escalator() {};
 /*
 virtual functions
@@ -59,6 +59,10 @@ virtual command_data_container
 virtual command_data_container
             get_default_command_request_to_comport
                          ();
+
+virtual metro_device::command_data
+     get_default_command_request_from_socket();
+
 };
 
 #endif

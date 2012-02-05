@@ -1,72 +1,75 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <sys/neutrino.h>
+#include <sys/slog.h>
+#include <sys/slogcodes.h>
 
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <iostream.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/route.h>
-#include <string.h>
 
-#include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <functional>
 #include <sstream>
-#include <stdexcept>
 
 #include <Ap.h>
 #include <Pt.h>
 
 using namespace std;
 
+#include "defines.h"
+#include "program_settings.h"
+
+#include "socket_exception.h"
 #include "generic_socket.h"
 #include "client_socket.h"
 
 #include "router.h"
 
- router::router() throw (runtime_error)
+
+router::router() throw (runtime_error)
     :routing_enabled(false){
-    if((sock = socket(PF_ROUTE, SOCK_RAW, 0)) == -1) {
+    if((sock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1) {
            throw runtime_error(string("In router::router() socket(PF_ROUTE, ...) error: ")+
                                                strerror(errno));
         };
 };
 
 router::~router(){
-  	shutdown (sock, 0);
+  	shutdown (sock, 2);
 };
 
 
 bool router::test_connection_to_test_host(struct in_addr test_host) {
-     struct timeval connection_timeout, recive_send_timeout;
-
-     generic_socket::bytes request_to_server(1);
-     generic_socket::bytes answer_from_server;
+     program_settings::bytes request_to_server(1);
+     program_settings::bytes answer_from_server;
      answer_from_server.reserve(request_to_server.size());
-
-    connection_timeout.tv_sec=router::CONNECT_TO_DEVICE_TIMEOUT;
-    connection_timeout.tv_usec=0;
-
-   recive_send_timeout.tv_sec=router::RECIEVE_SEND_TO_DEVICE_TIMEOUT;
-   	recive_send_timeout.tv_usec=0;
     request_to_server[0]=0xff;
 
       try{
        client_socket  socket_dev(test_host.s_addr,
-                                                  router::ECHO_TCP_PORT,
-                                                  connection_timeout,
-                                                  recive_send_timeout);
+                                                  program_settings::ECHO_TCP_PORT,
+                                                  program_settings::CONNECT_TO_DEVICE_TIMEOUT*1000000000,
+                                                  program_settings::RECIEVE_SEND_TO_DEVICE_TIMEOUT*1000000000);
          socket_dev.initialize();
          socket_dev.send(request_to_server);
          answer_from_server.clear();
          socket_dev.recv(answer_from_server, request_to_server.size());
          if (answer_from_server!=request_to_server) return false;
-      } catch (runtime_error sock_exc) {
-            cout<<"In router::test_connection_to_test_host test host "<<inet_ntoa(test_host)<<" raised exception: "<<sock_exc.what()<<endl;
+      } catch (socket_exception sock_exc) {
+            program_settings *prog_sett=program_settings::get_instance();
+            ostringstream except_descr;
+            except_descr<<"In router::test_connection_to_test_host test host "<<inet_ntoa(test_host)<<
+                                       " raised exception: "<<sock_exc.get_description()<<endl;
+            prog_sett->sys_message(program_settings::ERROR_MSG, except_descr.str());
             return false;
       };
         return true;
@@ -79,6 +82,12 @@ void router::change_route (
       struct rt_msghdr *rtm;
       struct sockaddr_in *dst, *gate, *msk;
       struct internal_route my_rt;
+
+     //ATTENTION Only for test
+//     return;
+
+      program_settings *prog_sett=program_settings::get_instance();
+       prog_sett->sys_message(program_settings::ERROR_MSG, "In router change route");
 
       memset(&my_rt, 0x00, sizeof(my_rt));
 

@@ -55,6 +55,11 @@ using namespace std;
 #include "metro_devices_types_container.h"
 #include "metro_device.h"
 
+#include "escalator_data_block.h"
+#include "escalator.h"
+#include "udku_data_block.h"
+#include "udku.h"
+
 class metro_devices_container;
 #include "station.h"
 #include "metro_stations_container.h"
@@ -83,11 +88,24 @@ extern string password_for_switching_sending_commands;
 extern string password_for_switching_start_time_commands;
 extern bool sending_commands_disabled;
 extern bool setting_start_time_disabled;
+
 //static functions
+static void apply_sending_commands_to_devices(bool new_sending_commands_state)
+{
+   metro_devices_container* metro_devices=metro_devices_container::get_instance();
+   metro_devices_container::iterator deviter = metro_devices->begin();
+   while(deviter != metro_devices->end())
+	{
+		deviter->second->set_conduction_is_switched_off(new_sending_commands_state);
+		++deviter;
+	}
+}
+
 static int validate_password ( void *data,
               char const *password_entered ) {
 if (password_for_switching_sending_commands.compare(password_entered)==0) {
               sending_commands_disabled=!sending_commands_disabled;
+			  apply_sending_commands_to_devices(sending_commands_disabled);
               setting_start_time_disabled=true;
              return Pt_PWD_ACCEPT;
          };
@@ -100,7 +118,7 @@ if (password_for_switching_start_time_commands.compare(password_entered)==0) {
                              sending_commands_disabled=true;
                               setting_start_time_disabled=true;
                 };
-
+			 apply_sending_commands_to_devices(sending_commands_disabled);
              return Pt_PWD_ACCEPT;
          };
 
@@ -354,15 +372,119 @@ int activate_device_button( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo
 		return( Pt_CONTINUE );
 	};
 
+void add_command_to_command_pool(const command& device_command)
+{
+   system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+   cmd_pool_container *cmd_pool_instance=cmd_pool_container::get_instance();
+   if (cmd_pool_instance==NULL) {
+      spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_device_menu_item (..): Can`t get instance  of cmd_pool_container");
+  };
+
+   cmd_pool_instance->push_back(device_command);
+   try {
+       cmd_pool_instance->prepare_to_display(); 
+   } catch (spider_exception spr_exc) {
+        spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_device_menu_item (..): In cmd_pool_instance->prepare_to_display() exception :"+spr_exc.get_description());
+   };
+}
+
+void process_movement_command(const command& device_command, unsigned int previous_direction_code, unsigned int predefined_direction_code,
+												 double time_diff, double predefined_delay)
+{
+       system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+       metro_stations_container *stations=metro_stations_container::get_instance();
+       metro_stations_container::iterator statons_iter=stations->find(device_command.get_station());
+       string prompt_title="Смена направления движения";
+       string prompt_text="Эскалатор ";
+       vector<char> tmp_chars(20);
+       itoa(device_command.get_device_number(), &tmp_chars[0], 10);
+      prompt_text+=&tmp_chars[0];
+      if (statons_iter!=stations->end()) prompt_text+=string(" станция ")+statons_iter->second.get_stl_name_string();
+      char const *buttons[] = { "Да", "Нет" };
+
+//==========================
+	           ostringstream excepiton_description;
+ 	          excepiton_description<<"In activate_device_menu_item (..): "
+												<< " notif delay from config file "
+												<< predefined_delay
+												<< " diff in time "
+												<< time_diff;
+
+       			spider_sys_sett->sys_message(system_settings::INFO_MSG, excepiton_description.str());
+//===========================
+
+					string old_direction = ""	;
+					string new_direction = "";
+					bool prompt_is_necesssary  = false;
+					if (time_diff <=predefined_delay)
+						{
+				             if (device_command.get_command_code() == system_settings::COMMAND_UP &&
+  				                  previous_direction_code ==system_settings::DIRECTION_DOWN)
+									{
+									new_direction = "ПОДЪЕМ";
+									old_direction = " работал  на СПУСК";
+									prompt_is_necesssary  = true;
+									};
+       			                 if (device_command.get_command_code()==system_settings::COMMAND_DOWN &&
+       			   		              previous_direction_code==system_settings::DIRECTION_UP) 
+									{
+										new_direction = "СПУСК";
+										old_direction = " работал  на ПОДЪЕМ";
+										prompt_is_necesssary  = true;
+									};
+						} else  if (predefined_direction_code != system_settings::DIRECTION_REVERSE){ //if (time_diff <=predefined_delay)
+				             if (device_command.get_command_code() == system_settings::COMMAND_UP &&
+  				                  predefined_direction_code ==system_settings::DIRECTION_DOWN)
+									{
+									new_direction = "ПОДЪЕМ";
+									old_direction = " должен работать на СПУСК";
+									prompt_is_necesssary  = true;
+									};
+       			                 if (device_command.get_command_code() ==system_settings::COMMAND_DOWN &&
+       			   		              predefined_direction_code==system_settings::DIRECTION_UP) 
+									{
+										new_direction = "СПУСК";
+										old_direction = " должен работать на ПОДЪЕМ";
+										prompt_is_necesssary  = true;
+									};
+						};
+
+						if (prompt_is_necesssary) 
+							{
+								prompt_text+= old_direction;
+								prompt_text+="\nНо производится попытка создать команду ";
+								prompt_text+= new_direction;
+								prompt_text+="\nВы уверены?";
+		                         if  (PtAlert( spider_sys_sett->get_main_window(),
+  			                              NULL,
+     			                           prompt_title.c_str(),
+        			                        spider_sys_sett->get_image (system_settings_spider::MSG_WARN),
+           				                     prompt_text.c_str(),
+               				                 spider_sys_sett->get_small_font(),
+                   				             2,
+                       				          buttons,
+                           			    	  NULL,
+                                			 1,
+                                 			2,
+                                 			Pt_CENTER | Pt_BLOCK_ALL)==1) {
+											add_command_to_command_pool(device_command);
+                                   }; //if  (PtAlert( spider_sys_sett->get_main_window()
+							}  else  {//prompt_is_necesssary
+								add_command_to_command_pool(device_command);
+							};	
+}
+
+
 int activate_device_menu_item( PtWidget_t *widget,
                                     void *client_data,
                                     PtCallbackInfo_t *cbinfo){
   vector<PtArg_t> args;
   command *callback_command
                    = static_cast<command*>(client_data);
-  command device_command=*callback_command;
-  delete(callback_command);
+command device_command=*callback_command;
+delete(callback_command);
 metro_devices_container::iterator dev_iter;
+time_t curr_time = time(NULL);
 
    cmd_pool_container *cmd_pool_instance=cmd_pool_container::get_instance();
    if (cmd_pool_instance==NULL) {
@@ -388,26 +510,51 @@ metro_devices_container::iterator dev_iter;
            spider_sys_sett->sys_message(system_settings::ERROR_MSG, excepiton_description.str());
            };
 
-
     if ( (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
            dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) &&
-       device_command.get_command_code()!=system_settings::COMMAND_STOP &&
-       device_command.get_command_code()!=system_settings::COMMAND_ACCEPT) { 
+           (device_command.get_command_code()==system_settings::COMMAND_DOWN ||
+           device_command.get_command_code()==system_settings::COMMAND_UP)) { 
 
-        cmd_pool_instance->push_back(device_command);
-           try {
-             cmd_pool_instance->prepare_to_display(); 
-          } catch (spider_exception spr_exc) {
-              system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
-              spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_device_menu_item (..): In cmd_pool_instance->prepare_to_display() exception :"+spr_exc.get_description());
-          };
+			double time_diff = 0;
+			unsigned int prev_direction_code, pref_direction_code;
+			time_t curr_time = time(NULL);
+
+             if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR) {
+                metro_escalator *esc_ptr=static_cast<metro_escalator*>(dev_iter->second);
+				time_diff = difftime(curr_time, esc_ptr->get_previous_stop_time());
+				prev_direction_code =  esc_ptr->get_previous_direction();
+				pref_direction_code = esc_ptr->get_pref_direction();
+
+			   process_movement_command(device_command, prev_direction_code, pref_direction_code,
+																  time_diff, esc_ptr->get_conduction_notification_delay());
+           }  else   if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) { // if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR) {
+               metro_udku *udku_ptr=static_cast<metro_udku*>(dev_iter->second);
+				time_diff = difftime(curr_time, udku_ptr->get_previous_stop_time());
+				prev_direction_code =  udku_ptr->get_previous_direction();
+				pref_direction_code = udku_ptr->get_pref_direction();
+
+			   process_movement_command(device_command, prev_direction_code, pref_direction_code,
+																  time_diff, udku_ptr->get_conduction_notification_delay());
+
+			} else {  //}  else   if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) 
+             system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+		     ostringstream exception_description;
+		     exception_description<<"In activate_device_menu_item impossible situation arose "
+                                           <<" device id  "
+                                           <<device_command.get_device_id();
+		      spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
+            }; //  else   if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) 
+
+
       } else if ((dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
            dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) && 
-         (device_command.get_command_code()==system_settings::COMMAND_STOP ||
+         (device_command.get_command_code()==system_settings::COMMAND_CHANCEL ||
          device_command.get_command_code()==system_settings::COMMAND_ACCEPT )) {
           try {
              sound& snd=sound::get_instance();
-             snd.play("sounds/ringdin.wav");
+			std::vector<string> *files  = new std::vector<string> ();
+			files->push_back("sounds/ringdin.wav");
+             snd.play(files);
              dev_iter->second->send_command(device_command);
           } catch (spider_exception spr_exc) {
              system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
@@ -418,7 +565,19 @@ metro_devices_container::iterator dev_iter;
                                            <<device_command.get_device_id();
 		      spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
           };
-    } else if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_SHAVR) {
+      } else if ((dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
+           dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) && 
+		 device_command.get_command_code()==system_settings::COMMAND_STOP) {
+
+        cmd_pool_instance->push_back(device_command);
+           try {
+             cmd_pool_instance->prepare_to_display(); 
+          } catch (spider_exception spr_exc) {
+              system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+              spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_device_menu_item (..): In cmd_pool_instance->prepare_to_display() exception :"+spr_exc.get_description());
+          };
+    } else if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_SHAVR &&
+                    device_command.get_command_code()!=system_settings::COMMAND_CHANCEL) {
 
         cmd_pool_instance->push_back(device_command);
            try {
@@ -428,6 +587,23 @@ metro_devices_container::iterator dev_iter;
               spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In activate_device_menu_item (..): In cmd_pool_instance->prepare_to_display() exception :"+spr_exc.get_description());
           };
 
+    } else if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_SHAVR &&
+                    device_command.get_command_code()==system_settings::COMMAND_CHANCEL) {
+          try {
+             sound& snd=sound::get_instance();
+			std::vector<string> *files  = new std::vector<string>();
+			files->push_back("sounds/ringdin.wav");
+             snd.play(files);
+             dev_iter->second->send_command(device_command);
+          } catch (spider_exception spr_exc) {
+             system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+		     ostringstream exception_description;
+		     exception_description<<"In activate_device_menu_item raised exception "
+                                           <<spr_exc.get_description()
+                                           <<" device id  "
+                                           <<device_command.get_device_id();
+		      spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
+          };
     } else if (dev_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
                    device_command.get_command_code()==system_settings::COMMAND_ACCEPT) { 
           try {
@@ -435,7 +611,7 @@ metro_devices_container::iterator dev_iter;
           } catch (spider_exception spr_exc) {
              system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 		     ostringstream exception_description;
-		     exception_description<<"In activate_device_menu_item raised exception "
+		     exception_description<<"In item raised exception "
                                            <<spr_exc.get_description()
                                            <<" device id  "
                                            <<device_command.get_device_id();
@@ -468,8 +644,6 @@ metro_devices_container::iterator dev_iter;
   metro_devices_container *metro_devices=metro_devices_container::get_instance();
   metro_devices_container::iterator dev_iter;
 
-  cout<<"In activate_device_menu"<<endl;
-
   PtCallback_t tmp_callback;
   vector<PtCallback_t> callbacks;
   tmp_callback.event_f=activate_device_menu_item;
@@ -493,10 +667,17 @@ metro_devices_container::iterator dev_iter;
            spider_sys_sett->sys_message(system_settings::ERROR_MSG, excepiton_description.str());
            };
 
- appropriated_commands=dev_iter->second->get_appropriated_commands();
 
- if (appropriated_commands.empty()) 
+try {
+    appropriated_commands=dev_iter->second->get_appropriated_commands();
+  }  catch (spider_exception spr_exc) {
+           system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+           spider_sys_sett->sys_message(system_settings::ERROR_MSG, string("In activate_device_menu : ")+spr_exc.get_description ());
+  };
+
+ if (appropriated_commands.empty()) {
         return Pt_CONTINUE;
+    }
 
   args.clear();
   args.resize(1);

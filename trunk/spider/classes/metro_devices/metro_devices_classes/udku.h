@@ -6,13 +6,19 @@ private:
    	PtWidget_t *arrow;
 
 //udku properties widgets
-    PtWidget_t *udku_direction_combobox;
+    PtWidget_t *udku_pref_direction_combobox;
+    PtWidget_t *udku_start_direction_combobox;
     PtWidget_t *udku_start_mode_combobox;
     PtWidget_t *udku_start_hour;
     PtWidget_t *udku_start_minute;
 
    	pthread_t		tid;
    	int				pref_direction;
+   	int				start_direction;
+    int 				previous_direction;
+
+	double conduction_notification_delay;
+	time_t previous_stop_time;
 
     udku_data_block data_block;
 
@@ -25,6 +31,12 @@ private:
     void A0_z4(){A0_x1=system_settings::DIRECTION_DOWN;};
     void A0_z6(){A0_x2=true;};
     void A0_z7(){A0_x2=false;};
+    void A0_z8();
+    void A0_z9();
+    void A0_z10();
+    void A0_z11();
+
+	bool A0_x8();
 public:
 
 // automat A0 states
@@ -45,14 +57,20 @@ metro_udku(
      int id, 
      int id_station,
      int number,
+     int modbus_number,
      int type,
      int pref_direction,
      int	 start_day_mode,
      int	 start_hour,
      int	 start_minute,
+     int	 start_direction,
      int channel,
-     	bool enabled,
-     in_addr_t	new_ip) throw (spider_exception);
+     bool enabled,
+     in_addr_t	new_ip,
+	double offline_or_exception_delay,
+	double conduction_notification_delay,
+	bool new_conduction_is_switched_off,
+	bool new_log_packets) throw (spider_exception);
 
 virtual ~metro_udku();
 
@@ -63,6 +81,16 @@ virtual ~metro_udku();
    	int get_pref_direction() { return pref_direction; };   	
    	void set_pref_direction(int new_dir) { pref_direction=new_dir; A0_x1=new_dir; }; 
 
+   	int get_start_direction() { return start_direction; };
+   	void set_start_direction(int new_start_direction) { start_direction=new_start_direction; }; 
+
+   	int get_previous_direction() { return previous_direction; };
+   	void set_previous_direction(int new_previous_direction) { previous_direction=new_previous_direction; }; 
+
+	double get_conduction_notification_delay() {return conduction_notification_delay;};
+	time_t get_previous_stop_time() { return previous_stop_time;};
+	void set_previous_stop_time(time_t new_stop_time) { previous_stop_time = new_stop_time;};
+
 	metro_device::buffer_data_type get_4_function_request();
 	metro_device::buffer_data_type get_setting_time_request();
 
@@ -72,7 +100,8 @@ void
      decode_answer_from_device_4_function(metro_device::buffer_data_type answer) throw (spider_exception);
 
 
-    PtWidget_t* get_udku_direction_combobox_widget(){return udku_direction_combobox;};
+    PtWidget_t* get_udku_pref_direction_combobox_widget(){return udku_pref_direction_combobox;};
+    PtWidget_t* get_udku_start_direction_combobox_widget(){return udku_start_direction_combobox;};
     PtWidget_t* get_udku_start_mode_combobox_widget() {return udku_start_mode_combobox;};
     PtWidget_t* get_udku_start_hour_widget(){return udku_start_hour;};
     PtWidget_t* get_udku_start_minute_widget(){return udku_start_minute;};
@@ -98,8 +127,9 @@ virtual void decode_answer_from_device_to_data_block  ();
 virtual buffer_data_type get_request_for_send_to_device();
 
 virtual ::data_block* get_data_block() { return &data_block;};
-virtual command get_device_pref_command() throw (spider_exception);
-virtual vector<command> get_appropriated_commands();
+
+virtual command get_device_start_command() throw (spider_exception);
+virtual vector<command> get_appropriated_commands()  throw (spider_exception);
 
 virtual void create_properties_widgets(PtWidget_t *parent_widget);
 
