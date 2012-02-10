@@ -66,10 +66,10 @@ metro_escalator(
      int modbus_number,
      int type,
      int pref_direction,
-     int	 start_day_mode,
-     int	 start_hour,
-     int	 start_minute,
-     int  start_direction,
+     int start_day_mode,
+     int start_hour,
+     int start_minute,
+     int start_direction,
      int channel,
      bool enabled,
      in_addr_t	new_ip,
@@ -115,16 +115,16 @@ void
 
 /*
 virtual methods
-*/   	
+*/
 
 virtual int get_type_description() {return metro_device_type::DEVICE_TYPE_ESCALATOR;};
 virtual void send_command(command cmd) throw (spider_exception);
 virtual void create_device_widget(int x,
-                                                  int y,
-                                                  ApDBase_t*  widgets_dbase,
-                                                  PtWidget_t *station_widget,
-                                                  vector<PtCallback_t> activate_callbacks,
-                                                  vector<PtCallback_t> menu_callbacks) throw (spider_exception);
+                                  int y,
+                                  ApDBase_t*  widgets_dbase,
+                                  PtWidget_t *station_widget,
+                                  vector<PtCallback_t> activate_callbacks,
+                                  vector<PtCallback_t> menu_callbacks) throw (spider_exception);
 virtual void update_device_widget() throw (spider_exception);
 virtual PhRect_t get_device_widget_extent() throw (spider_exception);
 virtual void update_device_panel(metro_device_type *dev_type) throw (spider_exception);
