@@ -82,7 +82,8 @@ metro_escalator::metro_escalator(
 		double offline_or_exception_delay,
 		double new_conduction_notification_delay,
 		bool new_conduction_is_switched_off, 
-        bool new_log_packets) throw (spider_exception):
+        bool new_log_packets,
+		int new_door_id) throw (spider_exception):
 
 	metro_device( id,
                    id_station,
@@ -107,6 +108,7 @@ metro_escalator::metro_escalator(
 	pref_direction(pref_direction),
 	start_direction(start_direction),
     previous_direction(pref_direction),
+	door_id(new_door_id)
 	conduction_notification_delay(new_conduction_notification_delay),
 	previous_stop_time(time(NULL)),
     A0_x2(true), //state accepted
@@ -1105,6 +1107,31 @@ ldword tmp_id;
 
 };
 
+void send_datablock_to_door(metro_devices_container::iterator& devices_iter, byte data_to_send)
+{
+	 metro_device::buffer_data_type data_to_door;
+	 system_settings::bytes tmp_bytes;
+
+
+	 data_to_door.clear();
+	 data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
+	 data_to_door.push_back(4); //function code
+	 data_to_door.push_back(2); //data bytes count
+	 data_to_door.push_back(0); //high byte
+	 //low byte
+	 data_to_door.push_back(data_to_send);
+
+	tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
+	data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
+	devices_iter->second->set_answer_from_device_buffer(data_to_door);
+
+   MsgSendPulse(devices_iter->second->get_connection_id(),
+							system_settings_spider::PHOTON_THREAD_PULSE,
+							system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
+							 devices_iter->second->get_id());
+
+}
+
 void metro_escalator::decode_answer_from_device_4_function
                          (metro_device::buffer_data_type answer) throw (spider_exception){
    system_settings_spider *sys_sett=system_settings_spider::get_instance();
@@ -1375,7 +1402,14 @@ void metro_escalator::decode_answer_from_device_4_function
                  metro_device::buffer_data_type data_to_door;
                  system_settings::bytes tmp_bytes;
 
+				 byte door_data_to_send = 0;
+			 	 if (local_data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)==escalator_data_block::SIGNAL_VALUE_RED)  {
+					door_data_to_send = 1;
+				};
+
+				 
                  if (stations!=NULL && devices!=NULL) {
+					if (door_id <0) { //this case when no info added for door
                           stations_iter=stations->find(metro_device::get_station_id());
                           if (stations_iter!=stations->end()) {
                                 metro_station::iterator_devices_id station_devices_ids=stations_iter->second.begin_devices_id();
@@ -1384,32 +1418,13 @@ void metro_escalator::decode_answer_from_device_4_function
                                      if (devices_iter!=devices->end()) {
                                           if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
                                                devices_iter->second->get_enabled()) {
-                                             data_to_door.clear();
-                                             data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
-                                             data_to_door.push_back(4); //function code
-                                             data_to_door.push_back(2); //data bytes count
-                                             data_to_door.push_back(0); //high byte
-                                             //low byte
-                                             if (local_data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)==escalator_data_block::SIGNAL_VALUE_RED)  {
-                                                     data_to_door.push_back(1);
-                                                   } else  {
-                                                     data_to_door.push_back(0);
-                                                   };
-
-	                                        tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
-                                            data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
-                                            devices_iter->second->set_answer_from_device_buffer(data_to_door);
-
-                                           MsgSendPulse(devices_iter->second->get_connection_id(),
-                                                                    system_settings_spider::PHOTON_THREAD_PULSE,
-                                                                    system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
-                                                                     devices_iter->second->get_id());
-
+											   send_datablock_to_door(devices_iter, door_data_to_send);
                                           }; //if (devices_iter->second->get_type_description()
                                       }; //if (devices_iter=devices->end())
                                      station_devices_ids++;
                                 }; //while(station_devices_ids!=stations_iter->second->end_devices_id()
-                          }; //if (stations_iter=stations->end())
+							}; //if (stations_iter=stations->end())
+						};//if (door_id <0) {
                       }; //if (stations!=NULL)
               }; //if (data_block.get_signal_value(escalator_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
 
