@@ -2,26 +2,26 @@
 #define _ESCALATOR_
 
 class metro_escalator : public metro_device {
-private: 				
+private: 
    	PtWidget_t *arrow;
 
 //escalator properties widgets
-    PtWidget_t *escalator_pref_direction_combobox;
-    PtWidget_t *escalator_start_direction_combobox;
-    PtWidget_t *escalator_start_mode_combobox;
-    PtWidget_t *escalator_start_hour;
-    PtWidget_t *escalator_start_minute;
+	PtWidget_t	*escalator_pref_direction_combobox;
+	PtWidget_t	*escalator_start_direction_combobox;
+	PtWidget_t	*escalator_start_mode_combobox;
+	PtWidget_t	*escalator_start_hour;
+	PtWidget_t	*escalator_start_minute;
 
-   	pthread_t		tid;
-   	int				pref_direction;
-   	int				start_direction;
-    int				previous_direction;
-
+	pthread_t		tid;
+	int				pref_direction;
+	int				start_direction;
+	int				previous_direction;
+	int 			door_id;
 
 	double conduction_notification_delay;
 	time_t previous_stop_time;
 
-    escalator_data_block data_block;
+	escalator_data_block data_block;
 protected:
 	bool A0_x0, A0_x2, A0_x3, A0_x4, A0_x5, A0_x6;
 	int  A0_x1, A0_state;
@@ -60,23 +60,24 @@ constructors and destructors
 */	
 
 metro_escalator(
-     int id, 
-     int id_station,
-     int number,
-     int modbus_number,
-     int type,
-     int pref_direction,
-     int start_day_mode,
-     int start_hour,
-     int start_minute,
-     int start_direction,
-     int channel,
-     bool enabled,
-     in_addr_t	new_ip,
-    double offline_or_exception_delay,
+	int id, 
+	int id_station,
+	int number,
+	int modbus_number,
+	int type,
+	int pref_direction,
+	int start_day_mode,
+	int start_hour,
+	int start_minute,
+	int start_direction,
+	int channel,
+	bool enabled,
+	in_addr_t	new_ip,
+	double offline_or_exception_delay,
 	double conduction_notification_delay,
 	bool new_conduction_is_switched_off,
-	bool new_log_packets) throw (spider_exception);
+	bool new_log_packets,
+	int new_door_id = -1) throw (spider_exception);
 
 virtual ~metro_escalator();
 

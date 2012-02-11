@@ -12,10 +12,11 @@ private:
     PtWidget_t *udku_start_hour;
     PtWidget_t *udku_start_minute;
 
-   	pthread_t		tid;
-   	int				pref_direction;
-   	int				start_direction;
-    int 				previous_direction;
+	pthread_t	tid;
+	int			pref_direction;
+	int			start_direction;
+	int 		previous_direction;
+	int 		door_id;
 
 	double conduction_notification_delay;
 	time_t previous_stop_time;
@@ -70,7 +71,8 @@ metro_udku(
 	double offline_or_exception_delay,
 	double conduction_notification_delay,
 	bool new_conduction_is_switched_off,
-	bool new_log_packets) throw (spider_exception);
+	bool new_log_packets,
+	int new_door_id = -1) throw (spider_exception);
 
 virtual ~metro_udku();
 
