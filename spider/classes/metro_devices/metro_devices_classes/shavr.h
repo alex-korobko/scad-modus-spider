@@ -38,6 +38,9 @@ void A0(int event)
 void A0_z1() {A0_x5=true;};
 void A0_z2() {A0_x5=false;};
 
+protected:
+	int door_id;
+
 public:
    enum {
          A0_OFFLINE=0,
@@ -70,7 +73,8 @@ metro_shavr(
 		in_addr_t	new_ip,
 		time_t offline_or_exception_delay,
 		bool new_conduction_is_switched_off,
-		bool new_log_packets) throw (spider_exception);
+		bool new_log_packets,
+		int new_door_id = -1) throw (spider_exception);
 
 virtual ~metro_shavr();
 

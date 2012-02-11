@@ -168,7 +168,7 @@ system_settings_spider *sys_sett_obj=	system_settings_spider::get_instance();
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,
 			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, 
 			PREDEFINED_DIRECTION, START_DIRECTION, OFFLINE_DELAY,
-			CONDUCTION_DELAY, LOG_PACKETS, ENTRIES_COUNT};
+			CONDUCTION_DELAY, LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
 
 string entry_name;
 ostringstream exception_description;
@@ -196,13 +196,14 @@ entries_names[START_DIRECTION]="start_direction";
 entries_names[OFFLINE_DELAY]="after_offline_delay";
 entries_names[CONDUCTION_DELAY] = "conduct_notify_delay";
 entries_names[LOG_PACKETS] = "log_packets";
+entries_names[DOOR_ID] = "door_id";
 
 if (PxConfigReadInt( NULL, 
-			                     entries_names[ID].c_str(), 
-			                     -1, 
-			                     &id_device)!=Pt_TRUE) {
-        exception_description<<"save_escalator_parameters: can`t read entry - id";
-	    throw spider_exception(exception_description.str());
+					entries_names[ID].c_str(), 
+					-1, 
+					&id_device)!=Pt_TRUE) {
+		exception_description<<"save_escalator_parameters: can`t read entry - id";
+		throw spider_exception(exception_description.str());
 	};
 
 	iterator	 iter_dev=this->find(id_device);
@@ -273,9 +274,9 @@ void 	metro_devices_container::save_udku_parameters ()  throw (spider_exception)
 
 system_settings_spider *sys_sett_obj=	system_settings_spider::get_instance();
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,
-			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, 
-			PREDEFINED_DIRECTION, START_DIRECTION, OFFLINE_DELAY,
-			CONDUCTION_DELAY, LOG_PACKETS, ENTRIES_COUNT};
+		IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, 
+		PREDEFINED_DIRECTION, START_DIRECTION, OFFLINE_DELAY,
+		CONDUCTION_DELAY, LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
 
 string entry_name;
 ostringstream exception_description;
@@ -303,6 +304,7 @@ entries_names[START_DIRECTION]="start_direction";
 entries_names[OFFLINE_DELAY]="after_offline_delay";
 entries_names[CONDUCTION_DELAY] = "conduct_notify_delay";
 entries_names[LOG_PACKETS] = "log_packets";
+entries_names[DOOR_ID] = "door_id";
 
 if (PxConfigReadInt( NULL, 
 			                     entries_names[ID].c_str(), 
@@ -329,22 +331,22 @@ if (PxConfigReadInt( NULL,
 	metro_udku *udku = dynamic_cast<metro_udku*> (metro_device);
 
 	if (PxConfigWriteInt( NULL, 
-			                    entries_names[START_HOUR].c_str(), 
-   				                PXCONFIG_FMT_INT_DECIMAL, 
-			                    udku->get_start_hour())!=Pt_TRUE) {
+						entries_names[START_HOUR].c_str(), 
+						PXCONFIG_FMT_INT_DECIMAL, 
+						udku->get_start_hour())!=Pt_TRUE) {
 	       exception_description<<"save_udku_parameters: PxConfigWriteInt START_HOUR !=Pt_TRUE device_id ";
 	       exception_description<<id_device;
            throw spider_exception(exception_description.str());
            };
 
 	if (PxConfigWriteInt( NULL, 
-			                    entries_names[START_MINUTE].c_str(), 
-   				                PXCONFIG_FMT_INT_DECIMAL, 
-			                    udku->get_start_minute())!=Pt_TRUE){
-	       exception_description<<"save_udku_parameters: PxConfigWriteInt START_MINUTE !=Pt_TRUE device_id ";
-	       exception_description<<id_device;
-           throw spider_exception(exception_description.str());
-           };
+						entries_names[START_MINUTE].c_str(), 
+						PXCONFIG_FMT_INT_DECIMAL, 
+						udku->get_start_minute())!=Pt_TRUE){
+			exception_description<<"save_udku_parameters: PxConfigWriteInt START_MINUTE !=Pt_TRUE device_id ";
+			exception_description<<id_device;
+			throw spider_exception(exception_description.str());
+		};
 	
 	if (PxConfigWriteString( NULL, 
 			                    entries_names[START_DAY_MODE].c_str(), 
@@ -472,9 +474,8 @@ function write error message and return false.
 */
 
 void 
-	metro_devices_container::load_door_parameters (
-                                    int channel) // channel where devices must be attached
-                                    throw (spider_exception) {
+	metro_devices_container::load_door_parameters (int channel) // channel where devices must be attached
+					throw (spider_exception) {
 
 metro_stations_container *metro_stat_obj=metro_stations_container::get_instance();
 metro_devices_types_container *metro_dev_types=metro_devices_types_container::get_instance();
@@ -717,7 +718,7 @@ system_settings_spider *sys_sett_obj=system_settings_spider::get_instance();
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,
 			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, 
 			PREDEFINED_DIRECTION, START_DIRECTION, OFFLINE_DELAY,
-			CONDUCTION_DELAY, LOG_PACKETS, ENTRIES_COUNT};
+			CONDUCTION_DELAY, LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
 
 ostringstream exception_description;
 const char *entry_name_c_str;
@@ -728,7 +729,8 @@ vector<string> entries_names(ENTRIES_COUNT);
 
 int id_device=-1, id_station=-1, dev_type=-1, number=-1, modbus_number=-1,
 	predef_direction=-1, start_direction=-1, start_day_mode=-1, 
-	start_hour=-1, start_minute=-1,  enabled=system_settings::DISABLED, log_enabled = system_settings::DISABLED;
+	start_hour=-1, start_minute=-1,  enabled=system_settings::DISABLED, 
+	log_enabled = system_settings::DISABLED, door_id=-1;
 
 in_addr_t ip=INADDR_NONE;
 time_t offline_delay = system_settings::OFFLINE_DELAY;
@@ -753,6 +755,7 @@ entries_names[START_DIRECTION]="start_direction";
 entries_names[OFFLINE_DELAY] = "after_offline_delay";
 entries_names[CONDUCTION_DELAY] = "conduct_notify_delay";
 entries_names[LOG_PACKETS] = "log_packets";
+entries_names[DOOR_ID] = "door_id";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
 							                        temp_str.size()
@@ -989,12 +992,15 @@ if (entry_name.compare(entries_names[ID])==0)
 					if (outer_states_strings[temp_int].compare(&temp_str[0])==0) {
 							log_enabled = temp_int;					
 						} else {
-                           exception_description<<"In load_door_parameters: Wrong device enabled state (enabled/disabled)  ";
-                           exception_description<<&temp_str[0];
-                           throw spider_exception(exception_description.str());
+							exception_description<<"In load_door_parameters: Wrong device enabled state (enabled/disabled)  ";
+							exception_description<<&temp_str[0];
+							throw spider_exception(exception_description.str());
 						};
 				};	
 
+	} else if (entry_name.compare(entries_names[DOOR_ID])==0) {
+
+			door_id = atoi(&temp_str[0]);
 
 	} else {
             exception_description<<"In load_escalator_parameters: Unrecognized config entry  ";
@@ -1033,25 +1039,27 @@ if (id_device>0 &&
 	metro_stations_container::iterator iter_stat;
 	iter_stat=metro_stat_obj->find(id_station);
 	if (iter_stat!=metro_stat_obj->end()) {
-                  value_type insert_dev_value(id_device,
-					                 new metro_escalator
-										 (	id_device,
-											id_station,
-											number,
-											modbus_number,
-											dev_type,
-											predef_direction,
-                                            start_day_mode,
-											start_hour,
-											start_minute,
-											start_direction,
-											channel,
-											enabled,
-											ip,
-											offline_delay,
-											conduct_notif_delay,
-											sending_commands_disabled,
-											log_enabled) );
+		value_type insert_dev_value(
+			id_device,
+			new metro_escalator
+				(id_device,
+				id_station,
+				number,
+				modbus_number,
+				dev_type,
+				predef_direction,
+				start_day_mode,
+				start_hour,
+				start_minute,
+				start_direction,
+				channel,
+				enabled,
+				ip,
+				offline_delay,
+				conduct_notif_delay,
+				sending_commands_disabled,
+				log_enabled,
+				door_id) );
 
 				iter_stat->second.push_back_devices_id(id_device); 
 				this->set_current_device(this->insert(this->upper_bound(id_device), insert_dev_value));	
@@ -1078,7 +1086,7 @@ system_settings_spider *sys_sett_obj=system_settings_spider::get_instance();
 
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,  ESCALATOR_ID,
 			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, OFFLINE_DELAY,
-			LOG_PACKETS,  ENTRIES_COUNT};
+			LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
 
 ostringstream exception_description;
 const char *entry_name_c_str;
@@ -1089,7 +1097,7 @@ vector<string> entries_names(ENTRIES_COUNT);
 
 int id_device=-1, id_station=-1, dev_type=-1, number=-1, modbus_number=-1,
 	 start_day_mode=-1, start_hour=-1, start_minute=-1,  enabled=system_settings::DISABLED, 
-	 log_enabled=system_settings::DISABLED;
+	 log_enabled=system_settings::DISABLED, door_id = -1;
 
 in_addr_t ip=INADDR_NONE;
 time_t offline_delay = system_settings::OFFLINE_DELAY;
@@ -1113,10 +1121,9 @@ entries_names[START_HOUR]="start hour";
 entries_names[START_MINUTE]="start minute";
 entries_names[OFFLINE_DELAY] = "after_offline_delay";
 entries_names[LOG_PACKETS] = "log_packets";
+entries_names[DOOR_ID] = "door_id";
 
-entry_name_c_str=PxConfigNextString(&temp_str[0], 
-							                        temp_str.size()
-							                      );
+entry_name_c_str=PxConfigNextString(&temp_str[0], temp_str.size());
 
 while(entry_name_c_str!=NULL)
 {
@@ -1321,7 +1328,10 @@ if (entry_name.compare(entries_names[ID])==0) {
                            exception_description<<&temp_str[0];
                            throw spider_exception(exception_description.str());
 						};
-				};	
+				};
+
+	} else if (entry_name.compare(entries_names[DOOR_ID])==0) { 	
+			door_id = atoi(&temp_str[0]); 
 
 	} else {
             exception_description<<"In load_shavr_parameters: Unrecognized config entry  ";
@@ -1374,7 +1384,8 @@ if (id_device>0 &&
 															ip,
 															offline_delay,
 															sending_commands_disabled,
-															log_enabled) );
+															log_enabled,
+															door_id) );
 
 				iter_stat->second.push_back_devices_id(id_device); 
 				this->set_current_device(this->insert(this->upper_bound(id_device), ins_device_value));
@@ -1409,7 +1420,7 @@ system_settings_spider *sys_sett_obj=system_settings_spider::get_instance();
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,
 			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, 
 			PREDEFINED_DIRECTION, START_DIRECTION, OFFLINE_DELAY, 
-			CONDUCTION_DELAY, LOG_PACKETS, ENTRIES_COUNT};
+			CONDUCTION_DELAY, LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
 
 ostringstream exception_description;
 const char *entry_name_c_str;
@@ -1421,7 +1432,7 @@ vector<string> entries_names(ENTRIES_COUNT);
 int id_device=-1, id_station=-1, dev_type=-1, number=-1, modbus_number=-1,
 	predef_direction=-1, start_day_mode=-1, 
 	start_hour=-1, start_minute=-1, start_direction=-1, enabled=system_settings::DISABLED,
-	log_enabled=system_settings::DISABLED;
+	door_id = -1, log_enabled=system_settings::DISABLED;
 
 in_addr_t ip=INADDR_NONE;
 time_t offline_delay = system_settings::OFFLINE_DELAY;
@@ -1446,9 +1457,10 @@ entries_names[START_DIRECTION]="start_direction";
 entries_names[OFFLINE_DELAY]= "after_offline_delay";
 entries_names[CONDUCTION_DELAY] = "conduct_notify_delay";
 entries_names[LOG_PACKETS] = "log_packets";
+entries_names[DOOR_ID] = "door_id";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0], 
-							                        temp_str.size() );
+									temp_str.size() );
 
 while(entry_name_c_str!=NULL) {
 entry_name=entry_name_c_str;
@@ -1673,6 +1685,10 @@ if (entry_name.compare(entries_names[ID])==0) {
 						};
 				};	
 
+	} else if (entry_name.compare(entries_names[DOOR_ID])==0) {
+
+			door_id = atoi(&temp_str[0]);
+
 	} else {
             exception_description<<"In load_udku_parameters: Unrecognized config entry  ";
             exception_description<<entry_name;
@@ -1728,7 +1744,8 @@ if (id_device>0 &&
 											offline_delay,
 											conduct_notif_delay,
 											sending_commands_disabled,
-											log_enabled) );
+											log_enabled,
+											door_id) );
 
 				iter_stat->second.push_back_devices_id(id_device); 
 				this->set_current_device(this->insert(this->upper_bound(id_device), insert_dev_value));	

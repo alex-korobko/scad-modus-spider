@@ -61,8 +61,8 @@ extern bool setting_start_time_disabled;
 //see staton_devices_properties_callbacks.cpp
 int
 activate_ok_button_in_escalator_properties( PtWidget_t *widget, 
-                                                                     ApInfo_t *apinfo, 
-                                                                   PtCallbackInfo_t *cbinfo );
+											ApInfo_t *apinfo, 
+											PtCallbackInfo_t *cbinfo );
 
 
 metro_escalator::metro_escalator(
@@ -72,54 +72,54 @@ metro_escalator::metro_escalator(
 		int modbus_number,
 		int type,
 		int pref_direction,
-	   	int	 start_day_mode,
-	   	int	 start_hour,
-	   	int	 start_minute,
-	   	int	 start_direction,
-        int channel,
+		int	 start_day_mode,
+		int	 start_hour,
+		int	 start_minute,
+		int	 start_direction,
+		int channel,
 		bool enabled,
 		in_addr_t	ip,
 		double offline_or_exception_delay,
 		double new_conduction_notification_delay,
 		bool new_conduction_is_switched_off, 
-        bool new_log_packets,
+		bool new_log_packets,
 		int new_door_id) throw (spider_exception):
 
 	metro_device( id,
-                   id_station,
-                   number,
-                   modbus_number,
-                   type,
-                   start_day_mode,
-                   start_hour,
-                   start_minute,
-                   enabled,
-                   ip,
-                   channel,
+					id_station,
+					number,
+					modbus_number,
+					type,
+					start_day_mode,
+					start_hour,
+					start_minute,
+					enabled,
+					ip,
+					channel,
 					offline_or_exception_delay,
 					new_conduction_is_switched_off,
 					new_log_packets),
-   arrow(NULL),
-   escalator_pref_direction_combobox(NULL),
-   escalator_start_direction_combobox(NULL),
-   escalator_start_hour(NULL),
-   escalator_start_minute(NULL),
+	arrow(NULL),
+	escalator_pref_direction_combobox(NULL),
+	escalator_start_direction_combobox(NULL),
+	escalator_start_hour(NULL),
+	escalator_start_minute(NULL),
 	tid(0),	
 	pref_direction(pref_direction),
 	start_direction(start_direction),
     previous_direction(pref_direction),
-	door_id(new_door_id)
+	door_id(new_door_id),
 	conduction_notification_delay(new_conduction_notification_delay),
 	previous_stop_time(time(NULL)),
-    A0_x2(true), //state accepted
+	A0_x2(true), //state accepted
 	A0_x5(false),  //offline
 	A0_x6(false),  //last request to device failed
-    A0_x1(pref_direction), //predefined direction
-    A0_state(A0_OFFLINE){};
+	A0_x1(pref_direction), //predefined direction
+	A0_state(A0_OFFLINE){};
 
 	metro_escalator::~metro_escalator() {
-       if (tid!=0) {
-           pthread_cancel(tid);
+		if (tid!=0) {
+			pthread_cancel(tid);
 		};
 };
 
@@ -131,81 +131,79 @@ void metro_escalator::A0(int event)  throw (spider_exception){
 
  switch (A0_state) {
 
-    case A0_NOT_READY:
-          if (!A0_x5) {
-            A0_state=A0_OFFLINE;
-            break;
-            };
-          if (!A0_x6) {
-            A0_state=A0_EXCEPTION;
-            break;
-           };
-          if (A0_x4 && !A0_x0) {
-            A0_state=A0_READY_NOT_ACCEPTED;
-            break;
-            };
-          if (A0_x0) {
-           A0_state=A0_RUN;
-            break;
-            };
-     break;
+	case A0_NOT_READY:
+		if (!A0_x5) {
+			A0_state=A0_OFFLINE;
+			break;
+		};
+		if (!A0_x6) {
+			A0_state=A0_EXCEPTION;
+			break;
+		};
+		if (A0_x4 && !A0_x0) {
+			A0_state=A0_READY_NOT_ACCEPTED;
+			break;
+		};
+		if (A0_x0) {
+		A0_state=A0_RUN;
+			break;
+		};
+	break;
 
-    case A0_READY_NOT_ACCEPTED:
-          if (!A0_x5) {
-            A0_state=A0_OFFLINE;
-            break;
-            };
-          if (!A0_x6) {
-            A0_state=A0_EXCEPTION;
-            break;
-           };
-         if (!A0_x4)  {
-            A0_state=A0_NOT_READY;
-            break;
-            };
-         if (A0_x0)  {
-            A0_state=A0_RUN;
-            break;
-            };
-          switch (event) {
-           case 3:
-           if (A0_x3) {
-               A0_state=A0_STARTING;
-               A0_z3();
-                break;
-               };
-            break;
-           case 4:
-             if (A0_x3) {
-               A0_state=A0_STARTING;
-               A0_z4();
-               break;
-               };
-            break;
-           case 6:
-               A0_state=A0_READY;
-            break;
-          }; //switch (event)
+	case A0_READY_NOT_ACCEPTED:
+		if (!A0_x5) {
+			A0_state=A0_OFFLINE;
+			break;
+		};
+		if (!A0_x6) {
+			A0_state=A0_EXCEPTION;
+			break;
+		};
+		if (!A0_x4)  {
+			A0_state=A0_NOT_READY;
+			break;
+		};
+		if (A0_x0)  {
+			A0_state=A0_RUN;
+			break;
+		};
+		switch (event) {
+			case 3:
+				if (A0_x3) {
+					A0_state=A0_STARTING;
+					A0_z3();
+				};
+			break;
+			case 4:
+				if (A0_x3) {
+					A0_state=A0_STARTING;
+					A0_z4();
+				};
+			break;
+			case 6:
+				A0_state=A0_READY;
+			break;
+		}; //switch (event)
 
-    break;
+	break;
 
-    case A0_READY:
-          if (!A0_x5) {
-            A0_state=A0_OFFLINE;
-            break;
-            };
-          if (!A0_x6) {
-            A0_state=A0_EXCEPTION;
-            break;
-           };
-         if (!A0_x4)  {
-            A0_state=A0_NOT_READY;
-            break;
-            };
-         if (A0_x0)  {
-            A0_state=A0_RUN;
-            break;
-            };
+	case A0_READY:
+		if (!A0_x5) {
+			A0_state=A0_OFFLINE;
+			break;
+		};
+		if (!A0_x6) {
+			A0_state=A0_EXCEPTION;
+			break;
+		};
+		if (!A0_x4)  {
+			A0_state=A0_NOT_READY;
+			break;
+		};
+		if (A0_x0)  {
+			A0_state=A0_RUN;
+			break;
+		};
 
           switch (event) {
            case 3:
@@ -1107,30 +1105,7 @@ ldword tmp_id;
 
 };
 
-void send_datablock_to_door(metro_devices_container::iterator& devices_iter, byte data_to_send)
-{
-	 metro_device::buffer_data_type data_to_door;
-	 system_settings::bytes tmp_bytes;
-
-
-	 data_to_door.clear();
-	 data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
-	 data_to_door.push_back(4); //function code
-	 data_to_door.push_back(2); //data bytes count
-	 data_to_door.push_back(0); //high byte
-	 //low byte
-	 data_to_door.push_back(data_to_send);
-
-	tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
-	data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
-	devices_iter->second->set_answer_from_device_buffer(data_to_door);
-
-   MsgSendPulse(devices_iter->second->get_connection_id(),
-							system_settings_spider::PHOTON_THREAD_PULSE,
-							system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
-							 devices_iter->second->get_id());
-
-}
+void send_datablock_to_door(metro_devices_container::iterator& devices_iter, byte data_to_send);
 
 void metro_escalator::decode_answer_from_device_4_function
                          (metro_device::buffer_data_type answer) throw (spider_exception){
@@ -1393,40 +1368,37 @@ void metro_escalator::decode_answer_from_device_4_function
                   advance(tmp_iter2, 2);
 			    };
 
-           if (data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)!=
-                local_data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)) {
-                 metro_stations_container *stations=metro_stations_container::get_instance();
-                 metro_stations_container::iterator stations_iter;
-                 metro_devices_container *devices=metro_devices_container::get_instance();
-                 metro_devices_container::iterator devices_iter;
-                 metro_device::buffer_data_type data_to_door;
-                 system_settings::bytes tmp_bytes;
+			if (data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)!=
+				local_data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)) {
+				metro_stations_container *stations=metro_stations_container::get_instance();
+				metro_stations_container::iterator stations_iter;
+				metro_devices_container *devices=metro_devices_container::get_instance();
+				metro_devices_container::iterator devices_iter;
+				metro_device::buffer_data_type data_to_door;
+				system_settings::bytes tmp_bytes;
 
 				 byte door_data_to_send = 0;
 			 	 if (local_data_block.get_signal_value(escalator_data_block::INDEX_OF_MASHZAL_DOOR)==escalator_data_block::SIGNAL_VALUE_RED)  {
 					door_data_to_send = 1;
 				};
 
-				 
-                 if (stations!=NULL && devices!=NULL) {
+				if (stations!=NULL && devices!=NULL) {
 					if (door_id <0) { //this case when no info added for door
-                          stations_iter=stations->find(metro_device::get_station_id());
-                          if (stations_iter!=stations->end()) {
-                                metro_station::iterator_devices_id station_devices_ids=stations_iter->second.begin_devices_id();
-                                while(station_devices_ids!=stations_iter->second.end_devices_id()) {
-                                     devices_iter=devices->find(*station_devices_ids);
-                                     if (devices_iter!=devices->end()) {
-                                          if (devices_iter->second->get_type_description()==metro_device_type::DEVICE_TYPE_DOOR &&
-                                               devices_iter->second->get_enabled()) {
-											   send_datablock_to_door(devices_iter, door_data_to_send);
-                                          }; //if (devices_iter->second->get_type_description()
-                                      }; //if (devices_iter=devices->end())
-                                     station_devices_ids++;
-                                }; //while(station_devices_ids!=stations_iter->second->end_devices_id()
-							}; //if (stations_iter=stations->end())
-						};//if (door_id <0) {
-                      }; //if (stations!=NULL)
-              }; //if (data_block.get_signal_value(escalator_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
+						stations_iter=stations->find(metro_device::get_station_id());
+						if (stations_iter!=stations->end()) {
+							metro_station::iterator_devices_id station_devices_ids=stations_iter->second.begin_devices_id();
+							while(station_devices_ids!=stations_iter->second.end_devices_id()) {
+								devices_iter=devices->find(*station_devices_ids);
+								send_datablock_to_door(devices_iter, door_data_to_send);
+								station_devices_ids++;
+							}; //while(station_devices_ids!=stations_iter->second->end_devices_id()
+						}; //if (stations_iter=stations->end())
+					} else {//if (door_id <0) {
+						devices_iter=devices->find(door_id);
+						send_datablock_to_door(devices_iter, door_data_to_send);
+					};//if (door_id <0)
+				}; //if (stations!=NULL)
+			}; //if (data_block.get_signal_value(escalator_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
 
 	 }
 

@@ -35,6 +35,8 @@ using namespace std;
 #include "msg_dict_container.h"
 #include "devices_types.h"
 #include "metro_devices_types_container.h"
+class timer_command;
+#include "metro_devices_container.h"
 
 #include "metro_device.h"
 
@@ -56,29 +58,30 @@ metro_device::metro_device(int  id,
 					bool new_conduction_is_switched_off,
 					bool new_log_packets
                    )  throw (spider_exception):
-                   id(id),
-                   id_station(id_station),
-                   number(number),
-                   modbus_number(modbus_number),
-                   type(type),
-                   execution_mode(start_day_mode),
-                   start_hour(start_hour),
-                   start_minute(start_minute),
-                   sleepticks(0),
-                   enabled(enabled),
-				   conduction_is_switched_off(new_conduction_is_switched_off),
-                   last_failures_count(0),
-                   last_message_remote_id(-1),
-                   last_message_remote_time(0),
-                   ip(ip),
-                   answer_from_device(0),
-                   request_for_send_to_device(0),
-                   current_request_to_device(0),
-				   connection_id(0),
-				   channel_id(0),
-				  last_offline_or_exception_time (0),
-				  offline_or_exception_delay(offline_or_exception_delay),
-				 log_packets(new_log_packets) {
+				id(id),
+				id_station(id_station),
+				number(number),
+				modbus_number(modbus_number),
+				type(type),
+				execution_mode(start_day_mode),
+				start_hour(start_hour),
+				start_minute(start_minute),
+				sleepticks(0),
+				enabled(enabled),
+				conduction_is_switched_off(new_conduction_is_switched_off),
+				last_failures_count(0),
+				last_message_remote_id(-1),
+				last_message_remote_time(0),
+				ip(ip),
+
+				request_for_send_to_device(0),
+				current_request_to_device(0),
+				connection_id(0),
+				channel_id(0),
+				last_offline_or_exception_time (0),
+				offline_or_exception_delay(offline_or_exception_delay),
+				log_packets(new_log_packets),
+				answer_from_device(0){
 
 		connection_id = ConnectAttach(0, 0, channel, 0, 0 );
 		if (connection_id<0){
@@ -387,3 +390,35 @@ metro_device::buffer_data_type
 
    	return buffer;
 };
+
+void send_datablock_to_door(metro_devices_container::iterator& devices_iter, byte data_to_send)
+{
+	 metro_device::buffer_data_type data_to_door;
+	 system_settings::bytes tmp_bytes;
+	 metro_devices_container *devices=metro_devices_container::get_instance();
+
+
+	if ((devices_iter==devices->end()) ||
+		(devices_iter->second->get_type_description()!=metro_device_type::DEVICE_TYPE_DOOR) ||
+		devices_iter->second->get_enabled()) {
+		return;
+	};
+
+	 data_to_door.clear();
+	 data_to_door.push_back(devices_iter->second->get_modbus_number()); //modbus device number
+	 data_to_door.push_back(4); //function code
+	 data_to_door.push_back(2); //data bytes count
+	 data_to_door.push_back(0); //high byte
+	 //low byte
+	 data_to_door.push_back(data_to_send);
+
+	tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(data_to_door));
+	data_to_door.insert(data_to_door.end(), tmp_bytes.begin(), tmp_bytes.end());
+	devices_iter->second->set_answer_from_device_buffer(data_to_door);
+
+   MsgSendPulse(devices_iter->second->get_connection_id(),
+				system_settings_spider::PHOTON_THREAD_PULSE,
+				system_settings_spider::PULSE_CODE_UPDATE_DEVICE,
+				 devices_iter->second->get_id());
+
+}
