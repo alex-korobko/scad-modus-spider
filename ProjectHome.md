@@ -1,0 +1,1 @@
+SCADA like system to work with remote devices
