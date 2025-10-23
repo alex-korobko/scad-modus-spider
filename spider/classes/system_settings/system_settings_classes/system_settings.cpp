@@ -16,7 +16,7 @@ using namespace std;
 #include "spider_exception.h"
 #include "system_settings.h"
 
-const string app_version="ver 1.5.1.1 ";
+const string app_version="ver 1.5.2.0 ";
 
 system_settings::system_settings() : 
 	escalator_mode_text(ESCALATOR_MODES_COUNT),
@@ -70,18 +70,25 @@ system_settings::system_settings() :
 		udku_mode_text[UDKU_MODE_BRAKKSR]="Нет контакта стыковки разъемов ДКСЭ";
 		udku_mode_text[UDKU_MODE_UNUSED]="-";
 
-		udku_type_text[UDKU_TYPE_LT_1]="ЛТ-1 0.75 м/с";
-		udku_type_text[UDKU_TYPE_LT_2]="ЛТ-2 0.90 м/с";
-		udku_type_text[UDKU_TYPE_LT_3]="ЛТ-3 0.90 м/с";
-		udku_type_text[UDKU_TYPE_LT_4]="ЛТ-4 0.88 м/с";
-		udku_type_text[UDKU_TYPE_LT_5]="ЛТ-5 0.90 м/с";
+		udku_type_text[UDKU_TYPE_LT_1]="ЛТ-1 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_2_1]="ЛТ-2 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_2_2]="ЛТ-2 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3_1]="ЛТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3_2]="ЛТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3M_1]="ЛТ-3М 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3M_2]="ЛТ-3М 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_4_1]="ЛТ-4 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_4_2]="ЛТ-4 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_5_1]="ЛТ-5 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_5_2]="ЛТ-5 0.94 м/с";
 		udku_type_text[UDKU_TYPE_ET_2]="ЭТ-2 0.94 м/с";
-		udku_type_text[UDKU_TYPE_ET_3]="ЭТ-3 0.94 м/с";
-		udku_type_text[UDKU_TYPE_ET_5]="ЭТ-5 0.73 м/с";
+		udku_type_text[UDKU_TYPE_ET_3_1]="ЭТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_3_2]="ЭТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_3M_1]="ЭТ-3М 0.94 м/с";	
+		udku_type_text[UDKU_TYPE_ET_5]="ЭТ-5 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_5M_1]="ЭТ-5М 0.94 м/с";
 		udku_type_text[UDKU_TYPE_EM_4]="ЭМ-4 0.94 м/с";
-		udku_type_text[UDKU_TYPE_EM_5_5_S]="ЭМ-5.5С 0.94 м/с";
-		udku_type_text[UDKU_TYPE_EM_5_5_T]="ЭМ-5.5Т 0.75 м/с";
-		udku_type_text[UDKU_TYPE_ET_5_H]="ЭТ-5Х 0.73 м/с";
+		udku_type_text[UDKU_TYPE_EM_5_5]="ЭМ-5.5 0.94 м/с";
 		udku_type_text[UDKU_TYPE_UNUSED]="-";
 
         udku_position_text[UDKU_POSITION_LEFT]="Левое";

@@ -331,7 +331,7 @@ PhImage_t* system_settings_spider::get_image (images_size_type image_index){
 void system_settings_spider::message_window (
              const int type,
              const string mess_text,
-             const bool is_detached=false){
+             const bool is_detached){
 PhImage_t *window_icon;
 string window_title;
 
