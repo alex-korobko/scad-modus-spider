@@ -3,11 +3,12 @@
 
 // metropoliten line class
 class metro_line {
-private:   
+public:
    typedef set<int> stations_ids_container;
    typedef stations_ids_container::iterator stations_ids_interator;
    typedef stations_ids_container::size_type stations_ids_size_type;
 
+private:
    int			id;
    string 	name;
    PgColor_t	 color;   

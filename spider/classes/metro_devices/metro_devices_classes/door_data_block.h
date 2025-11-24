@@ -29,7 +29,7 @@ modbus register 30001
 */
 
 
-typedef struct door_data_block : public data_block{
+struct door_data_block : public data_block{
 
 	enum {SIGNAL_VALUE_GREEN=0,
                  SIGNAL_VALUE_BLUE=1,

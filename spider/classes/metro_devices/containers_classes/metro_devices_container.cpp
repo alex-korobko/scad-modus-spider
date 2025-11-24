@@ -20,8 +20,8 @@
 #include <sys/slogcodes.h>
 #include <inttypes.h>
 #include <fcntl.h>
-
-#include <iostream.h>
+#include <arpa/inet.h>
+#include <iostream>
 
 using namespace std;
 

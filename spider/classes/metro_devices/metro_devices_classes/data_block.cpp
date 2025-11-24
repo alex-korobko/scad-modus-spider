@@ -3,7 +3,7 @@ using namespace std;
 #include <pthread.h>
 #include <inttypes.h>
 
-#include <iostream.h>
+#include <iostream>
 
 #include <vector>
 #include <string>
@@ -24,7 +24,7 @@ using namespace std;
            messages(messages_size),
            parameters(parameters_size){
            int ret_value = pthread_mutex_init(&data_block_mutex, NULL);
-           if (ret_value!=EOK){
+           if (ret_value != 0 /*EOK*/ ){
                 string exception_message("Can`t initialize data_block mutex: ");
                 exception_message+=strerror(ret_value);
                 throw spider_exception(exception_message);
@@ -37,7 +37,7 @@ using namespace std;
 	pthread_mutex_t *ptr_to_copied_mutex=
 	         const_cast<pthread_mutex_t*>(&(copy_data_block.data_block_mutex));
      int ret_value = pthread_mutex_init(&data_block_mutex, NULL);
-     if (ret_value!=EOK){
+     if (ret_value !=0 /*EOK*/ ){
           string exception_message("Can`t initialize data_block mutex: ");
           exception_message+=strerror(ret_value);
           throw spider_exception(exception_message);

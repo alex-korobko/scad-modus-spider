@@ -35,12 +35,13 @@ bool operator == (timer_command timer_command_to_equal);
 
 class timer_command_container {
  friend class friend_class_only_for_compiler_happening;
-private :
+public:
 typedef  list<timer_command> timer_command_container_stl;	
 typedef  timer_command_container_stl::iterator iterator_timer_command;	
 typedef  timer_command_container_stl::const_iterator const_iterator_timer_command;	
 typedef  timer_command_container_stl::size_type size_type_timer_command;	
 
+private :
 timer_command_container_stl container_timer_command;
 bool was_created_in_this_day, only_execution_mode_enabled_now , timer_commands_accepted;
 PtWidget_t		*timer_commands_state_indicator;

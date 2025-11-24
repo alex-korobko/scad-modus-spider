@@ -10,6 +10,7 @@ using namespace std;
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
 
 #include <vector>
 #include <string>
@@ -19,7 +20,7 @@ using namespace std;
 #include <functional>
 #include <algorithm>
 #include <sstream>
-#include <iostream.h>
+#include <iostream>
 
 #include "defines.h"
 #include "spider_exception.h"

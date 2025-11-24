@@ -145,12 +145,12 @@ static string parameter_text_of_value(data_block *data,
 
 
 class device_block{
-private:
+public:
 	typedef vector<int>  ids_container;
 	typedef ids_container::iterator iterator_ids;
 	typedef ids_container::size_type size_type_ids;
 
-
+private:
 	ids_container data_units_id;
 
 	int id;
@@ -193,8 +193,22 @@ bool id_empty() {return data_units_id.empty();};
 size_type_ids id_size () { return data_units_id.size();};
 };
 
-
 class metro_device_type{
+public:
+  typedef hash_map<int, device_data_unit*> data_unit_container;
+  typedef data_unit_container::iterator data_unit_iterator;
+  typedef data_unit_container::value_type data_unit_pair;
+  typedef data_unit_container::size_type  data_unit_size;
+
+  typedef hash_map<int, device_block> blocks_container;
+  typedef blocks_container::iterator iterator_blocks;
+  typedef blocks_container::value_type pair_blocks;
+  typedef blocks_container::size_type  size_blocks;
+
+  typedef vector<device_input_circut_for_message> circuts_for_message_container;
+  typedef circuts_for_message_container::iterator iterator_circuts_for_message;
+  typedef circuts_for_message_container::value_type value_type_circuts_for_message;
+  typedef circuts_for_message_container::size_type  size_circuts_for_message;
 private:
 	int id;
 	string		name;
@@ -204,21 +218,6 @@ private:
    			 return (i1<i2) ;
   			}
 	};
-
-	typedef hash_map<int, device_data_unit*> data_unit_container;
-	typedef data_unit_container::iterator data_unit_iterator;
-	typedef data_unit_container::value_type data_unit_pair;
-	typedef data_unit_container::size_type  data_unit_size;
-
-	typedef hash_map<int, device_block> blocks_container;
-	typedef blocks_container::iterator iterator_blocks;
-	typedef blocks_container::value_type pair_blocks;
-	typedef blocks_container::size_type  size_blocks;
-
-	typedef vector<device_input_circut_for_message> circuts_for_message_container;
-	typedef circuts_for_message_container::iterator iterator_circuts_for_message;
-	typedef circuts_for_message_container::value_type value_type_circuts_for_message;
-	typedef circuts_for_message_container::size_type  size_circuts_for_message;
 
 	data_unit_container  type_data_units;
 	blocks_container	type_blocks;

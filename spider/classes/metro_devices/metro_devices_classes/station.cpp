@@ -18,7 +18,7 @@ using namespace std;
 #include <algorithm>
 #include <sstream>
 
-#include <iostream.h>
+#include <iostream>
 
 #include "defines.h"
 #include "spider_exception.h"

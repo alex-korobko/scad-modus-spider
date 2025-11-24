@@ -2,7 +2,7 @@
 #define _SHAVR_
 
 class metro_shavr : public metro_device {
-private:
+public:
 typedef vector<PhRect_t> supplied_escalators_dimensions;
 typedef supplied_escalators_dimensions::iterator supplied_escalators_dimensions_iterator; 
 typedef supplied_escalators_dimensions::size_type supplied_escalators_dimensions_size; 
@@ -11,6 +11,7 @@ typedef vector<PtWidget_t*> power_supply_lines_widgets;
 typedef power_supply_lines_widgets::iterator power_supply_lines_widgets_iterator; 
 typedef power_supply_lines_widgets::size_type power_supply_lines_widgets_size; 
 
+private:
 supplied_escalators_dimensions escalators_dimensions;
 power_supply_lines_widgets power_lines;
 PtWidget_t *state_indicator_widget,

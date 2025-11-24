@@ -254,7 +254,7 @@ bool sound::play(std::vector<string> *names_to_play) {
 	pthread_attr_t      attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	if (pthread_create(NULL, &attr, &player, names_to_play) != EOK) {
+	if (pthread_create(NULL, &attr, &player, names_to_play) != 0 /*EOK*/) {
 		sys_sett->sys_message(system_settings::ERROR_MSG, "sound::play can`t start thread");			
 		return false;
 	}

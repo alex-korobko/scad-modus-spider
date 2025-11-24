@@ -13,8 +13,9 @@ using namespace std;
 #include <sys/syspage.h>
 #include <inttypes.h>
 #include <fcntl.h>
+#include <errno.h>
 
-#include <iostream.h>
+#include <iostream>
 
 #include <vector>
 #include <string>
@@ -36,9 +37,8 @@ using namespace std;
 #include "devices_types.h"
 #include "metro_devices_types_container.h"
 class timer_command;
-#include "metro_devices_container.h"
-
 #include "metro_device.h"
+#include "metro_devices_container.h"
 
 int metro_device::paneled_device_id=0;
 PtWidget_t* metro_device::device_panel=NULL;
@@ -90,21 +90,21 @@ metro_device::metro_device(int  id,
 		channel_id = channel;	
 
 		int init_res=pthread_mutex_init(&answer_from_device_mutex, NULL);
-		if (init_res!=EOK){
+		if (init_res!=0 /*EOK*/){
 			string mess("Fail initialize answer_from_device_mutex : ");
 			mess+=strerror(init_res);
 			throw spider_exception(mess);	
 		};
 
 		init_res=pthread_mutex_init(&request_to_device_mutex, NULL);
-		if (init_res!=EOK){
+		if (init_res!=0 /*EOK*/){
 			string mess("Fail initialize request_to_device_mutex : ");
 			mess+=strerror(init_res);
 			throw spider_exception(mess);	
 		};
 
 		init_res=pthread_mutex_init(&time_setting_flag_mutex, NULL);
-		if (init_res!=EOK){
+		if (init_res!=0/*EOK*/){
 			string mess("Fail initialize time_setting_flag_mutex : ");
 			mess+=strerror(init_res);
 			throw spider_exception(mess);	
@@ -119,15 +119,15 @@ metro_device::~metro_device(){
 					cout<<"connect detach "<<strerror(errno)<<endl;
 
 		int ret_value=pthread_mutex_destroy(&request_to_device_mutex);
-		if (ret_value!=EOK) 
+		if (ret_value!=0/*EOK*/) 
 		       cout<<"can`t destroy request_to_device_mutex error : "<< strerror(ret_value)<<endl;
 
 		ret_value=pthread_mutex_destroy(&answer_from_device_mutex);
-		if (ret_value!=EOK) 
+		if (ret_value!=0/*EOK*/) 
 		       cout<<"can`t destroy answer_from_device_mutex error : "<< strerror(ret_value)<<endl;
 
 		ret_value=pthread_mutex_destroy(&time_setting_flag_mutex);
-		if (ret_value!=EOK) 
+		if (ret_value!=0/*EOK*/) 
 		       cout<<"can`t destroy time_setting_flag_mutex error : "<< strerror(ret_value)<<endl;
 };
 

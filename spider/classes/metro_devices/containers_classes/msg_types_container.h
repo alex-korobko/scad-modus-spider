@@ -32,13 +32,13 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class msg_types_container {
-private :
-
+public:
 typedef  hash_map <int, msg_type> msg_types_cont;
 typedef  msg_types_cont::iterator iterator;	
 typedef  msg_types_cont::value_type value_type;	
 typedef  msg_types_cont::size_type size_type;	
 
+private :
 msg_types_cont	container_msg_types;
 msg_types_container(){};
 

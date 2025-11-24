@@ -22,8 +22,9 @@ class alert_record
 
 class alerts_container
 {
+	public:
+			typedef  vector<alert_record> container_alerts;
 	protected:
-		typedef  vector<alert_record> container_alerts;
 		container_alerts alerts_stack;		
 	public:
 		container_alerts::size_type size() {return(alerts_stack.size());}

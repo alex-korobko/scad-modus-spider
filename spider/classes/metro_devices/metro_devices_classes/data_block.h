@@ -2,14 +2,14 @@
 #define _DATA_BLOCK_
 
 class data_block{
-private:
+public:
     typedef byte signal_data_type;
     typedef word message_data_type;
     typedef dword parameter_data_type;
     typedef  vector<signal_data_type> signals_container;
     typedef  vector<message_data_type> messages_container;
     typedef  vector<parameter_data_type> parameters_container;
-
+private:
 	signals_container signals;
 	messages_container  messages;
 	parameters_container parameters;

@@ -5,9 +5,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <iostream.h>
+#include <iostream>
 #include <sys/neutrino.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #include <vector>
 #include <string>
