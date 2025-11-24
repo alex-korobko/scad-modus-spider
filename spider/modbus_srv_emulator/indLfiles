@@ -1,0 +1,5 @@
+MYLIBS = -lm -lph -lphexlib  -lcpp -lsocket -lang-c++
+
+ifdef UNIT_TESTING
+MYLIBS +=  -lcppunit
+endif
