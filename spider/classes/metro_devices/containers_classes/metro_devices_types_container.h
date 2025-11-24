@@ -8,7 +8,7 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class metro_devices_types_container {
-private :
+public :
 enum  data_unit_type {SIGNAL=0, PARAMETER};
 
 typedef  hash_map<int, metro_device_type*> devices_type_container;
@@ -16,6 +16,7 @@ typedef  devices_type_container::iterator iterator;
 typedef  devices_type_container::value_type value_type;	
 typedef devices_type_container::size_type size_type;	
 
+private :
 devices_type_container	container_devices_types;
 
 iterator current_devices_type;

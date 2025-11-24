@@ -1,7 +1,7 @@
 #ifndef __METRO_STATIONS_CONTAINER__
 #define __METRO_STATIONS_CONTAINER_
 class metro_stations_container  {
-private:
+public:
 typedef hash_map<int , metro_station > container_metro_stations;
 typedef container_metro_stations::iterator iterator;
 typedef container_metro_stations::value_type value_type;
@@ -9,6 +9,7 @@ typedef container_metro_stations::size_type size_type;
 
 typedef vector<int> devices_id_container;
 
+private:
 container_metro_stations cont_stations;
 devices_id_container devices_ids;
 iterator current_station_iter;

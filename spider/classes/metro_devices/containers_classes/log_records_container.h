@@ -133,11 +133,12 @@ bool operator () (const log_record log_rec) const;
 };
 
 class log_records_container {
-private :
+public:
 typedef	list<log_record> contain_log_rec;
 typedef  contain_log_rec::iterator iterator;
 typedef  contain_log_rec::size_type size_type;
 
+private :
 contain_log_rec container_log_rec;
 PtWidget_t	 *wnd, *filtration_state_indicator, *filter_window;
 PtWidget_t *toggle_button_filter_turn_off, *toggle_button_filter_all_times,
@@ -268,7 +269,7 @@ size_type size()  {return distance(container_log_rec.begin(), iter_end);};
 //other metods
 void prepare_to_display();
 
-void log_records_container::load (string file_name) throw (spider_exception);
+void load (string file_name) throw (spider_exception);
 void save (string file_name) throw (spider_exception);
 
 void set_filtering();

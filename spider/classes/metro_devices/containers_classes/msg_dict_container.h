@@ -28,13 +28,13 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class msg_dict_container {
-private :
-
+public:
 typedef  hash_map <int, dictionary_message> msg_dictionary;	
 typedef  msg_dictionary::iterator iterator;	
 typedef  msg_dictionary::value_type value_type;	
 typedef  msg_dictionary::size_type size_type;	
 
+private :
 msg_dictionary	container_msg_dict;
 
 public :

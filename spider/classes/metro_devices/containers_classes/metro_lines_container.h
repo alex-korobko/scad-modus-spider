@@ -7,12 +7,13 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class metro_lines_container {
-private :
+public:
 typedef  hash_map <int, metro_line > contain_metro_lines;	
 typedef 	contain_metro_lines::iterator iterator;	
 typedef 	contain_metro_lines::value_type value_type;	
 typedef 	contain_metro_lines::size_type size_type;	
 
+private :
 contain_metro_lines 	container_metro_lines;
 iterator current_line;
 

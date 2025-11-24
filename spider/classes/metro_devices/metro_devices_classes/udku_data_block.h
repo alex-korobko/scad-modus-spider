@@ -30,18 +30,25 @@ status :
             1 in right
      low byte
         escalator type & speed (m/s)
-        0 LT-1 0,75
-        1 LT-2 0,90
-        2 LT-3 0,90
-        3 LT-4 0,88
-        4 LT-5 0,90
-        5 ET-2 0,94
-        6 ET-3 0,94
-        7 ET-5 0,73
-        8 EM-4 0,94
-        9 EM-5.5S 0,94
-        10 EM-5.5T 0,75
-        11 ET-5/h 0,73
+		udku_type_text[UDKU_TYPE_LT_1]="ЛТ-1 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_2_1]="ЛТ-2 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_2_2]="ЛТ-2 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3_1]="ЛТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3_2]="ЛТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3M_1]="ЛТ-3М 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_3M_2]="ЛТ-3М 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_4_1]="ЛТ-4 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_4_2]="ЛТ-4 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_5_1]="ЛТ-5 0.94 м/с";
+		udku_type_text[UDKU_TYPE_LT_5_2]="ЛТ-5 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_2]="ЭТ-2 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_3_1]="ЭТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_3_2]="ЭТ-3 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_3M_1]="ЭТ-3М 0.94 м/с";	
+		udku_type_text[UDKU_TYPE_ET_5]="ЭТ-5 0.94 м/с";
+		udku_type_text[UDKU_TYPE_ET_5M_1]="ЭТ-5М 0.94 м/с";
+		udku_type_text[UDKU_TYPE_EM_4]="ЭМ-4 0.94 м/с";
+		udku_type_text[UDKU_TYPE_EM_5_5]="ЭМ-5.5 0.94 м/с";
 
 	modbus register 30003
      high byte
@@ -124,7 +131,7 @@ status :
 */
 
 
-typedef struct udku_data_block : public data_block{
+struct udku_data_block : public data_block{
 	enum {
         MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS=30001,
         MODBUS_DIRECTION_REGISTERS_BEGIN_ADDRESS=40001,

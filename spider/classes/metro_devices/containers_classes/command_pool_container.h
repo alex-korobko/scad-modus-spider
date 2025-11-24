@@ -7,8 +7,11 @@
 *****************************************************************************/
 
 class cmd_pool_container {
-private :
+public:
 typedef 	list<command> cmd_pool_list;
+typedef  cmd_pool_list::iterator iterator;
+
+private :
 cmd_pool_list cmd_pool_cont;
 
 PtWidget_t *wnd; 
@@ -16,8 +19,6 @@ PtGenListItem_t *first;
 static cmd_pool_container* cmd_pool_container_instance;
 
 public :
-typedef  cmd_pool_list::iterator iterator;
-
 cmd_pool_container();
 virtual ~cmd_pool_container();
 

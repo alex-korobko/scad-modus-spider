@@ -142,7 +142,7 @@ modbus register 30076-30083
 */
 
 
-typedef struct shavr_data_block : public data_block{
+struct shavr_data_block : public data_block{
 
 	enum {SIGNAL_VALUE_GREEN=0,
                  SIGNAL_VALUE_BLUE=1,

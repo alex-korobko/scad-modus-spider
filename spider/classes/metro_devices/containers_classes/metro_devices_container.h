@@ -7,20 +7,18 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class metro_devices_container {
+public:
+  enum  device_type {ESCALATOR=0, SHAVR, UDKU, DOOR};
+
+  typedef  hash_map <int, metro_device*> metro_devices_map;
+  typedef metro_devices_map::iterator  iterator;
+  typedef metro_devices_map::value_type value_type;
+  typedef metro_devices_map::size_type size_type;
+
+  iterator current_device;
+  iterator current_device_in_directions;
 private :
-enum  device_type {ESCALATOR=0, SHAVR, UDKU, DOOR};
-
-typedef  hash_map <int, metro_device*> metro_devices_map;
-
-metro_devices_map	container_metro_devices;
-
-typedef metro_devices_map::iterator  iterator;
-typedef metro_devices_map::value_type value_type;
-typedef metro_devices_map::size_type size_type;
-
-iterator current_device;
-iterator current_device_in_directions;
-
+  metro_devices_map	container_metro_devices;
 
 //functor class for generating  commands from
 //metro_devices_container

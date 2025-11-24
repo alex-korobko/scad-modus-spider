@@ -2,9 +2,12 @@
 #define __SYSTEM_H__
 
 class system_settings {
-private:
+public:
 typedef vector<string> strings_container;
+typedef strings_container::size_type strings_size_type;
+typedef  vector<byte>  bytes;
 
+private:
 strings_container escalator_mode_text;
 strings_container escalator_ready_text;
 
@@ -29,10 +32,6 @@ string dispatchers_name;
 string routing_name;
 
 public:
-typedef strings_container::size_type strings_size_type;
-typedef  vector<byte>  bytes;
-
-
 system_settings();
 virtual ~system_settings() {};
 //Enumerated constants

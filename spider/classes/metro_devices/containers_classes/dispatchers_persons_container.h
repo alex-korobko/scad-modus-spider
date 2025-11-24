@@ -36,12 +36,13 @@ wrapper of STL container  map
 *****************************************************************************/
 
 class dispatcher_persons_container {
-private :
+public:
 typedef  list <dispatcher_person> dispatcher_persons_cont;
 typedef  dispatcher_persons_cont::iterator iterator;
 typedef  dispatcher_persons_cont::value_type value_type;
-typedef  dispatcher_persons_cont::size_type size_type;	
+typedef  dispatcher_persons_cont::size_type size_type;
 
+private :
 dispatcher_persons_cont container_dispatcher_persons;
 
 PtWidget_t *dispatchers_list;

@@ -137,7 +137,7 @@ signals :
 */
 
 
-typedef struct escalator_data_block : public data_block{
+struct escalator_data_block : public data_block{
 	enum {
         MODBUS_INPUT_REGISTERS_BEGIN_ADDRESS=30001,
         MODBUS_DIRECTION_REGISTERS_BEGIN_ADDRESS=40001,
