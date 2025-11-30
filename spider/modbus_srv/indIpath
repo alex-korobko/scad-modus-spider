@@ -4,5 +4,6 @@ MYIPATH=-I.\
      -I../system_settings_classes/\
      -I../com_port_class/\
      -I../socket_classes/\
+     -I../modbus_srv_metro_devices/\
      -I../modbus_srv/
     

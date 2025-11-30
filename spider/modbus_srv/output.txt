@@ -1,0 +1,318 @@
+../modbus_srv/main.cpp:33:21: error: defines.h: No such file or directory
+../modbus_srv/main.cpp:36:31: error: comport_exception.h: No such file or directory
+../modbus_srv/main.cpp:37:21: error: comport.h: No such file or directory
+../modbus_srv/main.cpp:39:30: error: socket_exception.h: No such file or directory
+../modbus_srv/main.cpp:40:28: error: generic_socket.h: No such file or directory
+../modbus_srv/main.cpp:41:27: error: server_socket.h: No such file or directory
+../modbus_srv/main.cpp:42:27: error: client_socket.h: No such file or directory
+In file included from ../modbus_srv/main.cpp:34:
+../modbus_srv_metro_devices/program_settings.h:9: error: 'byte' was not declared in this scope
+../modbus_srv_metro_devices/program_settings.h:9: error: template argument 1 is invalid
+../modbus_srv_metro_devices/program_settings.h:9: error: template argument 2 is invalid
+../modbus_srv_metro_devices/program_settings.h:80: error: 'word' does not name a type
+../modbus_srv_metro_devices/program_settings.h: In static member function 'static int program_settings::bytes_of_type(T, bool)':
+../modbus_srv_metro_devices/program_settings.h:86: error: expected initializer before 'i'
+../modbus_srv_metro_devices/program_settings.h:86: error: 'i' was not declared in this scope
+../modbus_srv_metro_devices/program_settings.h:86: error: request for member 'size' in 'ret_val', which is of non-class type 'int'
+../modbus_srv_metro_devices/program_settings.h:88: error: request for member 'size' in 'ret_val', which is of non-class type 'int'
+../modbus_srv_metro_devices/program_settings.h: In static member function 'static T program_settings::type_from_bytes(int, bool)':
+../modbus_srv_metro_devices/program_settings.h:106: error: expected initializer before 'count'
+../modbus_srv_metro_devices/program_settings.h:108: error: expected initializer before 'i'
+../modbus_srv_metro_devices/program_settings.h:108: error: 'i' was not declared in this scope
+../modbus_srv_metro_devices/program_settings.h:108: error: 'count' was not declared in this scope
+../modbus_srv_metro_devices/program_settings.h:111: error: expected initializer before 'i'
+../modbus_srv_metro_devices/program_settings.h:111: error: 'i' was not declared in this scope
+../modbus_srv_metro_devices/program_settings.h:111: error: 'count' was not declared in this scope
+In file included from ../modbus_srv/main.cpp:45:
+../modbus_srv_metro_devices/metro_device.h: At global scope:
+../modbus_srv_metro_devices/metro_device.h:6: error: 'byte' was not declared in this scope
+../modbus_srv_metro_devices/metro_device.h:6: error: template argument 1 is invalid
+../modbus_srv_metro_devices/metro_device.h:6: error: template argument 2 is invalid
+../modbus_srv_metro_devices/metro_device.h:7: error: 'byte' was not declared in this scope
+../modbus_srv_metro_devices/metro_device.h:7: error: template argument 1 is invalid
+../modbus_srv_metro_devices/metro_device.h:7: error: template argument 2 is invalid
+../modbus_srv_metro_devices/metro_device.h:17: error: 'byte' does not name a type
+../modbus_srv_metro_devices/metro_device.h:19: error: 'word' does not name a type
+../modbus_srv_metro_devices/metro_device.h:97: error: 'byte' does not name a type
+../modbus_srv_metro_devices/metro_device.h:98: error: 'byte' does not name a type
+../modbus_srv_metro_devices/metro_device.h: In member function 'void metro_device::set_command_answer_to_socket_buffer(int)':
+../modbus_srv_metro_devices/metro_device.h:55: error: request for member 'swap' in '((metro_device*)this)->metro_device::answer_to_socket', which is of non-class type 'int'
+In file included from ../modbus_srv/main.cpp:46:
+../modbus_srv_metro_devices/metro_device.h: At global scope:
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_escalator.h:6: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_escalator.h:8: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_escalator.h:9: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_escalator.h:11: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/metro_escalator.h:41: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_escalator.h:49: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_escalator.h:53: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_escalator.h:55: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_escalator.h:59: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_escalator.h:63: error: within this context
+In file included from ../modbus_srv/main.cpp:47:
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_shavr.h:6: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_shavr.h:8: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_shavr.h:9: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_shavr.h:11: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/metro_shavr.h:34: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/metro_shavr.h:142: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_shavr.h:157: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_shavr.h:161: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_shavr.h:163: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_shavr.h:166: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_shavr.h:169: error: within this context
+In file included from ../modbus_srv/main.cpp:48:
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_udku.h:6: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_udku.h:8: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_udku.h:9: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_udku.h:11: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/metro_udku.h:83: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_udku.h:97: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_udku.h:101: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_udku.h:103: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv_metro_devices/metro_udku.h:106: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv_metro_devices/metro_udku.h:110: error: within this context
+In file included from ../modbus_srv/main.cpp:51:
+../modbus_srv_metro_devices/watchdog.h:12: error: 'byte' does not name a type
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/watchdog.h:20: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/watchdog.h:23: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv_metro_devices/watchdog.h:24: error: within this context
+../modbus_srv_metro_devices/watchdog.h: In constructor 'watchdog_timer::watchdog_timer()':
+../modbus_srv_metro_devices/watchdog.h:16: error: class 'watchdog_timer' does not have any field named 'reset_interval'
+../modbus_srv/main.cpp: At global scope:
+../modbus_srv/main.cpp:55: error: expected constructor, destructor, or type conversion before '*' token
+../modbus_srv/main.cpp:59: error: 'comport' has not been declared
+../modbus_srv_metro_devices/metro_device.h: In function 'void log_buffer(std::string, int)':
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:74: error: within this context
+../modbus_srv/main.cpp:81: error: expected initializer before 'i'
+../modbus_srv/main.cpp:81: error: 'i' was not declared in this scope
+../modbus_srv/main.cpp:81: error: request for member 'size' in 'device_answer', which is of non-class type 'int'
+../modbus_srv_metro_devices/metro_device.h: In function 'void* watchdog_thread_function(void*)':
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:96: error: within this context
+../modbus_srv/main.cpp: In function 'void* socket_thread_function(void*)':
+../modbus_srv/main.cpp:105: error: 'generic_socket' was not declared in this scope
+../modbus_srv/main.cpp:105: error: 'socket_device' was not declared in this scope
+../modbus_srv/main.cpp:105: error: expected type-specifier before 'server_socket'
+../modbus_srv/main.cpp:105: error: expected '>' before 'server_socket'
+../modbus_srv/main.cpp:105: error: expected '(' before 'server_socket'
+../modbus_srv/main.cpp:105: error: 'server_socket' was not declared in this scope
+../modbus_srv/main.cpp:105: error: expected primary-expression before '>' token
+../modbus_srv/main.cpp:105: error: expected ')' before ';' token
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:107: error: within this context
+../modbus_srv/main.cpp:108: error: expected initializer before 'tmp_iter'
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:110: error: within this context
+../modbus_srv/main.cpp:113: error: 'word' was not declared in this scope
+../modbus_srv/main.cpp:113: error: expected ';' before 'crc_value'
+../modbus_srv/main.cpp:119: error: request for member 'clear' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:123: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:139: error: 'byte' was not declared in this scope
+../modbus_srv/main.cpp:139: error: expected ';' before 'data_bytes_count'
+../modbus_srv/main.cpp:141: error: 'data_bytes_count' was not declared in this scope
+../modbus_srv/main.cpp:146: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:149: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:154: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:155: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:163: error: request for member 'size' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:163: error: 'socket_exception' was not declared in this scope
+../modbus_srv/main.cpp:164: error: 'tmp_iter' was not declared in this scope
+../modbus_srv/main.cpp:164: error: request for member 'begin' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:165: error: request for member 'size' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:166: error: 'crc_value' was not declared in this scope
+../modbus_srv/main.cpp:166: error: 'crc' is not a member of 'program_settings'
+../modbus_srv/main.cpp:167: error: request for member 'begin' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:168: error: functional cast expression list treated as compound expression
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:168: error: within this context
+../modbus_srv/main.cpp:170: error: 'word' cannot appear in a constant-expression
+../modbus_srv/main.cpp:171: error: invalid types 'int[int]' for array subscript
+../modbus_srv/main.cpp:171: error: request for member 'size' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:172: error: invalid types 'int[int]' for array subscript
+../modbus_srv/main.cpp:172: error: request for member 'size' in 'telemetr_request', which is of non-class type 'int'
+../modbus_srv/main.cpp:173: error: 'socket_exception' was not declared in this scope
+../modbus_srv/main.cpp:178: error: expected type-specifier before 'socket_exception'
+../modbus_srv/main.cpp:178: error: expected ')' before 'sock_exc'
+../modbus_srv/main.cpp:178: error: expected '{' before 'sock_exc'
+../modbus_srv/main.cpp:178: error: 'sock_exc' was not declared in this scope
+../modbus_srv/main.cpp:178: error: expected ';' before ')' token
+../modbus_srv/main.cpp:186: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:190: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:195: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:196: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:221: error: request for member 'empty' in 'telemetr_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:225: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:230: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:231: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:247: error: expected type-specifier before 'socket_exception'
+../modbus_srv/main.cpp:247: error: expected ')' before 'sock_exc'
+../modbus_srv/main.cpp:247: error: expected '{' before 'sock_exc'
+../modbus_srv/main.cpp:247: error: expected ';' before ')' token
+../modbus_srv/main.cpp:257: error: type '<type error>' argument given to 'delete', expected pointer
+../modbus_srv/main.cpp: In function 'void* comport_thread_function(void*)':
+../modbus_srv/main.cpp:264: error: 'comport' was not declared in this scope
+../modbus_srv/main.cpp:264: error: 'comport_device' was not declared in this scope
+../modbus_srv/main.cpp:264: error: expected type-specifier before 'comport'
+../modbus_srv/main.cpp:264: error: expected '>' before 'comport'
+../modbus_srv/main.cpp:264: error: expected '(' before 'comport'
+../modbus_srv/main.cpp:264: error: expected primary-expression before '>' token
+../modbus_srv/main.cpp:264: error: expected ')' before ';' token
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv/main.cpp:272: error: within this context
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv/main.cpp:273: error: within this context
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:275: error: within this context
+../modbus_srv/main.cpp:277: error: expected initializer before 'tmp_iter'
+../modbus_srv/main.cpp:278: error: 'byte' was not declared in this scope
+../modbus_srv/main.cpp:278: error: expected ';' before 'data_bytes_count'
+../modbus_srv_metro_devices/metro_device.h:8: error: 'typedef class std::vector<int, std::allocator<int> > metro_device::command_data_container' is private
+../modbus_srv/main.cpp:289: error: within this context
+../modbus_srv/main.cpp:298: error: request for member 'clear' in 'device_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:318: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:323: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:326: error: 'data_bytes_count' was not declared in this scope
+../modbus_srv/main.cpp:326: error: invalid types 'int[program_settings::<anonymous enum>]' for array subscript
+../modbus_srv/main.cpp:339: error: 'comport_exception' was not declared in this scope
+../modbus_srv/main.cpp:344: error: 'tmp_iter' was not declared in this scope
+../modbus_srv/main.cpp:344: error: request for member 'begin' in 'device_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:345: error: request for member 'size' in 'device_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:346: error: 'word' was not declared in this scope
+../modbus_srv/main.cpp:346: error: 'crc' is not a member of 'program_settings'
+../modbus_srv/main.cpp:347: error: request for member 'begin' in 'device_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:348: error: functional cast expression list treated as compound expression
+../modbus_srv_metro_devices/metro_device.h:7: error: 'typedef int metro_device::command_data' is private
+../modbus_srv/main.cpp:348: error: within this context
+../modbus_srv/main.cpp:349: error: invalid types 'int[int]' for array subscript
+../modbus_srv/main.cpp:350: error: invalid types 'int[int]' for array subscript
+../modbus_srv/main.cpp:354: error: expected initializer before 'i'
+../modbus_srv/main.cpp:354: error: request for member 'size' in 'device_answer', which is of non-class type 'int'
+../modbus_srv/main.cpp:355: error: invalid types 'int[std::size_t]' for array subscript
+../modbus_srv/main.cpp:359: error: 'comport_exception' was not declared in this scope
+../modbus_srv/main.cpp:372: error: expected type-specifier before 'comport_exception'
+../modbus_srv/main.cpp:372: error: expected ')' before 'cmp_exc'
+../modbus_srv/main.cpp:372: error: expected '{' before 'cmp_exc'
+../modbus_srv/main.cpp:372: error: 'cmp_exc' was not declared in this scope
+../modbus_srv/main.cpp:372: error: expected ';' before ')' token
+../modbus_srv_metro_devices/router.h: In function 'void* routing_thread_function(void*)':
+../modbus_srv_metro_devices/router.h:20: error: 'typedef class std::_Vector_iterator<router::route, std::allocator<router::route> > router::routes_iterator' is private
+../modbus_srv/main.cpp:404: error: within this context
+../modbus_srv_metro_devices/router.h:24: error: 'typedef class std::_Vector_iterator<in_addr, std::allocator<in_addr> > router::gateways_iterator' is private
+../modbus_srv/main.cpp:405: error: within this context
+../modbus_srv_metro_devices/metro_device.h: In function 'void load_settings()':
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:470: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:507: error: within this context
+../modbus_srv/main.cpp:511: error: 'comport' has not been declared
+../modbus_srv/main.cpp:512: error: 'comport' has not been declared
+../modbus_srv/main.cpp:513: error: 'comport' has not been declared
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:515: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:522: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:531: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:545: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:553: error: within this context
+../modbus_srv_metro_devices/metro_device.h: In function 'void load_metro_devices(section_type)':
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:564: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:590: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:604: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:610: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:647: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:653: error: within this context
+../modbus_srv_metro_devices/metro_device.h: In function 'void load_configuration(std::string)':
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:658: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:676: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:700: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:704: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:709: error: within this context
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:714: error: within this context
+../modbus_srv/main.cpp: In function 'int main(int, const char**)':
+../modbus_srv/main.cpp:733: error: 'server_socket' was not declared in this scope
+../modbus_srv/main.cpp:733: error: 'socket_device' was not declared in this scope
+../modbus_srv/main.cpp:734: error: 'generic_socket' was not declared in this scope
+../modbus_srv/main.cpp:734: error: 'accepted_socket' was not declared in this scope
+../modbus_srv_metro_devices/metro_device.h:28: error: 'class metro_device::metro_device_exception' is private
+../modbus_srv/main.cpp:754: error: within this context
+../modbus_srv/main.cpp:778: error: 'comport_device' was not declared in this scope
+../modbus_srv/main.cpp:778: error: expected type-specifier before 'comport'
+../modbus_srv/main.cpp:778: error: expected ';' before 'comport'
+../modbus_srv/main.cpp:786: error: expected type-specifier before 'comport_exception'
+../modbus_srv/main.cpp:786: error: expected ')' before 'cmp_exc'
+../modbus_srv/main.cpp:786: error: expected '{' before 'cmp_exc'
+../modbus_srv/main.cpp:786: error: 'cmp_exc' was not declared in this scope
+../modbus_srv/main.cpp:786: error: expected ';' before ')' token
+../modbus_srv/main.cpp:793: error: 'comport_device' was not declared in this scope
+../modbus_srv/main.cpp:797: error: 'comport_exception' was not declared in this scope
+../modbus_srv/main.cpp:799: error: expected type-specifier before 'comport_exception'
+../modbus_srv/main.cpp:799: error: expected ')' before 'cmp_exc'
+../modbus_srv/main.cpp:799: error: expected '{' before 'cmp_exc'
+../modbus_srv/main.cpp:799: error: expected ';' before ')' token
+../modbus_srv/main.cpp:810: error: 'comport_device' was not declared in this scope
+../modbus_srv/main.cpp:819: error: 'comport_device' was not declared in this scope
+../modbus_srv/main.cpp:826: error: expected type-specifier before 'server_socket'
+../modbus_srv/main.cpp:826: error: expected ';' before 'server_socket'
+../modbus_srv/main.cpp:830: error: expected type-specifier before 'socket_exception'
+../modbus_srv/main.cpp:830: error: expected ')' before 'sock_exc'
+../modbus_srv/main.cpp:830: error: expected '{' before 'sock_exc'
+../modbus_srv/main.cpp:830: error: 'sock_exc' was not declared in this scope
+../modbus_srv/main.cpp:830: error: expected ';' before ')' token
+../modbus_srv/main.cpp:839: error: expected type-specifier before 'socket_exception'
+../modbus_srv/main.cpp:839: error: expected ')' before 'sock_exc'
+../modbus_srv/main.cpp:839: error: expected '{' before 'sock_exc'
+../modbus_srv/main.cpp:839: error: expected ';' before ')' token
+cc: /usr/qnx650/host/qnx6/x86/usr/lib/gcc/i486-pc-nto-qnx6.5.0/4.4.2/cc1plus error 1
+make[1]: *** [main.o] Error 1
+make: *** [all] Error 2

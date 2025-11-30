@@ -1,17 +1,4 @@
-HEADERS = program_settings.h\
- generic_socket.h\
- defines.h\
- fatal_program_exception.h\
- watchdog.h\
- router.h\
- socket_exception.h\
- server_socket.h\
- comport_exception.h\
- comport.h\
- metro_device.h\
- metro_shavr.h\
- metro_udku.h\
- metro_escalator.h
+HEADERS = 
  
 ifdef UNIT_TESTING
 
