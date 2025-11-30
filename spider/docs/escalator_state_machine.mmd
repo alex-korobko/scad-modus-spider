@@ -1,0 +1,61 @@
+stateDiagram-v2
+    [*] --> A0_OFFLINE: Initial State
+    
+    %% Transitions from A0_NOT_READY
+    A0_NOT_READY --> A0_OFFLINE: !A0_x5 (device offline)
+    A0_NOT_READY --> A0_EXCEPTION: !A0_x6 (request failed)
+    A0_NOT_READY --> A0_READY_NOT_ACCEPTED: A0_x4 && !A0_x0 (ready, not running)
+    A0_NOT_READY --> A0_RUN: A0_x0 (running)
+    
+    %% Transitions from A0_READY_NOT_ACCEPTED
+    A0_READY_NOT_ACCEPTED --> A0_OFFLINE: !A0_x5
+    A0_READY_NOT_ACCEPTED --> A0_EXCEPTION: !A0_x6
+    A0_READY_NOT_ACCEPTED --> A0_NOT_READY: !A0_x4 (not ready)
+    A0_READY_NOT_ACCEPTED --> A0_RUN: A0_x0 (running)
+    A0_READY_NOT_ACCEPTED --> A0_STARTING: event=3 && A0_x3 (CMD_UP)
+    A0_READY_NOT_ACCEPTED --> A0_STARTING: event=4 && A0_x3 (CMD_DOWN)
+    A0_READY_NOT_ACCEPTED --> A0_READY: event=6 (CMD_ACCEPT)
+    
+    %% Transitions from A0_READY
+    A0_READY --> A0_OFFLINE: !A0_x5
+    A0_READY --> A0_EXCEPTION: !A0_x6
+    A0_READY --> A0_NOT_READY: !A0_x4
+    A0_READY --> A0_RUN: A0_x0 (running)
+    A0_READY --> A0_STARTING: event=3 && A0_x3 (CMD_UP)
+    A0_READY --> A0_STARTING: event=4 && A0_x3 (CMD_DOWN)
+    
+    %% Transitions from A0_STARTING
+    A0_STARTING --> A0_OFFLINE: !A0_x5
+    A0_STARTING --> A0_EXCEPTION: !A0_x6
+    A0_STARTING --> A0_NOT_READY: !A0_x4
+    A0_STARTING --> A0_RUN: A0_x0 (running detected)
+    A0_STARTING --> A0_READY: event=6 && A0_x3 && !A0_x0 (CMD_ACCEPT, not running)
+    
+    %% Transitions from A0_RUN
+    A0_RUN --> A0_OFFLINE: !A0_x5
+    A0_RUN --> A0_EXCEPTION: !A0_x6
+    A0_RUN --> A0_NOT_READY: !A0_x4
+    A0_RUN --> A0_READY: !A0_x0 (stopped)
+    A0_RUN --> A0_STOPPING: event=5 && A0_x3 (CMD_STOP)
+    
+    %% Transitions from A0_STOPPING
+    A0_STOPPING --> A0_OFFLINE: !A0_x5
+    A0_STOPPING --> A0_EXCEPTION: !A0_x6
+    A0_STOPPING --> A0_NOT_READY: !A0_x4
+    A0_STOPPING --> A0_READY: !A0_x0 (stopped)
+    A0_STOPPING --> A0_RUN: event=6 && A0_x3 && A0_x0 (CMD_ACCEPT, running)
+    
+    %% Transitions from A0_OFFLINE
+    A0_OFFLINE --> A0_EXCEPTION: A0_x5 && !A0_x6 (online but failed)
+    A0_OFFLINE --> A0_NOT_READY: A0_x5 && !A0_x4 (online, not ready)
+    A0_OFFLINE --> A0_READY_NOT_ACCEPTED: A0_x3 && A0_x5 && !A0_x2 && A0_x4 && !A0_x0 && !A0_x8()
+    A0_OFFLINE --> A0_READY: (!A0_x3 || (A0_x3 && A0_x2) || (A0_x3 && A0_x8())) && A0_x5 && A0_x4 && !A0_x0
+    A0_OFFLINE --> A0_RUN: A0_x5 && A0_x0 (online and running)
+    
+    %% Transitions from A0_EXCEPTION
+    A0_EXCEPTION --> A0_OFFLINE: !A0_x5
+    A0_EXCEPTION --> A0_NOT_READY: A0_x6 && !A0_x4
+    A0_EXCEPTION --> A0_READY_NOT_ACCEPTED: !A0_x2 && A0_x6 && !A0_x0 && !A0_x8()
+    A0_EXCEPTION --> A0_READY: (A0_x2 || A0_x8()) && A0_x6 && !A0_x0
+    A0_EXCEPTION --> A0_RUN: A0_x6 && A0_x0
+

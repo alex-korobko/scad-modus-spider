@@ -1,6 +1,4 @@
-VPATH =../unit_tests\
- :../com_port_class\
- :../system_settings_classes\
+VPATH =../system_settings_classes\
  :../socket_classes\
- :../modbus_srv\
+ :../metro_devices_classes\
  :../

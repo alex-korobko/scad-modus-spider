@@ -2,7 +2,7 @@ MYIPATH=-I.\
      -I /usr/local/include/\
      -I../\
      -I../system_settings_classes/\
-     -I../com_port_class/\
      -I../socket_classes/\
-     -I../modbus_srv/
-    
+     -I../containers_classes/\
+     -I../metro_devices_classes/\
+     -I../com_port_class
