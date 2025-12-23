@@ -39,12 +39,12 @@ extern log_records_container *main_log;
 //see in_code_attached_callbacks.cpp for close_window body
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo );
 
 //local functions
 static int activate_exit_button_in_smena_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ) {
 
 dispatcher_persons_container *dispatchers=dispatcher_persons_container::get_instance();
@@ -61,7 +61,7 @@ if (dispatchers==NULL) {
 };
 
 static int activate_ok_button_in_smena_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ) {
 
 dispatcher_persons_container *dispatchers=dispatcher_persons_container::get_instance();
@@ -114,7 +114,7 @@ if (dispatchers==NULL) {
 
 int
 activate_smena_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ) {
 
 PtWidget_t *dialog_window, *common_panel, *buttons_panel,  *current_button;

@@ -61,7 +61,7 @@ extern bool setting_start_time_disabled;
 //see staton_devices_properties_callbacks.cpp
 int
 activate_ok_button_in_escalator_properties( PtWidget_t *widget, 
-											ApInfo_t *apinfo, 
+											void *apinfo, 
 											PtCallbackInfo_t *cbinfo );
 
 
@@ -1134,7 +1134,7 @@ void metro_escalator::decode_answer_from_device_4_function
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-              system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
+              static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
    advance(tmp_iter2,
                 (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
                    system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
@@ -1146,7 +1146,7 @@ void metro_escalator::decode_answer_from_device_4_function
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-                  system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
+                  static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
    advance(tmp_iter2,
                  (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                   system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
@@ -1675,7 +1675,7 @@ this->data_block=local_data_block;
 
                     find_pos=static_cast<int>(message_from_messages_container.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
                     if (find_pos!=-1) {
-                        input_circut_index=static_cast<byte>((log_mess_iter->get_msg_id()&0x00ff00)>>8);
+                        input_circut_index=static_cast<byte>(log_mess_iter->get_msg_id()>>8);
                    if (dev_types_iter!=dev_types_cont->end() &&
                                dev_types_iter->second->circuts_size()>input_circut_index) {
                                input_circut_name=(dev_types_iter->second->at_circut(input_circut_index)).get_hint();

@@ -231,12 +231,20 @@ int activate_device_menu_item( PtWidget_t *widget,
                                               args.size(),
                                               &args[0]);
 
-
+  // Get system settings to access fonts
+  system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+  const char* menu_font = NULL;
+  if (spider_sys_sett->small_font_prepared()) {
+    menu_font = spider_sys_sett->get_small_font();
+  } else if (spider_sys_sett->large_font_prepared()) {
+    menu_font = spider_sys_sett->get_large_font();
+  }
+  
 cmd_iter=appropriated_commands.begin();
  while (cmd_iter!=appropriated_commands.end()) {
 
    args.clear();
-   args.resize(3);
+   args.resize(menu_font ? 4 : 3);
 
    callbacks.clear();
    tmp_callback.data=new command(*cmd_iter);
@@ -247,11 +255,13 @@ cmd_iter=appropriated_commands.begin();
   
    PtSetArg (&args[0], Pt_ARG_LABEL_TYPE, Pt_Z_STRING , 0);
    PtSetArg (&args[1], Pt_ARG_TEXT_STRING, command_description.c_str(), 0);
-//   PtSetArg (&args[1], Pt_ARG_TEXT_STRING, "Команда 1", 0);
    PtSetArg (&args[2],
                   Pt_CB_ACTIVATE,
                   &callbacks[0],
                   callbacks.size());
+   if (menu_font) {
+     PtSetArg (&args[3], Pt_ARG_TEXT_FONT, menu_font, 0);
+   }
 
    PtCreateWidget(PtMenuButton,
                             menu_wgt,

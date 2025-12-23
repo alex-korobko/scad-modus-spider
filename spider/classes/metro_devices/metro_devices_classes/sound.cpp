@@ -65,7 +65,7 @@ void* sound::player(void* arg) {
 	filenames_iter=filenames->begin();
 	while (filenames_iter!=filenames->end()) {
 		filename=*filenames_iter;
-
+		++filenames_iter;
 	    cout<<"in player playing "<<filename<<endl;
 	 	  sys_sett->sys_message(system_settings::INFO_MSG, 
    			                                     filename+" playing in sound.cpp@Player");
@@ -222,7 +222,6 @@ void* sound::player(void* arg) {
 
 		pcmHandle = NULL;
 		mixHandle = NULL;
-		++filenames_iter;
 	}; //while
 }
 catch (sound_exception snd_exc) 

@@ -1,0 +1,9 @@
+OBJECTS= data_block.o\
+ main_macos.o
+
+ifdef UNIT_TESTING
+# Note: Unit tests also include QNX headers, so they are excluded for now
+endif
+
+# Note: Most files include QNX headers and are excluded from macOS build
+# Only keeping files that don't include QNX-specific headers

@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <iostream.h>
+#include <errno.h>
 
 #include <hash_map>
 #include <set>
@@ -79,7 +80,7 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 //see in_code_attached_callbacks.cpp for close_window body
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo );
 
 //static functions
@@ -177,7 +178,7 @@ try {
 
 //local functions
 int
-selection_on_stations_list(PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo ){
+selection_on_stations_list(PtWidget_t *widget, void *apinfo, PtCallbackInfo_t *cbinfo ){
 log_records_container *log_rec_cont=NULL;
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 PtListCallback_t *list_callback_data=static_cast<PtListCallback_t*>(cbinfo->cbdata);
@@ -378,7 +379,7 @@ try {
 
 int
 activate_report_button_in_log_window( PtWidget_t *widget, 
-                                                                        ApInfo_t *apinfo, 
+                                                                        void *apinfo, 
                                                                         PtCallbackInfo_t *cbinfo ){
 char const *btns[] = { "&На дискету", "&В директорию", "О&тмена"};
 
@@ -415,7 +416,7 @@ return Pt_CONTINUE;
 
 int
 activate_button_ok_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 long *internal_flags, flags;
 const PtCalendarDate_t *internal_pt_time;
@@ -653,7 +654,7 @@ try {
 
 int
 activate_button_chancel_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -693,7 +694,7 @@ return Pt_CONTINUE;
 
 int 
 activate_toggle_button_all_devices_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 vector<PtArg_t> args;
 long *internal_flags, flags;
@@ -741,7 +742,7 @@ return Pt_CONTINUE;
 
 int 
 activate_toggle_button_all_stations_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 vector<PtArg_t> args;
 long *internal_flags, flags;
@@ -803,7 +804,7 @@ return Pt_CONTINUE;
 
 int
 activate_toggle_button_all_msg_types_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 vector<PtArg_t> args;
 long *internal_flags, flags;
@@ -851,7 +852,7 @@ return Pt_CONTINUE;
 
 int
 activate_toggle_button_all_times_in_filter_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ) {
 vector<PtArg_t> args;
 long *internal_flags, flags;
@@ -908,7 +909,7 @@ return Pt_CONTINUE;
 
 int
 activate_filter_button_in_log_window( PtWidget_t *widget, 
-                                                                ApInfo_t *apinfo, 
+                                                                void *apinfo, 
                                                                 PtCallbackInfo_t *cbinfo ){
 PtWidget_t *dialog_window,*parent_panel,*current_panel, *panel_group, *current_button;
 PtWidget_t *toggle_button_filter_turn_off=NULL, *toggle_button_filter_all_times=NULL,
@@ -963,7 +964,7 @@ if (spider_sys_sett==NULL) {
 };
 
 unsigned int dialog_wnd_height=300,
-                      dialog_wnd_width=450,
+                      dialog_wnd_width=600,
                       buttons_panel_height=40,
                       button_in_panel_width=80;
 PhPoint_t widget_position;
@@ -2038,7 +2039,7 @@ return( Pt_CONTINUE);
 
 int
 activate_exit_button_in_main_log_window( PtWidget_t *widget, 
-                                                              ApInfo_t *apinfo, 
+                                                              void *apinfo, 
                                                               PtCallbackInfo_t *cbinfo ){
      main_log->set_widget(NULL);
      main_log->set_filter_window(NULL);
@@ -2047,7 +2048,7 @@ return( Pt_CONTINUE);
 
 int
 activate_exit_button_in_archive_log_window( PtWidget_t *widget, 
-                                                              ApInfo_t *apinfo, 
+                                                              void *apinfo, 
                                                               PtCallbackInfo_t *cbinfo ){
      archive_log->set_widget(NULL);
      archive_log->set_filter_window(NULL);
@@ -2057,7 +2058,7 @@ return( Pt_CONTINUE);
 
 int
 activate_archive_log_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                         void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 PtWidget_t *dialog_window,*buttons_panel, *raw_list, *divider_in_raw_list, *current_button;
 vector<PtCallback_t> callbacks;
@@ -2067,7 +2068,7 @@ PhPoint_t widget_position;
 PtFileSelectionInfo_t info;
 string dialog_title("Архив журналов сообщений") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=1000,
+                      dialog_wnd_width=1800,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;
@@ -2271,7 +2272,7 @@ try {
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/8,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Станция", 0);
          current_button=PtCreateWidget(PtButton,
@@ -2428,7 +2429,7 @@ return( Pt_CONTINUE);
 
 int
 activate_main_log_button_in_main_window( PtWidget_t *widget, 
-                                                                         ApInfo_t *apinfo, 
+                                                                         void *apinfo, 
                                                                          PtCallbackInfo_t *cbinfo ){
 PtWidget_t *dialog_window,*buttons_panel, *raw_list, *divider_in_raw_list, *current_button;
 vector<PtCallback_t> callbacks;
@@ -2437,7 +2438,7 @@ vector<PtArg_t> args;
 PhPoint_t widget_position;
 string dialog_title("Журнал сообщений") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=1000,
+                      dialog_wnd_width=1800,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;
@@ -2585,7 +2586,7 @@ try {
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
-		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/8,0);
+		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
                        "Станция", 0);
          current_button=PtCreateWidget(PtButton,

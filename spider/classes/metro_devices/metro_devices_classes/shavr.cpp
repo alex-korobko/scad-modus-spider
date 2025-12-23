@@ -1236,7 +1236,7 @@ void
    tmp_iter1=request_to_device.begin();
    tmp_iter2=tmp_iter1;
    advance(tmp_iter1,
-              system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
+              static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
    advance(tmp_iter2,
               (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
                  system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
@@ -1246,7 +1246,7 @@ void
   tmp_iter1=request_to_device.begin();
   tmp_iter2=tmp_iter1;
    advance(tmp_iter1,
-                  system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
+                  static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
    advance(tmp_iter2,
                  (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                   system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
@@ -1286,7 +1286,7 @@ for (vector<byte>::size_type i=0; i<answer.size(); i++) {
      tmp_iter2=tmp_iter1;
 
      advance(tmp_iter1,
-                 system_settings::MODBUS_HEADER_SIZE);
+                 static_cast<int>(system_settings::MODBUS_HEADER_SIZE));
      advance(tmp_iter2,
                  (system_settings::MODBUS_HEADER_SIZE+2));
 

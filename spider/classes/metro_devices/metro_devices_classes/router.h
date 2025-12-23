@@ -14,8 +14,6 @@ struct route {
           in_addr mask;
           test_hosts_container test_hosts;
  };
-
-private:
  typedef vector<route> routes_container;
  typedef vector<route>::iterator routes_iterator;
  typedef vector<route>::size_type routes_size_type;
@@ -31,6 +29,7 @@ private:
      struct sockaddr_in mask;
    };
 
+private:
 routes_container routes;
 gateways_container gateways;
 

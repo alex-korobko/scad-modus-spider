@@ -16,6 +16,7 @@
 #include <iostream.h>
 #include <net/if.h>
 #include <net/route.h>
+#include <errno.h>
 
 #include <hash_map>
 #include <vector>
@@ -85,69 +86,69 @@ string password_for_switching_sending_commands("124");
 string password_for_switching_start_time_commands("7316883");
 
 int resize_main_window( PtWidget_t *widget,
-                                          ApInfo_t *apinfo,
+                                          void *apinfo,
                                           PtCallbackInfo_t *cbinfo );
 
 int
 activate_archive_log_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 int
 activate_exit_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 int
   activate_commands_pool_button_in_main_window(
                                           PtWidget_t *widget, 
-                                          ApInfo_t *apinfo, 
+                                          void *apinfo, 
                                           PtCallbackInfo_t *cbinfo );
 
 int
 activate_main_log_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 int
 activate_timer_commands_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 int
 activate_devices_parameters_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 int
 close_device_panel_window( PtWidget_t *widget,
-                                                   ApInfo_t *apinfo, 
+                                                   void *apinfo, 
                                                    PtCallbackInfo_t *cbinfo );
 
 int
 activate_close_device_panel_button( PtWidget_t *widget,
-                                                        ApInfo_t *apinfo, 
+                                                        void *apinfo, 
                                                         PtCallbackInfo_t *cbinfo );
 
 int activate_device_button( PtWidget_t *widget,
-                                         ApInfo_t *apinfo,
+                                         void *apinfo,
                                          PtCallbackInfo_t *cbinfo );
 
  int activate_device_menu (PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                               PtCallbackInfo_t *cbinfo);
 
  int  activate_sending_commands_disabled_button_in_main_window
                                             (PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                              PtCallbackInfo_t *cbinfo);
 int
 activate_dictionary_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo );
 int
 activate_smena_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo );
 
 //threads
@@ -255,6 +256,8 @@ int channel=-1;
 unsigned int top_panel_height=45;
 metro_devices_container::iterator iter_dev;
 pthread_attr_t detached_thread_attributes;
+
+cout<<"Starting spdier before globals initialization"<<endl;
 
 //begin globals initialization
 system_settings_spider 	*spider_sys_sett=system_settings_spider::get_instance();
@@ -907,6 +910,8 @@ if (PtAppAddInput(NULL, 0, pulse_reciever_catcher, NULL)== NULL){
     	}
 
 try {
+cout<<"Starting spdier before loading device types and messages"<<endl;
+
 msg_types->load(spider_sys_sett->get_messages_types_name());
 messages->load(spider_sys_sett->get_global_messages_name());
 metro_devices_types->load(spider_sys_sett->get_devices_types_name());

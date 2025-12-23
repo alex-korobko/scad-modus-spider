@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/route.h>
+#include <errno.h>
 
 #include <string>
 #include <vector>
@@ -165,7 +166,7 @@ void router::change_route (
       gate->sin_family = AF_INET;
       gate->sin_addr=gateway;
 
-      if(write(sock, rtm, rtm->rtm_msglen) < 0)
+      if(write(sock, rtm, rtm->rtm_msglen) < 0) {
                 if( errno == EEXIST) {
                        rtm->rtm_type = RTM_CHANGE;
                        if(write(sock, rtm, rtm->rtm_msglen) < 0)
@@ -173,6 +174,7 @@ void router::change_route (
                   } else {
                       throw runtime_error (string("In write(...) RTM_ADD error: ")+strerror(errno));
                   };
+       };
 };
 
 

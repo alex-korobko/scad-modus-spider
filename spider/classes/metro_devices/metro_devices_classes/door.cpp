@@ -550,7 +550,7 @@ if (metro_device::get_id()==10) {
 //data bytes count
    tmp_iter1=answer.begin();
     advance(tmp_iter1,
-                   system_settings::MODBUS_DATA_BYTES_COUNT_INDEX);
+                   static_cast<int>(system_settings::MODBUS_DATA_BYTES_COUNT_INDEX));
     register_value=*tmp_iter1;
     if (register_value!=2) {
           A0_x2=false;

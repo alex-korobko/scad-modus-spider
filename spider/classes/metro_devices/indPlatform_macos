@@ -1,0 +1,2 @@
+DIRS = gcc_macos
+ALLDIRS = gcc_macos

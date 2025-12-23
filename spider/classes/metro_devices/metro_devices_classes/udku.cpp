@@ -1,4 +1,4 @@
-#include <Ap.h>
+    #include <Ap.h>
 #include <Ph.h>
 #include <Pt.h>
 
@@ -61,7 +61,7 @@ extern bool setting_start_time_disabled;
 //see staton_devices_properties_callbacks.cpp
 int
 activate_ok_button_in_udku_properties( PtWidget_t *widget, 
-                                                                     ApInfo_t *apinfo, 
+                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo );
 
 metro_udku::metro_udku(
@@ -374,16 +374,17 @@ void metro_udku::A0(int event)  throw (spider_exception){
 
  if (old_automat_state==A0_state) return;
 
-//  cout<<"udku automate A0 state changed from "<<old_automat_state
-//         <<" to "<<A0_state<<endl;
+if (metro_device::log_packets) {
+  cout<<"udku automate A0 state changed from "<<old_automat_state
+         <<" to "<<A0_state<<endl;
 
-//  cout<<"A0_x0 "<<(A0_x0? "true": "false")<<endl;
-//  cout<<"A0_x2 "<<(A0_x2? "true": "false")<<endl;
-//  cout<<"A0_x3 "<<(A0_x3? "true": "false")<<endl;
-//  cout<<"A0_x4 "<<(A0_x4? "true": "false")<<endl;
-//  cout<<"A0_x5 "<<(A0_x5? "true": "false")<<endl;
-//  cout<<"A0_x6 "<<(A0_x6? "true": "false")<<endl;
-
+  cout<<"A0_x0 "<<(A0_x0? "true": "false")<<endl;
+  cout<<"A0_x2 "<<(A0_x2? "true": "false")<<endl;
+  cout<<"A0_x3 "<<(A0_x3? "true": "false")<<endl;
+  cout<<"A0_x4 "<<(A0_x4? "true": "false")<<endl;
+  cout<<"A0_x5 "<<(A0_x5? "true": "false")<<endl;
+  cout<<"A0_x6 "<<(A0_x6? "true": "false")<<endl;
+}
 switch (old_automat_state) {
     case A0_RUN:
 			A0_z11();
@@ -825,8 +826,8 @@ void metro_udku::decode_answer_from_device_to_data_block(){
 
 // previos_request_to_device
 //============================================
-/*
-if (metro_device::get_id()==16) {
+
+if (metro_device::log_packets) {
 metro_device::buffer_data_type current_request_to_device=
                         metro_device::get_current_request_to_device_buffer();
 if (metro_device::get_id()==16) {
@@ -849,14 +850,13 @@ if (metro_device::get_id()==16) {
   };//if (current_request_to_device.empty())
 };
 }
-*/
 //============================================
 
 
 // answer_from_device
 //============================================
-/*
-if (metro_device::get_id()==16) {
+
+if (metro_device::log_packets) {
 if (answer_from_device.empty()) {
       cout<<"answer_from_device is EMPTY"<<endl;
 } else  if ( answer_from_device[1]==4){
@@ -875,13 +875,12 @@ for (metro_device::buffer_data_type::size_type i=0;
     cout<<endl;
     cout<<endl;
   };//if (answer_from_device.empty())
- }; //if (metro_device::get_id()==16)
-*/
+ }; //if(metro_device::log_packets)
 //============================================
 
-//  if (metro_device::get_id()==1 &&metro_device::get_failures_count()>0)
-//      cout<<"In udku with id "<<metro_device::get_id()<<" failures count "<<metro_device::get_failures_count()<<" A0_state "<<A0_state<<endl;
-
+  if (metro_device::log_packets &&metro_device::get_failures_count()>0) {
+      cout<<"In udku with id "<<metro_device::get_id()<<" failures count "<<metro_device::get_failures_count()<<" A0_state "<<A0_state<<endl;
+}
         try {
 		if (answer_from_device.empty()) {
                  if (metro_device::get_failures_count()>system_settings::RECONNECTS_TO_DEVICE_COUNT) {
@@ -889,29 +888,31 @@ for (metro_device::buffer_data_type::size_type i=0;
                            metro_device::set_last_message_remote_id(-1);
                        } else {
                            metro_device::set_failures_count(metro_device::get_failures_count()+1);
-//                    if (metro_device::get_id()==1) 
-//                           cout<<"Increment failures in answer_from_device.empty() "<<endl;
+                    		if (metro_device::log_packets) { 
+                           		cout<<"Increment failures in answer_from_device.empty() new value"<<metro_device::get_failures_count()<<endl;
+                           		}
                        };
-//            if (metro_device::get_id()==1) 
-//                cout<<"In udku with id "<<metro_device::get_id()<<" answer from device is empty "<<endl;
-
+            	if (metro_device::log_packets) { 
+                		cout<<"In udku with id "<<metro_device::get_id()<<" answer from device is empty "<<endl;
+				}
 			 } else { //if (answer_from_device.empty()
                   if (( answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX] & 0x80)
                          !=0) {
                          if (metro_device::get_failures_count()>system_settings::RECONNECTS_TO_DEVICE_COUNT ||
                               ! A0_x5)  {//if ecalator change state from offline to internal exception, it must be changed immediatly
-//                           if (metro_device::get_id()==1) 
-//                                cout<<"In udku with id "<<metro_device::get_id()<<" returned error "<<static_cast<int>(answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX])<<endl;
+                                  if (metro_device::log_packets) { 
+                                      cout<<"In udku with id "<<metro_device::get_id()<<" returned error "<<static_cast<int>(answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX])<<endl;
+                                }
                                 A0_x6=false;
                                 metro_device::set_failures_count(0);
                              } else  {
                                 metro_device::set_failures_count(metro_device::get_failures_count()+1);
-//                              if (metro_device::get_id()==1) 
-//                                   cout<<"Increment failures in answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX] "<<endl;
+                                if (metro_device::log_packets) { 
+                                     cout<<"Increment failures in answer_from_device[system_settings::MODBUS_FUNCTION_CODE_INDEX] "<<endl;
+                                   }
                              };
                       } else {
                                 A0_x6=true;
-                                metro_device::set_last_message_remote_id(-1);
                                 metro_device::set_failures_count(0);
                      };
 
@@ -1216,7 +1217,7 @@ void metro_udku::decode_answer_from_device_4_function
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-             system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX);
+             static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX));
    advance(tmp_iter2,
                 (system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INDEX+
                  system_settings::MODBUS_FUNCTION_4_REQUEST_BEGIN_ADDRESS_INCREM));
@@ -1228,7 +1229,7 @@ void metro_udku::decode_answer_from_device_4_function
    tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-                 system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
+                 static_cast<int>(system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
    advance(tmp_iter2,
                  (system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                   system_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM));
@@ -1382,7 +1383,7 @@ void metro_udku::decode_answer_from_device_4_function
      if (begin_addr<= 30009&&
          begin_addr+registers_count>30009) {
             answer_last_message_remote_id=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
-//			cout<<"answer_last_message_remote_id "<<answer_last_message_remote_id<<endl;
+
            if (answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
                     throw spider_exception ("In answer 3009 register answer_last_message_remote_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE");
             tmp_iter1=tmp_iter2;
@@ -1392,11 +1393,8 @@ void metro_udku::decode_answer_from_device_4_function
      if (begin_addr<= 30010&&
          begin_addr+registers_count>30010) {
             answer_messages_size=sys_sett->type_from_bytes<word>( system_settings::bytes (tmp_iter1, tmp_iter2) );
-//			cout<<"answer_messages_size "<<answer_messages_size<<endl;
            if (answer_messages_size>system_settings::MAX_MESSAGES_COUNT)
                     throw spider_exception ("In answer 30010 register answer_messages_size>system_settings::MAX_MESSAGES_COUNT");
-//            tmp_iter1=tmp_iter2;
-//            advance(tmp_iter2, 2);
     };
 
 //change input variables of automat A0
@@ -1464,18 +1462,19 @@ void metro_udku::decode_answer_from_device_4_function
 
 //messages
     //in initial state get_last_message_remote_id()==0, so all messages must be skiped
-    int upper_last_id=metro_device::get_last_message_remote_id();
+    int upper_last_id=this->get_last_message_remote_id();
     int answer_first_message_remote_id, current_message_id=0;
 
-
      if (upper_last_id<0) { //decode first packet after program starting
-               metro_device::set_last_message_remote_id(answer_last_message_remote_id);
+               this->set_last_message_remote_id(answer_last_message_remote_id);
                upper_last_id=answer_last_message_remote_id;
               };
 
      answer_first_message_remote_id=answer_last_message_remote_id-answer_messages_size+1;
-     if (answer_first_message_remote_id<0)
+     if (answer_first_message_remote_id<0) {     		
            answer_first_message_remote_id+=system_settings::MAX_UPPER_MESSAGE_ID_VALUE;
+    }
+
 
      word current_register=30011;
      ldword message_id;
@@ -1488,24 +1487,21 @@ void metro_udku::decode_answer_from_device_4_function
                 throw spider_exception(message.str() );
           };
     local_msg_dict=&(dev_types_iter->second->type_messages);
-
 	 for (byte register_offset=0; register_offset<answer_messages_size; register_offset++){
             if (begin_addr+registers_count<current_register+register_offset) break;
 
            register_data_word=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2) );
             current_message_id=answer_first_message_remote_id+register_offset;
 
-//            cout<<"current message id"<<endl;
-
             if (current_message_id>system_settings::MAX_UPPER_MESSAGE_ID_VALUE)
-                   current_message_id-=system_settings::MAX_UPPER_MESSAGE_ID_VALUE;
+                   current_message_id-=system_settings::MAX_UPPER_MESSAGE_ID_VALUE; 
 
             if (answer_first_message_remote_id<=answer_last_message_remote_id &&
                 answer_first_message_remote_id<=upper_last_id &&
-                upper_last_id<=answer_last_message_remote_id &&
+                   upper_last_id<=answer_last_message_remote_id &&
                 current_message_id<=upper_last_id)  {
                      tmp_iter1=tmp_iter2;
-                     advance(tmp_iter2, 2);
+                     advance(tmp_iter2, 2); 
                      continue;
                   };
 
@@ -1567,12 +1563,11 @@ void metro_udku::decode_answer_from_device_4_function
                                                             get_station_id(),
                                                             get_id(),
                                                             time(NULL)));
-		           // NOTICE: time(NULL) must be replaced by time from escalator
-
-                  metro_device::set_last_message_remote_id(current_message_id);
+		           // NOTICE: time(NULL) must be replaced by time from udku
+                  this->set_last_message_remote_id(current_message_id);
                   tmp_iter1=tmp_iter2;
                   advance(tmp_iter2, 2);
-
+			
 	 }; // for (byte register_offset=0; register_offset<
 
    this->data_block=local_data_block;
@@ -1650,11 +1645,12 @@ void metro_udku::decode_answer_from_device_4_function
 
                     find_pos=static_cast<int>(message_from_messages_container.find(parameters_names[system_settings::PARAMETER_NAME_BLOCK_CIRCUT_NAME]));
                     if (find_pos!=-1) {
-                        input_circut_index=static_cast<byte>((current_message_id&0x00ff00)>>8);
+                        input_circut_index=static_cast<byte>(log_mess_iter->get_msg_id()>>8);                                      
+
                    if (dev_types_iter!=dev_types_cont->end() &&
                                dev_types_iter->second->circuts_size()>input_circut_index) {
                                input_circut_name=(dev_types_iter->second->at_circut(input_circut_index)).get_hint();
-                      } else  { // if (iter_devices_types!=devices_types->end()) &&
+                           } else  { // if (iter_devices_types!=devices_types->end()) &&
                                  input_circut_name="ERROR!!";
                                  ostringstream mess;
                                  mess<<"Present PARAMETER_NAME_BLOCK_CIRCUT_NAME but iter_devices_types!=devices_types->end() or circuts_size()>input_circut_index message id in log="<<current_message_id;

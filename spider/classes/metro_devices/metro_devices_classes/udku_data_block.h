@@ -58,67 +58,73 @@ status :
      low byte
           third byte of breaking path value
 
-	modbus register 30004
+     modbus register 30004
      high byte
           second byte of breaking path value
      low byte
           first byte of breaking path value
 
+     modbus register 30005
+     high byte
+          nominal escalator speed value, centimeters per second
+     low byte
+          current escalator speed value, centimeters per second
+
 	modbus register 30006
      high byte
-          fourth byte of escalator running path (porbeg)
+          fourth byte of escalator running path (porbeg, kilometers)
      low byte
-          third byte of escalator running path (porbeg)
+          third byte of escalator running path (porbeg, kilometers)
 
 	modbus register 30007
      high byte
-          second byte of escalator running path (porbeg)
+          second byte of escalator running path (porbeg, kilometers)
      low byte
-          first byte of escalator running path (porbeg)
+          first byte of escalator running path (porbeg, kilometers)
 
-	modbus register 30008 (UDKU inputs  6 and 7 bits used for block circut (other block-circut contacts on 30009 register))
+	modbus register 30008 
      high byte
         bit number (1 active state)
-        7 R3+RKA+RAT+UKPE
-        6 BT1+BT2
-        5 DU0 escalator stopped from DU - pulse
-        4 KNS1 button STOP (1 mean button is pressed)
+        7 КАНЛ+РДО+КАНП (Ключі «СТОП» на балюстраді нижні + вимикач СУРСТ)
+        6 ККВ+КАВЛ+КАВП (Ключі «СТОП» на балюстраді верхні)
+        5 КнС2+КЗП2 (Ключі заборони пуску верхні)
+        4 ДУО (Дистанційна зупинка)
         3 Not used
         2 Mashzal door
-        1 RKN2 circut of ~110V power supply control (1 mean ~110V power supply NOT PRESENT)
-        0 RKN1 circut of ~380V power supply control (1 mean ~380V power supply NOT PRESENT)
+        1 РКН2 (Реле контролю напруги +110В)
+        0 РКН1 (Реле контролю напруги ~380В)
      low byte
         bit number (1 active state)
         7 RKP rele of  start control (1 mean escalator rumming on nominal speed, 0 mean escalator is stopped or in starting mode)
         6 RB2 circut of power supply (1 mean is power supply NOT norma)
         5 KT breaks kontaktor (1 mean breaks is ON)
-        4 RG rele ready to start from TU (1 mean not ready)
-        3 RPV1 kontactor  UP (1 mean escalator running UP)
-        2 RPN1 kontactor DOWN (1 mean escalator running DOWN)
-        1 Block circut is norma (1 mean block circut is NOT norma)
-        0 Mode TU/MU (1 mean TU mode)
+        4 RG Готовність телемеханіки (1 mean not ready)
+        3 RPV1 kontactor  UP (1 means escalator running UP)
+        2 RPN1 kontactor DOWN (1 means escalator running DOWN)
+        1 RBK (Реле блокувального кола)
+        0 B16 (Вимикач допоміжного приводу)
 
 	modbus register 30009 (UDKU inputs - block circut contacts)
      high byte
         bit number (1 active state)
-        7 RTL+RTP
-        6 VNL+VNP
-        5 KZP3+KS4
-        4 KANL+KANP+RDO
-        3 VSN
-        2 VVNL+VVNP
-        1 VPNL+VPNP
-        0 VPVL+VPVP
+        7 РТЛ+РТП (Термореле підшипника вхідного валу редуктора)
+        6 РУП+РУЛ (Контакти реле заклинювання поручнів)
+        5 ВПС (Блокування підйому ступені нижнє)
+        4 ВВНП+ВВНЛ (Блокування нижньої вхідної площадки)
+        3 ВНП+ВСПН+ВСЛН+ВНЛ (Блокування натяжного пристрою + опускання ступені нижнє)
+        2 ВПНЛ+ВПНП (Блокування сходу поручня нижнє)
+        1 ВПП+ВПЛ+ВПВЛ+ВПВП (Блокування витяжки + сходу поручня верхнє)
+        0 ВБП+ВБЛ (Блокування бігунка ступені)
 
      low byte
-        7 RUL+RUP
-        6 VPP+VPL
-        5 VOL+VOP
-        4 BSV
-        3 VVVL+VVVP
-        2 KS2+KZP2+KS3
-        1 KAVL+KAVP
-        0 VG+VA+RUA
+        7 ВСПВ+ВСЛВ (Блокування опускання ступені верхнє)
+        6 ВВС+ВОП+ВОЛ (Блокування демонтажу ступені + блокування «СТОП» в нахилі)
+        5 ВВВП+ВВВЛ (Блокування верхньої вхідної площадки)
+        4 ВВ+ВА+ВГ (Гвинт + упор + гайка аварійного гальма)
+        3 РЗ+РАТ (Блокування зі схеми аварійного гальма)
+        2 ВТ (Блокування робочого гальма)
+        1 КнС (Кнопка «СТОП» на шафі керування)
+        0 КнС3+КЗП3 (Ключі заборони пуску нижні)
 
 	modbus register 30009
       upper message id in messages pull
@@ -162,7 +168,7 @@ struct udku_data_block : public data_block{
    INDEX_SIGNAL_CONTACTOR_RPV1=21,
    INDEX_SIGNAL_CONTACTOR_RPN1=20,
    INDEX_SIGNAL_BLOCK_CIRCUT_STATUS=19,
-   INDEX_SIGNAL_MU_TU_MODE=18};
+   INDEX_SIGNAL_MU_TU_MODE=22};
 
 	enum {
 	INDEX_PARAM_MODE_VALUE=1,

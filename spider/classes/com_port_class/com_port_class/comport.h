@@ -14,8 +14,7 @@ private:
     int m_delay_useconds;
     float m_comport_koeff;
 public:
-
-    comport::comport (
+    comport (
             int port_number,
             int baud_rate,
 	    byte parity,

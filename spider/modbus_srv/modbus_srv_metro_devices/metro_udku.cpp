@@ -291,39 +291,80 @@ metro_device::command_data
                          };
     previos_rkp_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x80;
 
-   if (previos_mu_tu_switcher_value!=-1) 
-         if (previos_mu_tu_switcher_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x01))
-                   if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x01)!=0) {
+   if (previos_mu_tu_switcher_value!=-1){ 
+         if (previos_mu_tu_switcher_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10))
+                   if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10)!=0) {
                               new_messages.push_back(0);
                               new_messages.push_back(MESSAGE_ESCALATOR_ON_TU);
                          } else {
                                new_messages.push_back(0);
                                new_messages.push_back(MESSAGE_ESCALATOR_ON_MU);
                          };
-    previos_mu_tu_switcher_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x01;
+    };
+    previos_mu_tu_switcher_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10;
 
-   if (previos_block_circut_value!=-1) 
+   if (previos_block_circut_value!=-1) {
          if (previos_block_circut_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02) &&
               (answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02)!=0) {
-                     // deside, which block circut is breaked
+                     // Determine which block circuit is broken
                     byte index_of_block_circut=0;
-                     if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+17] & 0xff)!=0) {
-                            for (index_of_block_circut=0; index_of_block_circut<8;index_of_block_circut++)
-                               if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+17] & (0x8>>index_of_block_circut))!=0) break;
-                        } else if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18] & 0xff)!=0) {
-                            for (index_of_block_circut=0; index_of_block_circut<8;index_of_block_circut++)
-                               if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18] & (0x8>>index_of_block_circut))!=0) break;
-                               index_of_block_circut+=8;
-                        } else if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+15] & 0xc0)!=0) {
-                            for (index_of_block_circut=0; index_of_block_circut<3;index_of_block_circut++)
-                               if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+15] & (0x8>>index_of_block_circut))!=0) break;
-                                index_of_block_circut+=16;
-                        } else {
-                            sett_obj->sys_message(program_settings::ERROR_MSG, "In metro_udku::create_answer_to_socket_func_4 previos_block_circut_value!=new value, but all crircuts is 0");
-                        };
+                    bool circuit_found=false;
+                    
+                    // Check circuits 0-7: Register 3009 high byte (byte index+17)
+                    const int CIRCUIT_BYTE_0_7_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+17;
+                    byte circuit_byte_0_7 = answer_from_com_port[0][CIRCUIT_BYTE_0_7_INDEX];
+                    if (circuit_byte_0_7 != 0) {
+                        byte bit_pos = metro_device::find_first_set_bit(circuit_byte_0_7);
+                        if (bit_pos < 8) {
+                            index_of_block_circut = bit_pos;  // Circuits 0-7
+                            circuit_found = true;
+                        }
+                    }
+                    
+                    // Check circuits 8-15: Register 3009 low byte (byte index+18)
+                    if (!circuit_found) {
+                        const int CIRCUIT_BYTE_8_15_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18;
+                        byte circuit_byte_8_15 = answer_from_com_port[0][CIRCUIT_BYTE_8_15_INDEX];
+                        if (circuit_byte_8_15 != 0) {
+                            byte bit_pos = metro_device::find_first_set_bit(circuit_byte_8_15);
+                            if (bit_pos < 8) {
+                                index_of_block_circut = bit_pos + 8;  // Circuits 8-15
+                                circuit_found = true;
+                            }
+                        }
+                    }
+                    
+                    // Check circuits 16-18: Register 3008 high byte bits 7, 6, 5
+                    if (!circuit_found) {
+                        const int CIRCUIT_BYTE_16_18_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+15;
+                        byte circuit_byte_16_18 = answer_from_com_port[0][CIRCUIT_BYTE_16_18_INDEX];
+                        // Check bit 5 (0x20) -> index 16
+                        if ((circuit_byte_16_18 & 0x20) != 0) {
+                            index_of_block_circut = 16;
+                            circuit_found = true;
+                        }
+                        // Check bit 6 (0x40) -> index 17
+                        else if (!circuit_found && (circuit_byte_16_18 & 0x40) != 0) {
+                            index_of_block_circut = 17;
+                            circuit_found = true;
+                        }
+                        // Check bit 7 (0x80) -> index 18
+                        else if (!circuit_found && (circuit_byte_16_18 & 0x80) != 0) {
+                            index_of_block_circut = 18;
+                            circuit_found = true;
+                        }
+                    }
+                    
+                    // Error: Block circuit fault detected but no specific circuit found
+                    if (!circuit_found) {
+                        sett_obj->sys_message(program_settings::ERROR_MSG, 
+                            "In metro_udku::create_answer_to_socket_func_4: "
+                            "Block circuit fault detected but all circuit bytes are 0");
+                    }
                      new_messages.push_back(index_of_block_circut);
                      new_messages.push_back(MESSAGE_ESCALATOR_NOT_READY_WITH_BLOCK_CIRCUT_NAME);
             };//if (previos_block_circut_value!=(answer_from_com_port[0][program_settings::MODBUS
+      }; //if (previos_block_circut_value!=-1) {
       previos_block_circut_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02;
 
      if (!new_messages.empty())

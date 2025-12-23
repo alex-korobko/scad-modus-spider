@@ -1,2 +1,11 @@
 **/.DS_Store
-**/*.o
+
+# Ignore PaxHeader directories created by tar when extracting archives with extended attributes
+**/PaxHeader/
+
+# Ignore JetBrains IDE directories
+**/.idea/
+
+# Ignore output.txt files at all levels
+**/output.txt
+

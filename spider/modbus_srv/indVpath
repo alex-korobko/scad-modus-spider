@@ -3,4 +3,5 @@ VPATH =../unit_tests\
  :../system_settings_classes\
  :../socket_classes\
  :../modbus_srv\
+ :../modbus_srv_metro_devices\
  :../

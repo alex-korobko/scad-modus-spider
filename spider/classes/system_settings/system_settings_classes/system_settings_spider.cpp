@@ -317,6 +317,20 @@ void system_settings_spider::prepare_visualization(
                   throw spider_exception(exception_description.str());
 				};
 
+		font_for_menu.resize(MAX_FONT_TAG);
+		font_name = "Helvetica";
+		font_size=24;
+
+		if (PfGenerateFontName ( font_name.c_str(),
+												PF_STYLE_ANTIALIAS | PF_STYLE_BOLD,
+												font_size,
+												&font_for_menu[0]) ==NULL) {
+				font_for_menu.erase(font_for_menu.begin(), font_for_menu.end());
+
+                exception_description<<"ERROR: Can`t generate font name for font "<<font_name<<" size "<<font_size;
+                throw spider_exception(exception_description.str());
+                };
+
 }
 
 PhImage_t* system_settings_spider::get_image (images_size_type image_index){
@@ -354,17 +368,16 @@ string window_title;
 			break;
 	};
 
-	if (!font_for_messages_small.empty() ||
-        !font_for_messages_large.empty()) {
+	if (menu_font_prepared()) {
 	is_detached ?
 	PtNotice(main_window, 
 					NULL, 
 					window_title.c_str(),
 					window_icon, 
 					mess_text.c_str(), 
-					(const char*) &font_for_messages_small[0], 
-					"Ok", 
-					(const char*) &font_for_messages_large[0],
+					(const char*) &font_for_menu[0], 
+					"OK", 
+					(const char*) &font_for_menu[0],
 					Pt_ESC_DISABLE | Pt_RIGHT|Pt_RELATIVE) 
 					 : 
 	PtNotice(main_window, 
@@ -372,9 +385,9 @@ string window_title;
 					window_title.c_str(),
 					window_icon, 
 					mess_text.c_str(), 
-					(const char*) &font_for_messages_small[0], 
-					"Ok", 
-					(const char*) &font_for_messages_large[0],
+					(const char*) &font_for_menu[0], 
+					"OK", 
+					(const char*) &font_for_menu[0],
 					Pt_ESC_DISABLE | Pt_MODAL | Pt_CENTER|Pt_RELATIVE) ;
 	} else {
             this->sys_message(system_settings::ERROR_MSG,
@@ -387,7 +400,7 @@ string window_title;
 					window_icon, 
 					mess_text.c_str(), 
 					NULL, 
-					"Ok", 
+					"OK", 
 					NULL,
 					Pt_ESC_DISABLE | Pt_RIGHT|Pt_RELATIVE)
 					 : 
@@ -397,7 +410,7 @@ string window_title;
 					window_icon, 
 					mess_text.c_str(), 
 					NULL, 
-					"Ok", 
+					"OK", 
 					NULL,
 					Pt_ESC_DISABLE | Pt_MODAL | Pt_CENTER|Pt_RELATIVE);
 

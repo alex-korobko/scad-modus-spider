@@ -14,6 +14,7 @@ PtWidget_t *map_container;
 
 chars_container font_for_messages_small;
 chars_container font_for_messages_large;
+chars_container font_for_menu;
 
 images_container images;
 string start_wav_file_name;
@@ -153,6 +154,9 @@ virtual ~system_settings_spider() {};
 
 	bool large_font_prepared() {return (!font_for_messages_large.empty());};
 	const char* get_large_font(){return this->large_font_prepared()?&font_for_messages_large[0] : NULL;};
+
+	bool menu_font_prepared() {return (!font_for_menu.empty());};
+	const char* get_menu_font(){return this->menu_font_prepared()?&font_for_menu[0] : NULL;};
 
 //virtual metods
 virtual system_settings::types_of_system_settings get_system_settings_type();

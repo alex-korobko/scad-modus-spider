@@ -1,0 +1,10 @@
+HEADERS=defines.h\
+spider_exception.h\
+data_block.h
+
+# Note: Most headers are associated with files that include QNX headers
+# and are excluded from macOS build
+
+ifdef UNIT_TESTING
+# Note: Unit test headers also associated with QNX-dependent files
+endif

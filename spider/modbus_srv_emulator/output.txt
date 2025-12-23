@@ -1,2 +1,0 @@
-make[1]: *** No rule to make target `msg_dict_container.h', needed by `generic_socket.o'.  Stop.
-make: *** [all] Error 2

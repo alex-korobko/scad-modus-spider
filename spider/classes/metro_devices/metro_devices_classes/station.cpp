@@ -43,15 +43,15 @@ class metro_devices_container;
 
 //see in_code_attached_callbacks.cpp
 int activate_device_button( PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                               PtCallbackInfo_t *cbinfo );
  int activate_device_menu (PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                               PtCallbackInfo_t *cbinfo);
 
 // see station_devices_properties_callbacks.cpp
 int activate_station_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo );
 
 void metro_station::create_wnd(PtWidget_t* parent) throw (spider_exception) {

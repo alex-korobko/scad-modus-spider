@@ -569,12 +569,12 @@ void log_records_container::load (
 				if (iter_metro_devices!=devs_cont->end()){
 						iter_devices_types=metro_devices_types->find(iter_metro_devices->second->get_type());
 						if (iter_devices_types!=metro_devices_types->end()) {
-                                if (new_format_file || (!new_format_file && (message_id&0x8000==0))) {
+                                if (new_format_file || ((!new_format_file) && ((message_id & 0x8000)==0))) {
                                      msg_dict_container::iterator tmp_msg_iter=
                                           iter_devices_types->second->type_messages.find(tmp_mess_id);
                                      if (tmp_msg_iter!=iter_devices_types->second->type_messages.end())
                                                                             msg_type=tmp_msg_iter->second.get_type();
-                                 }; // if (new_format_file || (!new_format_file && (message_id&0x8000==0)))
+                                 }; // if (new_format_file || (!new_format_file && ((message_id & 0x8000)==0)))
 							}  else  { // if (iter_devices_types!=metro_devices_types->end())
 					                    exception_description<<"Error in  file "<<file_name;
 					                    exception_description<<"  not found device type with id "<<iter_metro_devices->second->get_type();
@@ -610,8 +610,8 @@ void log_records_container::load (
 
    //if not found in device type messages (or device_id==0), must be found in global messages container
    if (msg_type==0 &&
-       (new_format_file || (!new_format_file && (message_id&0x8000==0)
-                                         )
+       (new_format_file || ((!new_format_file) && ((message_id&0x8000)==0)
+                                      )
        )
        ){ 
 			msg_dict_container::iterator tmp_msg_iter=messages->find(tmp_mess_id);
@@ -639,7 +639,7 @@ void log_records_container::load (
          } else {
             //in old format log files if mess_id&0x8000!=0 then that is not message it, that is block circut index. So it must be 
             //added to previos message to second byte
-            if (old_mess_id&0x8000==0) {
+            if ((old_mess_id&0x8000)==0) {
       			tmp_autoincrement=records_count+1;
                 //in old format log files in highest 2 bytes (4 bytes size of int) of message placed breaking path value
                 //now breaking path value must be in 4 highest bytes (8 bytes size of ldword) of message placed breaking path value

@@ -81,7 +81,7 @@ class metro_devices_container;
 #endif
 
 extern msg_dict_container *messages;
-extern log_records_container *main_log;
+  extern log_records_container *main_log;
 extern log_records_container *archive_log;
 
 extern string password_for_switching_sending_commands;
@@ -128,7 +128,7 @@ return Pt_PWD_REJECT;
 //local functions
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo ){
 
 if (widget==NULL) return Pt_HALT;
@@ -142,7 +142,7 @@ return( Pt_CONTINUE);
 
  int  activate_sending_commands_disabled_button_in_main_window
                                             (PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                               PtCallbackInfo_t *cbinfo){
 vector<PtArg_t> args;
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
@@ -205,7 +205,7 @@ return Pt_CONTINUE;
 
 int
 activate_exit_button_in_main_window( PtWidget_t *widget, 
-                                                                     ApInfo_t *apinfo, 
+                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 
 ApDBase_t *widgets_db;
@@ -242,7 +242,7 @@ return( Pt_CONTINUE); //make compiler happy
 
 int
 activate_devices_parameters_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -253,7 +253,7 @@ spider_sys_sett->message_window(system_settings::INFO_MSG, "Button disabled", tr
 return( Pt_CONTINUE);
 };
 
-int resize_main_window( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo ) {
+int resize_main_window( PtWidget_t *widget, void *apinfo, PtCallbackInfo_t *cbinfo ) {
 vector<PtArg_t> args(2);
 unsigned int *new_window_width, *new_window_height, new_map_width, new_map_height;
 PtWidget_t *map_container_widget;
@@ -284,7 +284,7 @@ return( Pt_CONTINUE);
 };
 
 int
-close_device_panel_window( PtWidget_t *widget, ApInfo_t *apinfo, 
+close_device_panel_window( PtWidget_t *widget, void *apinfo, 
                  PtCallbackInfo_t *cbinfo ){
 
 		metro_device::paneled_device_id=0;
@@ -294,7 +294,7 @@ close_device_panel_window( PtWidget_t *widget, ApInfo_t *apinfo,
 	};
 
 int
-activate_close_device_panel_button( PtWidget_t *widget, ApInfo_t *apinfo, 
+activate_close_device_panel_button( PtWidget_t *widget, void *apinfo, 
                  PtCallbackInfo_t *cbinfo ){
 		PtWidget_t *window_widget=PtGetParent(widget, PtWindow);
 
@@ -305,7 +305,7 @@ activate_close_device_panel_button( PtWidget_t *widget, ApInfo_t *apinfo,
 	};
 
 
-int activate_device_button( PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo ){
+int activate_device_button( PtWidget_t *widget, void *apinfo, PtCallbackInfo_t *cbinfo ){
 		int *device_id;
 		ostringstream exception_description;
  
@@ -484,7 +484,6 @@ int activate_device_menu_item( PtWidget_t *widget,
 command device_command=*callback_command;
 delete(callback_command);
 metro_devices_container::iterator dev_iter;
-time_t curr_time = time(NULL);
 
    cmd_pool_container *cmd_pool_instance=cmd_pool_container::get_instance();
    if (cmd_pool_instance==NULL) {
@@ -633,7 +632,7 @@ time_t curr_time = time(NULL);
 
 
  int activate_device_menu (PtWidget_t *widget,
-                                              ApInfo_t *apinfo,
+                                              void *apinfo,
                                               PtCallbackInfo_t *cbinfo){
   vector<PtArg_t> args;
   vector<command> appropriated_commands;
@@ -680,17 +679,28 @@ try {
     }
 
   args.clear();
-  args.resize(1);
-
+  // Get system settings to access fonts
+  system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
+  const char* menu_font = NULL;
+  if (spider_sys_sett->menu_font_prepared()) {
+    menu_font = spider_sys_sett->get_menu_font();
+  } else if (spider_sys_sett->large_font_prepared()) {
+    menu_font = spider_sys_sett->get_large_font();
+  }
+   args.resize(menu_font ? 2 : 1);
   PtSetArg (&args[0], Pt_ARG_MENU_TITLE, menu_title.c_str(), 0);
+   if (menu_font) {
+     PtSetArg (&args[1], Pt_ARG_MENU_TEXT_FONT, menu_font, 0);
+   }
+
   menu_wgt= PtCreateWidget(PtMenu,
                                               Pt_NO_PARENT,
                                               args.size(),
                                               &args[0]);
 
-
-cmd_iter=appropriated_commands.begin();
- while (cmd_iter!=appropriated_commands.end()) {
+ 
+  cmd_iter=appropriated_commands.begin();
+  while (cmd_iter!=appropriated_commands.end()) {
 
    args.clear();
    args.resize(3);

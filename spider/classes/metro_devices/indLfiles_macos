@@ -1,0 +1,4 @@
+MYLIBS= -lm -lpthread
+ifdef UNIT_TESTING
+MYLIBS+= -lcppunit
+endif

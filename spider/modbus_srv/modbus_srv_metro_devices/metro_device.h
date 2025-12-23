@@ -42,6 +42,18 @@ void set_command_request_to_comport_buffer(command_data_container new_request_to
          request_to_com_port=new_request_to_com_port;
 };
 
+// Helper function to find first set bit (MSB to LSB) in a byte
+// Returns bit position (0-7) or 8 if no bit is set
+static inline byte find_first_set_bit(byte value) {
+    for (byte bit_pos=0; bit_pos<8; bit_pos++) {
+        byte mask = 0x80 >> bit_pos;  // Start from MSB (bit 7) down to LSB (bit 0)
+        if ((value & mask) != 0) {
+            return bit_pos;
+        }
+    }
+    return 8;  // No bit set
+};
+
 public:
 
 metro_device(int new_device_number, bool new_log_packets) 

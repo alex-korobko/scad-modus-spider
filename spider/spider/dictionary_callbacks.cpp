@@ -35,12 +35,12 @@ using namespace std;
 //see in_code_attached_callbacks.cpp for close_window body
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo );
 
 //local functions
 static int activate_exit_button_in_dispatchers_window ( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
 
    dispatcher_persons_container *dispatchers=dispatcher_persons_container::get_instance();
@@ -58,7 +58,7 @@ static int activate_exit_button_in_dispatchers_window ( PtWidget_t *widget,
 };
 
 static int
-selection_dispatchers_list(PtWidget_t *widget, ApInfo_t *apinfo, PtCallbackInfo_t *cbinfo ){
+selection_dispatchers_list(PtWidget_t *widget, void *apinfo, PtCallbackInfo_t *cbinfo ){
 PtListCallback_t *list_callback_data=static_cast<PtListCallback_t*>(cbinfo->cbdata);
 ushort_t *sel_array=list_callback_data->sel_array;
 int sel_item_count=list_callback_data->sel_item_count;
@@ -102,19 +102,19 @@ return Pt_CONTINUE;
 
 
 static int activate_new_dispatcher_window ( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
     return Pt_CONTINUE;
 };
 
 static int activate_edit_dispatcher_window ( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
     return Pt_CONTINUE;
 };
 
 static int activate_delete_dispatcher_window ( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
     return Pt_CONTINUE;
 };
@@ -404,7 +404,7 @@ if (dispatchers==NULL) {
 
 int
 activate_dictionary_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
 PtWidget_t *dialog_window, *common_panel, *dictionary_panel_group, 
                      *buttons_panel,  *current_button;

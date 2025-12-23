@@ -1,0 +1,1 @@
+MYLPATH=-L. -L/usr/local/lib/ -L/opt/homebrew/lib/ -L/usr/lib/

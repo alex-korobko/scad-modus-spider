@@ -56,7 +56,7 @@ class metro_devices_container;
 //see in_code_attached_callbacks.cpp for close_window body
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo );
 
 //see draw_functinos.cpp
@@ -185,7 +185,7 @@ try {
 };
 
 int activate_exit_button_in_stations_devices_properties_window ( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
     metro_stations_container::set_metro_station_devices_properties_panel(NULL);
     metro_stations_container::set_metro_station_devices_properties_raw_list(NULL);
@@ -194,7 +194,7 @@ int activate_exit_button_in_stations_devices_properties_window ( PtWidget_t *wid
 
 int
 activate_station_window( PtWidget_t *widget, 
-                                           ApInfo_t *apinfo, 
+                                           void *apinfo, 
                                            PtCallbackInfo_t *cbinfo ){
 PtWidget_t *dialog_window, *common_panel, *devices_panel, *buttons_panel, *raw_list, *divider_in_raw_list, *current_button;
 vector<PtCallback_t> callbacks;
@@ -526,7 +526,7 @@ return Pt_CONTINUE;
 
 int
 activate_ok_button_in_udku_properties( PtWidget_t *widget, 
-                                                                     ApInfo_t *apinfo, 
+                                                                   void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 int *internal_deivce_id=NULL,
        device_id;
@@ -638,7 +638,7 @@ return (Pt_CONTINUE);
 
 int
 activate_ok_button_in_escalator_properties( PtWidget_t *widget, 
-                                                                     ApInfo_t *apinfo, 
+                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 int *internal_deivce_id=NULL,
        device_id;

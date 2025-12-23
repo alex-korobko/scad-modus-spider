@@ -56,7 +56,7 @@ using namespace std;
 //see in_code_attached_callbacks.cpp for close_window body
 int
 close_window( PtWidget_t *widget, 
-                            ApInfo_t *apinfo, 
+                            void *apinfo, 
                            PtCallbackInfo_t *cbinfo );
 
 //see draw_functinos.cpp
@@ -70,7 +70,7 @@ void timer_commands_raw_list_draw_function( PtWidget_t *widget,
 //local functions
 int
 activate_accept_button_in_timer_commands_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -87,7 +87,7 @@ return Pt_CONTINUE;
 
 int
 activate_generate_button_in_timer_commands_window ( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -118,7 +118,7 @@ return Pt_CONTINUE;
 
 int
 activate_exit_button_in_timer_commands_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ){
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -138,7 +138,7 @@ return( Pt_CONTINUE);
 
 int
 activate_timer_commands_button_in_main_window( PtWidget_t *widget, 
-                                                                                     ApInfo_t *apinfo, 
+                                                                                     void *apinfo, 
                                                                    PtCallbackInfo_t *cbinfo ) {
 PtWidget_t *dialog_window, *buttons_panel, *raw_list, *divider_in_raw_list, *current_button;
 vector<PtCallback_t> callbacks;

@@ -6,7 +6,7 @@ public:
   typedef vector<byte> buffer_data_type;
   typedef vector<int> related_devices_ids;
 
-private:
+protected:
     related_devices_ids devices_ids;
 
 //class for locking mutexes for class metro escalator
