@@ -90,18 +90,18 @@ status :
         5 КнС2+КЗП2 (Ключі заборони пуску верхні)
         4 ДУО (Дистанційна зупинка)
         3 Not used
-        2 Mashzal door
+        2 Mashzal door (1 means door is open)
         1 РКН2 (Реле контролю напруги +110В)
         0 РКН1 (Реле контролю напруги ~380В)
      low byte
         bit number (1 active state)
-        7 RKP rele of  start control (1 mean escalator rumming on nominal speed, 0 mean escalator is stopped or in starting mode)
+        7 RKP rele of  start control (0 means escalator is running on nominal speed, 1 mean escalator is stopped or in starting mode)
         6 RB2 circut of power supply (1 mean is power supply NOT norma)
         5 KT breaks kontaktor (1 mean breaks is ON)
-        4 RG Готовність телемеханіки (1 mean not ready)
+        4 RG Готовність телемеханіки (1 means on TU mode)
         3 RPV1 kontactor  UP (1 means escalator running UP)
         2 RPN1 kontactor DOWN (1 means escalator running DOWN)
-        1 RBK (Реле блокувального кола)
+        1 RBK (Реле блокувального кола 0 means it is good, 1 means one  of block circuts is broken)
         0 B16 (Вимикач допоміжного приводу)
 
 	modbus register 30009 (UDKU inputs - block circut contacts)
@@ -112,7 +112,7 @@ status :
         5 ВПС (Блокування підйому ступені нижнє)
         4 ВВНП+ВВНЛ (Блокування нижньої вхідної площадки)
         3 ВНП+ВСПН+ВСЛН+ВНЛ (Блокування натяжного пристрою + опускання ступені нижнє)
-        2 ВПНЛ+ВПНП (Блокування сходу поручня нижнє)
+        2 ВПНЛ+ВПНП (Блокування сходу поручня нижнє)  
         1 ВПП+ВПЛ+ВПВЛ+ВПВП (Блокування витяжки + сходу поручня верхнє)
         0 ВБП+ВБЛ (Блокування бігунка ступені)
 

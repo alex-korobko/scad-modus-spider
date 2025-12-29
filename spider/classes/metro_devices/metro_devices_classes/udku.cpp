@@ -317,7 +317,7 @@ void metro_udku::A0(int event)  throw (spider_exception){
            break;
          };
          if (A0_x3 && A0_x5 && !A0_x2 &&
-             A0_x4 && !A0_x0 & !A0_x8()) {
+             A0_x4 && !A0_x0 && !A0_x8()) {
            A0_state=A0_READY_NOT_ACCEPTED;
            break;
          };
@@ -371,12 +371,9 @@ void metro_udku::A0(int event)  throw (spider_exception){
       exception_description<<" A0 state "<<A0_state;
       throw spider_exception(exception_description.str());        
  }; //switch (A0_state)
-
- if (old_automat_state==A0_state) return;
-
-if (metro_device::log_packets) {
-  cout<<"udku automate A0 state changed from "<<old_automat_state
-         <<" to "<<A0_state<<endl;
+ if (metro_device::log_packets) {
+  cout<<"udku OLD automate A0 state "<<old_automat_state
+         <<" NEW automate A0 state"<<A0_state<<endl;
 
   cout<<"A0_x0 "<<(A0_x0? "true": "false")<<endl;
   cout<<"A0_x2 "<<(A0_x2? "true": "false")<<endl;
@@ -385,6 +382,10 @@ if (metro_device::log_packets) {
   cout<<"A0_x5 "<<(A0_x5? "true": "false")<<endl;
   cout<<"A0_x6 "<<(A0_x6? "true": "false")<<endl;
 }
+
+ if (old_automat_state==A0_state) return;
+
+
 switch (old_automat_state) {
     case A0_RUN:
 			A0_z11();
@@ -425,7 +426,17 @@ switch (old_automat_state) {
 
 bool metro_udku::A0_x8()
 {
-		return ((time(NULL)  - get_last_offline_or_exception_time()) <= get_offline_or_exception_delay ());
+    system_settings_spider *sys_sett=system_settings_spider::get_instance();
+	   ostringstream infMessage;
+	   time_t time_now = time(NULL);
+       double time_diff = difftime(time_now, get_last_offline_or_exception_time());
+       infMessage<<"In metro_udku::A0_x8() curr time is  : "<<time_now
+                       <<" get_last_offline_or_exception_time() "<<get_last_offline_or_exception_time()
+						<< " get_offline_or_exception_delay () " << get_offline_or_exception_delay ()
+						<< " diff in time "<< time_diff;
+        sys_sett->sys_message(system_settings::INFO_MSG,  infMessage.str());
+
+		return (time_diff <= get_offline_or_exception_delay ());
 }
 
 
@@ -1398,6 +1409,10 @@ void metro_udku::decode_answer_from_device_4_function
     };
 
 //change input variables of automat A0
+  // Store old values before updating signals for transition detection
+  bool old_A0_x0 = A0_x0;
+  bool old_A0_x4 = A0_x4;
+  
   A0_x0=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_RKP)==udku_data_block::SIGNAL_VALUE_GREEN);
 
   if (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPV1)==udku_data_block::SIGNAL_VALUE_RED) {
@@ -1406,15 +1421,12 @@ void metro_udku::decode_answer_from_device_4_function
        A0_x1=system_settings::DIRECTION_DOWN;
       };
 
-  A0_x3=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MU_TU_MODE)==udku_data_block::SIGNAL_VALUE_RED);
+		// TODO:  RG in UDKU switches briefly 0-1-0 or 1-0-1 when ecalator starts, the code should ignore one-packet change of the RG state
+        A0_x3=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MU_TU_MODE)==udku_data_block::SIGNAL_VALUE_GREEN);			
+    
 
-  A0_x4=
-//               (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_RKN1)==udku_data_block::SIGNAL_VALUE_GREEN) &&
-//                (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_RKN2)==udku_data_block::SIGNAL_VALUE_GREEN) &&
-//                (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RV2)==udku_data_block::SIGNAL_VALUE_GREEN) &&
-//                (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_KT)==udku_data_block::SIGNAL_VALUE_GREEN) &&
-                (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_BLOCK_CIRCUT_STATUS)==udku_data_block::SIGNAL_VALUE_RED);
-
+  A0_x4= (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_BLOCK_CIRCUT_STATUS)!=udku_data_block::SIGNAL_VALUE_GREEN);
+/*
   if (A0_x4)
        switch (local_data_block.get_parameter_value(udku_data_block::INDEX_PARAM_MODE_VALUE)) {
                      case system_settings::UDKU_MODE_GPSTOP:
@@ -1426,6 +1438,40 @@ void metro_udku::decode_answer_from_device_4_function
                          A0_x4=false;
                         break;
         }; //switch (local_data_block.get_parameter_value())
+*/
+
+//automatic command generation based on signal conditions
+//Generate COMMAND_UP or COMMAND_DOWN when ALL of the following conditions are met:
+//1. Block circuit status is not GREEN (A0_x4 is true)
+//2. Contactor RPV1 (UP) or RPN1 (DOWN) is RED (direction is set)
+//3. RKP is not GREEN (A0_x0 is false, meaning RKP signal is not GREEN)
+//4. Device is in TU mode (A0_x3 is true)
+if (A0_x4 && !A0_x0 && A0_x3) {
+    // Check if this is a new condition (transition detection to avoid repeated triggers)
+    bool condition_newly_met = (!old_A0_x4 && A0_x4) || 
+                                (old_A0_x0 && !A0_x0) ||
+                                (old_A0_x1_state != A0_x1);
+    
+    if (condition_newly_met) {
+        // Determine direction based on contactor signals
+        bool rpv1_red = (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPV1)==udku_data_block::SIGNAL_VALUE_RED);
+        bool rpn1_red = (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPN1)==udku_data_block::SIGNAL_VALUE_RED);
+        
+        if (rpv1_red) {
+            // Contactor RPV1 is RED -> direction is UP
+            A0(3); // COMMAND_UP event
+            if (metro_device::log_packets) {
+                cout << "udku device id " << get_id() << " automatic COMMAND_UP generated: block circuit not GREEN, RKP not GREEN, RPV1 RED" << endl;
+            }
+        } else if (rpn1_red) {
+            // Contactor RPN1 is RED -> direction is DOWN
+            A0(4); // COMMAND_DOWN event
+            if (metro_device::log_packets) {
+                cout << "udku device id " << get_id() << " automatic COMMAND_DOWN generated: block circuit not GREEN, RKP not GREEN, RPN1 RED" << endl;
+            }
+        }
+    }
+}
 
 //mashzal door
 		if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
@@ -1438,7 +1484,7 @@ void metro_udku::decode_answer_from_device_4_function
 			system_settings::bytes tmp_bytes;
 
 			 byte door_data_to_send = 0;
-			 if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)==udku_data_block::SIGNAL_VALUE_RED)  {
+			 if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=udku_data_block::SIGNAL_VALUE_GREEN)  {
 				door_data_to_send = 1;
 			};
 
@@ -1919,7 +1965,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        23,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
+                       "  год ",0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                        Pt_TRUE, Pt_BLOCKED);
          PtSetArg(&args[7], Pt_ARG_FLAGS,
@@ -1937,7 +1983,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        23,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
+                       "  год ",0);
          };
          current_widget=PtCreateWidget(PtNumericInteger,
                                                      parent_widget,
@@ -1982,7 +2028,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        60,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
+                       " хвил   ",0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                        50,0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
@@ -2003,7 +2049,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        59,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
+                       " хвил  ",0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                        50,0);
            }; //if (setting_start_time_disabled)
@@ -2157,7 +2203,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Сохранить", 0);
+                       "Зберегти", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_ok_button_in_udku_properties;
         tmp_callback.data=NULL;

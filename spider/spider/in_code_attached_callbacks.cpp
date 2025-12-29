@@ -150,18 +150,18 @@ if (spider_sys_sett==NULL) {
   cout<<"In activate_sending_commands_disabled_button_in_main_window: can`t get instance of system_settings_spider"<<endl;
   return( Pt_HALT);
 };
-char const *btns[] = { "&Отмена", "&ОК"};
+char const *btns[] = { "&Скасувати", "&ОК"};
 const char* font_for_message=NULL;
  if (spider_sys_sett->large_font_prepared())
             font_for_message=spider_sys_sett->get_large_font();
 string title;
 string message;
 if (sending_commands_disabled) {
-       title="Включение управления";
-       message="Введите пароль для активации управления";
+       title="Вмикнути керування";
+       message="Введiть пароль для активацii керування";
     } else {
-       title="Отключение управления";
-       message="Введите пароль для отключения управления";
+       title="Вимикнути керування";
+       message="Введiть пароль щоб вимкнути керування";
     };
 
 //int result=
@@ -187,12 +187,12 @@ args.clear();
 args.resize(2);
 if (sending_commands_disabled) {
        PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-                       "УПРАВЛЕНИЕ ОТКЛЮЧЕНО", 0);
+                       "КЕРУВАННЯ ВИМКНЕНО", 0);
        PtSetArg(&args[1], Pt_ARG_LABEL_IMAGE,
                        spider_sys_sett->get_image(system_settings_spider::BLOCK_RED_LED), 0);
    } else {
        PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-                       "УПРАВЛЕНИЕ ВКЛЮЧЕНО", 0);
+                       "КЕРУВАННЯ АКТИВОВАНО", 0);
        PtSetArg(&args[1], Pt_ARG_LABEL_IMAGE,
                        spider_sys_sett->get_image(system_settings_spider::BLOCK_GREEN_LED), 0);
 
@@ -216,13 +216,13 @@ if (spider_sys_sett==NULL) {
 };
 //spider_sys_sett->message_window(system_settings::INFO_MSG, "Exit");
 
-char const *btns[] = { "&ОК", "&Отмена"};
+char const *btns[] = { "&ОК", "&Скасувати"};
 const char* font_for_message=NULL;
  if (spider_sys_sett->large_font_prepared())
             font_for_message=spider_sys_sett->get_large_font();
 
-if (PtAlert( spider_sys_sett->get_main_window(), NULL, "Выйти из программы", spider_sys_sett->get_image(system_settings_spider::MSG_INFO),
-           "Выйти из программы ?",
+if (PtAlert( spider_sys_sett->get_main_window(), NULL, "Вийти з програми?", spider_sys_sett->get_image(system_settings_spider::MSG_INFO),
+           "Вийти з програми?",
              font_for_message,
               2, btns, NULL, 1, 2, Pt_BLOCK_ALL ) ==2) return( Pt_HALT);
 
@@ -394,13 +394,13 @@ void process_movement_command(const command& device_command, unsigned int previo
        system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
        metro_stations_container *stations=metro_stations_container::get_instance();
        metro_stations_container::iterator statons_iter=stations->find(device_command.get_station());
-       string prompt_title="Смена направления движения";
-       string prompt_text="Эскалатор ";
+       string prompt_title="Змiна напрямку руху";
+       string prompt_text="Ескалатор ";
        vector<char> tmp_chars(20);
        itoa(device_command.get_device_number(), &tmp_chars[0], 10);
       prompt_text+=&tmp_chars[0];
-      if (statons_iter!=stations->end()) prompt_text+=string(" станция ")+statons_iter->second.get_stl_name_string();
-      char const *buttons[] = { "Да", "Нет" };
+      if (statons_iter!=stations->end()) prompt_text+=string(" станцiя ")+statons_iter->second.get_stl_name_string();
+      char const *buttons[] = { "Так", "Нi" };
 
 //==========================
 	           ostringstream excepiton_description;
@@ -421,30 +421,30 @@ void process_movement_command(const command& device_command, unsigned int previo
 				             if (device_command.get_command_code() == system_settings::COMMAND_UP &&
   				                  previous_direction_code ==system_settings::DIRECTION_DOWN)
 									{
-									new_direction = "ПОДЪЕМ";
-									old_direction = " работал  на СПУСК";
+									new_direction = "ПIДЙОМ";
+									old_direction = " працював  на СПУСК";
 									prompt_is_necesssary  = true;
 									};
        			                 if (device_command.get_command_code()==system_settings::COMMAND_DOWN &&
        			   		              previous_direction_code==system_settings::DIRECTION_UP) 
 									{
 										new_direction = "СПУСК";
-										old_direction = " работал  на ПОДЪЕМ";
+										old_direction = " працював  на ПIДЙОМ";
 										prompt_is_necesssary  = true;
 									};
 						} else  if (predefined_direction_code != system_settings::DIRECTION_REVERSE){ //if (time_diff <=predefined_delay)
 				             if (device_command.get_command_code() == system_settings::COMMAND_UP &&
   				                  predefined_direction_code ==system_settings::DIRECTION_DOWN)
 									{
-									new_direction = "ПОДЪЕМ";
-									old_direction = " должен работать на СПУСК";
+									new_direction = "ПIДЙОМ";
+									old_direction = " повинен працювати на СПУСК";
 									prompt_is_necesssary  = true;
 									};
        			                 if (device_command.get_command_code() ==system_settings::COMMAND_DOWN &&
        			   		              predefined_direction_code==system_settings::DIRECTION_UP) 
 									{
 										new_direction = "СПУСК";
-										old_direction = " должен работать на ПОДЪЕМ";
+										old_direction = " повинен працювати на ПIДЙОМ";
 										prompt_is_necesssary  = true;
 									};
 						};
@@ -452,9 +452,9 @@ void process_movement_command(const command& device_command, unsigned int previo
 						if (prompt_is_necesssary) 
 							{
 								prompt_text+= old_direction;
-								prompt_text+="\nНо производится попытка создать команду ";
+								prompt_text+="\nАле намагаетеся зробити команду ";
 								prompt_text+= new_direction;
-								prompt_text+="\nВы уверены?";
+								prompt_text+="\nВи впевненi?";
 		                         if  (PtAlert( spider_sys_sett->get_main_window(),
   			                              NULL,
      			                           prompt_title.c_str(),
@@ -631,6 +631,47 @@ metro_devices_container::iterator dev_iter;
 };
 
 
+// Returns color for menu item based on device and command, or 0 if no color needed
+static PgColor_t get_menu_item_color_for_command(metro_device* device, const command& cmd)
+{
+  // Check if this is UP or DOWN command for escalator or UDKU
+  if ((device->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR ||
+       device->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) &&
+      (cmd.get_command_code()==system_settings::COMMAND_UP ||
+       cmd.get_command_code()==system_settings::COMMAND_DOWN)) {
+    
+    unsigned int previous_direction = 0;
+    
+    if (device->get_type_description()==metro_device_type::DEVICE_TYPE_ESCALATOR) {
+      metro_escalator *esc_ptr=static_cast<metro_escalator*>(device);
+      previous_direction = esc_ptr->get_previous_direction();
+    } else if (device->get_type_description()==metro_device_type::DEVICE_TYPE_UDKU) {
+      metro_udku *udku_ptr=static_cast<metro_udku*>(device);
+      previous_direction = udku_ptr->get_previous_direction();
+    }
+    
+    // Check if command direction matches previous direction
+    bool direction_matches = false;
+    if (cmd.get_command_code()==system_settings::COMMAND_UP &&
+        previous_direction==system_settings::DIRECTION_UP) {
+      direction_matches = true;
+    } else if (cmd.get_command_code()==system_settings::COMMAND_DOWN &&
+               previous_direction==system_settings::DIRECTION_DOWN) {
+      direction_matches = true;
+    }
+    
+    // Return color based on match
+    if (direction_matches) {
+      return system_settings_spider::COLOR_GREEN;
+    } else {
+      return system_settings_spider::COLOR_RED;
+    }
+  }
+  
+  // No color needed for this command
+  return 0;
+}
+
  int activate_device_menu (PtWidget_t *widget,
                                               void *apinfo,
                                               PtCallbackInfo_t *cbinfo){
@@ -655,7 +696,7 @@ metro_devices_container::iterator dev_iter;
 
   device_id=*internal_device_id;
 
-  menu_title="Команды";
+  menu_title="Команди";
 
   dev_iter=metro_devices->find(device_id);
   if (dev_iter==metro_devices->end()) {
@@ -703,7 +744,10 @@ try {
   while (cmd_iter!=appropriated_commands.end()) {
 
    args.clear();
-   args.resize(3);
+   PgColor_t menu_item_color = get_menu_item_color_for_command(dev_iter->second, *cmd_iter);
+   int args_count = (menu_item_color != 0) ? 4 : 3;
+
+   args.resize(args_count);
 
    callbacks.clear();
    tmp_callback.data=new command(*cmd_iter);
@@ -718,6 +762,10 @@ try {
                   Pt_CB_ACTIVATE,
                   &callbacks[0],
                   callbacks.size());
+   
+   if (menu_item_color != 0) {
+     PtSetArg (&args[3], Pt_ARG_FILL_COLOR, menu_item_color, 0);
+   }
 
    PtCreateWidget(PtMenuButton,
                             menu_wgt,

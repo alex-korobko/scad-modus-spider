@@ -264,6 +264,9 @@ void* metro_device_thread
                        spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
                                                           exception_description.str());
                        connect_faliures_count=system_settings::RECONNECTS_TO_DEVICE_COUNT;
+                       // Set empty buffer to signal connection failure to device automata
+                       metro_device::buffer_data_type empty_buffer;
+                       metro_dev->set_answer_from_device_buffer(empty_buffer);
 		 };
 
          while (connect_faliures_count<system_settings::RECONNECTS_TO_DEVICE_COUNT) {
@@ -283,22 +286,23 @@ void* metro_device_thread
 
            try{
                answer_from_device_header.clear();
-               socket_dev->recv(answer_from_device_header, system_settings::MODBUS_HEADER_SIZE);
-           }catch (socket_exception sock_exc) {
-		               ostringstream exception_description;
-                       exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
-                       exception_description<<" socket_dev->recv(answer_from_device_header) : "<<sock_exc.get_description();
-                       spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
-                                                          exception_description.str());
-                       connect_faliures_count++;
-                       usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
-                        cout<<exception_description.str()<<endl;
-                       continue;
-              };
-
+               int header_bytes_received = socket_dev->recv(answer_from_device_header, system_settings::MODBUS_HEADER_SIZE);
+               
+               // Check if we received at least the header
+               if (header_bytes_received < system_settings::MODBUS_HEADER_SIZE) {
+                   ostringstream exception_description;
+                   exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
+                   exception_description<<" received only "<<header_bytes_received
+                                        <<" bytes for header, expected "<<system_settings::MODBUS_HEADER_SIZE;
+                   spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
+                   connect_faliures_count++;
+                   usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
+                   continue;
+               }
+               
+               // Calculate how many bytes we need for the complete packet based on header
                vector<byte>::size_type recieved_answer_size;
    				if ((answer_from_device_header[system_settings::MODBUS_FUNCTION_CODE_INDEX]|0x80) == 
-
                        answer_from_device_header[system_settings::MODBUS_FUNCTION_CODE_INDEX]) {
    				          //answer from device  -  error code
                          recieved_answer_size=system_settings::MODBUS_CRC_SIZE;
@@ -310,25 +314,62 @@ void* metro_device_thread
                             recieved_answer_size=system_settings::MODBUS_CRC_SIZE+
                                                               system_settings::MODBUS_WRITE_COMMAND_ANSWER_FRAGMENT;
                    };
-
-                    try{
-                          answer_from_device.clear();
-                          socket_dev->recv(answer_from_device, recieved_answer_size);
-                    } catch (socket_exception sock_exc) {
+                   
+               // Calculate total packet size (header + data)
+               vector<byte>::size_type total_packet_size = system_settings::MODBUS_HEADER_SIZE + recieved_answer_size;
+               
+               // Initialize answer buffer with header (and any extra bytes that came with header)
+               answer_from_device = answer_from_device_header;
+               
+               // Calculate how many more bytes we need to receive
+               // If we already received more than just the header, account for that
+               int bytes_already_received = header_bytes_received - system_settings::MODBUS_HEADER_SIZE;
+               int bytes_still_needed = recieved_answer_size - bytes_already_received;
+               
+               // Read remaining bytes if needed
+               if (bytes_still_needed > 0) {
+                   metro_device::buffer_data_type remaining_data;
+                   int remaining_bytes_received = socket_dev->recv(remaining_data, bytes_still_needed);
+                   
+                   // Check if we received enough bytes
+                   if (remaining_bytes_received < bytes_still_needed) {
+                       ostringstream exception_description;
+                       exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
+                       exception_description<<" received only "<<remaining_bytes_received
+                                            <<" bytes for data, expected "<<bytes_still_needed;
+                       spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
+                       connect_faliures_count++;
+                       usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
+                       continue;
+                   }
+                   
+                   // Append remaining data to answer buffer
+                   answer_from_device.insert(answer_from_device.end(), remaining_data.begin(), remaining_data.end());
+               }
+               
+               // Verify we have the complete packet
+               if (answer_from_device.size() < total_packet_size) {
+                   ostringstream exception_description;
+                   exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
+                   exception_description<<" incomplete packet: received "<<answer_from_device.size()
+                                        <<" bytes, expected "<<total_packet_size;
+                   spider_sys_sett->sys_message(system_settings::ERROR_MSG, exception_description.str());
+                   connect_faliures_count++;
+                   usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
+                   continue;
+               }
+               
+           }catch (socket_exception sock_exc) {
 		               ostringstream exception_description;
                        exception_description<<"metro_device_thread(...) for dev id "<<metro_dev->get_id();
-                       exception_description<<" socket_dev->recv(answer_from_device) : "<<sock_exc.get_description();
+                       exception_description<<" socket_dev->recv(...) : "<<sock_exc.get_description();
                        spider_sys_sett->sys_message(system_settings::ERROR_MSG,  
                                                           exception_description.str());
                        connect_faliures_count++;
+                       usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
                         cout<<exception_description.str()<<endl;
-                        usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
                        continue;
-                    };
-
-                   answer_from_device.insert(answer_from_device.begin(),
-                                                             answer_from_device_header.begin(),
-                                                             answer_from_device_header.end());
+              };
                    //CRC check
                     answer_buffer_iter=answer_from_device.begin();
                     advance(answer_buffer_iter, 
@@ -383,6 +424,10 @@ void* metro_device_thread
                     usleep(system_settings::DELAY_BETWEEN_REQUESTS_TO_DEVICE);
               }; //while (connect_faliures_count
 
+              // Set empty buffer to signal connection failure (too many failures or initialization failed)
+              // This allows device automata to properly handle offline state transition
+              metro_device::buffer_data_type empty_buffer;
+              metro_dev->set_answer_from_device_buffer(empty_buffer);
               MsgSendPulse(metro_dev->get_connection_id(),
                                      system_settings_spider::PHOTON_THREAD_PULSE,
                                      system_settings_spider::PULSE_CODE_UPDATE_DEVICE,

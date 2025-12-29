@@ -516,7 +516,7 @@ PtSetArg(&args[26], Pt_ARG_HEIGHT,
 //button command pool
 args.clear();
 args.resize(5);
-PtSetArg(&args[0], Pt_ARG_TEXT_STRING,"КОМАНДЫ", 0);
+PtSetArg(&args[0], Pt_ARG_TEXT_STRING,"КОМАНДИ", 0);
 PtSetArg(&args[1], Pt_ARG_HEIGHT, system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
          120,0);
@@ -548,7 +548,7 @@ if (current_button==NULL) {
 args.clear();
 args.resize(5);
 PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-         "УСТРОЙСТВА", 0);
+         "ПРИСТРОI", 0);
 PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
@@ -776,7 +776,7 @@ indicator_send_commands_disabled=current_button;
 //button exit
 args.clear();
 args.resize(5);
-PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "ВЫХОД", 0);
+PtSetArg(&args[0], Pt_ARG_TEXT_STRING, "ВИХIД", 0);
 PtSetArg(&args[1], Pt_ARG_HEIGHT,
          system_settings_spider::TOP_PANEL_HEIGHT_IN_MAIN_WINDOW-10,0);
 PtSetArg(&args[2], Pt_ARG_WIDTH,
@@ -1026,12 +1026,12 @@ args.clear();
 args.resize(2);
 if (sending_commands_disabled) {
        PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-                       "УПРАВЛЕНИЕ ОТКЛЮЧЕНО", 0);
+                       "КЕРУВАННЯ ВИМКНЕНО", 0);
        PtSetArg(&args[1], Pt_ARG_LABEL_IMAGE,
                        spider_sys_sett->get_image(system_settings_spider::BLOCK_RED_LED), 0);
    } else {
        PtSetArg(&args[0], Pt_ARG_TEXT_STRING,
-                       "УПРАВЛЕНИЕ ВКЛЮЧЕНО", 0);
+                       "КЕРУВАННЯ АКТИВОВАНО", 0);
        PtSetArg(&args[1], Pt_ARG_LABEL_IMAGE,
                        spider_sys_sett->get_image(system_settings_spider::BLOCK_GREEN_LED), 0);
    };

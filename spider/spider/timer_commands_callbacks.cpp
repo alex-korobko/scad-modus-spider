@@ -145,7 +145,7 @@ vector<PtCallback_t> callbacks;
 PtCallback_t tmp_callback;
 vector<PtArg_t> args;
 PhPoint_t widget_position;
-string dialog_title("Утренний пуск");
+string dialog_title("Ранковий пуск");
 unsigned int dialog_wnd_height=350, 
                      dialog_wnd_width=750, 
                      buttons_panel_height=40,
@@ -333,7 +333,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
         PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Станция", 0);
+                       "Станцiя", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -346,13 +346,13 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Устройство", 0);
+                       "Пристрiй", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
                                                      &args[0]);
          if (current_button==NULL)
-                  throw spider_exception("button \"Station\" in raw list header is NULL");
+                  throw spider_exception("button \"Device\" in raw list header is NULL");
 
 		args.clear();
 		args.resize(3);
@@ -365,20 +365,20 @@ try {
                                                      args.size(),
                                                      &args[0]);
          if (current_button==NULL)
-                  throw spider_exception("button \"Station\" in raw list header is NULL");
+                  throw spider_exception("button \"Command\" in raw list header is NULL");
 
 		args.clear();
 		args.resize(3);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, (dialog_wnd_width-2)/4,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Время", 0);
+                       "Час", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
                                                      &args[0]);
          if (current_button==NULL)
-                  throw spider_exception("button \"Station\" in raw list header is NULL");
+                  throw spider_exception("button \"Time\" in raw list header is NULL");
 
          //buttons in button panel
 		args.clear();
@@ -390,7 +390,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Создать", 0);
+                       "Збудувати", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_generate_button_in_timer_commands_window;
          tmp_callback.data=NULL;
@@ -414,7 +414,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Утвердить", 0);
+                       "Пiдтвердити", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_accept_button_in_timer_commands_window;
          tmp_callback.data=NULL;
@@ -439,7 +439,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_exit_button_in_timer_commands_window;
          tmp_callback.data=NULL;

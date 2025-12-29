@@ -109,6 +109,7 @@ if (dispatchers==NULL) {
                }; //if (dispatchers->get_dispatchers_combobox()!=NULL)
 
      return Pt_CONTINUE;
+
 };
 
 
@@ -279,7 +280,7 @@ try {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Час :", 0);
+                            "Година :", 0);
          current_widget=PtCreateWidget(PtLabel,
                                                   common_panel,
                                                   args.size(),
@@ -301,7 +302,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           23, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " ч ", 0);
+                          " год ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      50, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -326,7 +327,7 @@ try {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Минута :", 0);
+                            "Хвилина :", 0);
          current_widget=PtCreateWidget(PtLabel,
                                                   common_panel,
                                                   args.size(),
@@ -348,7 +349,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           5, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " мин    ", 0);
+                          " хвил  ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      50, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -391,7 +392,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Принять смену", 0);
+                       "Прийняти смену", 0);
 
 		callbacks.clear();
 		tmp_callback.event_f=activate_ok_button_in_smena_window;
@@ -428,7 +429,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отмена", 0);
+                       "Скасувати", 0);
 
 		callbacks.clear();
 		tmp_callback.event_f=activate_exit_button_in_smena_window;

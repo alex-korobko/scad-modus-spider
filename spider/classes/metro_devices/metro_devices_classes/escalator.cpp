@@ -1948,7 +1948,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        23,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
+                       "  год ",0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                        Pt_TRUE, Pt_BLOCKED);
          PtSetArg(&args[7], Pt_ARG_FLAGS,
@@ -1966,7 +1966,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        23,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       "  ч ",0);
+                       "  год ",0);
          };
          current_widget=PtCreateWidget(PtNumericInteger,
                                                      parent_widget,
@@ -2011,7 +2011,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        60,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
+                       " хвил  ",0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                        50,0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
@@ -2032,7 +2032,7 @@ try {
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                        59,0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                       " мин    ",0);
+                       " хвил   ",0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                        50,0);
            }; //if (setting_start_time_disabled)
@@ -2187,7 +2187,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Сохранить", 0);
+                       "Зберегти", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_ok_button_in_escalator_properties;
         tmp_callback.data=NULL;

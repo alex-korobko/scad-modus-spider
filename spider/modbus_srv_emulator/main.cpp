@@ -154,47 +154,101 @@ void* socket_thread_function(void* socket_ptr){
   while(failures_count<program_settings::SOCKET_FAILURES_COUNT) {
       try {
       telemetr_request.clear();
-	    socket_device->recv(telemetr_request,
+      
+      // Step 1: Read Modbus packet header
+      int header_bytes_received = socket_device->recv(telemetr_request,
                                             program_settings::MODBUS_REQUEST_HEADER_SIZE);
+      if (header_bytes_received < program_settings::MODBUS_REQUEST_HEADER_SIZE) {
+          throw socket_exception("Received incomplete header");
+      }
 
-        switch (telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX]) {
-             case 4: {
-  	          socket_device->recv(telemetr_request,
-                                            program_settings::MODBUS_FUNCTION_4_REQUEST_PARTIAL_SIZE);
-             break; };
-             case 5: {
-  	          socket_device->recv(telemetr_request,
-                                            program_settings::MODBUS_FUNCTION_5_REQUEST_PARTIAL_SIZE);
-             break; };
-             case 6: {
-  	          socket_device->recv(telemetr_request,
-                                            program_settings::MODBUS_FUNCTION_6_REQUEST_PARTIAL_SIZE);
-             break; };
-             case 16: {
-  	          socket_device->recv(telemetr_request,
-                                            program_settings::MODBUS_FUNCTION_16_REQUEST_PARTIAL_SIZE);
-              byte data_bytes_count=telemetr_request[telemetr_request.size()-1];
-  	          socket_device->recv(telemetr_request,
-                                            data_bytes_count);
-             break; } ;
-             default: 
-              string message="In request to device ";
-              vector<char> tmp_chars(20);
-              itoa(telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX], &tmp_chars[0], 10);
-              message+=&tmp_chars[0];
-              message+=" not supported function ";
-              itoa(telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX], &tmp_chars[0], 10);
-              message+=&tmp_chars[0];
-              sett_obj->sys_message(program_settings::ERROR_MSG, message);
-              failures_count++;
-              telemetr_answer=metro_device::generate_error_answer_for_function ( 
-                                             telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX],
-                                             telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX],
-                                             program_settings::MODBUS_EXCEPTION_ILLEGAL_FUNCTION);
-  		      socket_device->send(telemetr_answer);
-              continue;
-         };
-	     socket_device->recv(telemetr_request, program_settings::MODBUS_CRC_SIZE);
+      // Step 2: Determine function code and required sizes
+      byte function_code = telemetr_request[program_settings::MODBUS_FUNCTION_CODE_INDEX];
+      int function_partial_size = 0;
+      
+      switch (function_code) {
+           case 4: function_partial_size = program_settings::MODBUS_FUNCTION_4_REQUEST_PARTIAL_SIZE; break;
+           case 5: function_partial_size = program_settings::MODBUS_FUNCTION_5_REQUEST_PARTIAL_SIZE; break;
+           case 6: function_partial_size = program_settings::MODBUS_FUNCTION_6_REQUEST_PARTIAL_SIZE; break;
+           case 16: function_partial_size = program_settings::MODBUS_FUNCTION_16_REQUEST_PARTIAL_SIZE; break;
+           default: 
+            string message="In request to device ";
+            vector<char> tmp_chars(20);
+            itoa(telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX], &tmp_chars[0], 10);
+            message+=&tmp_chars[0];
+            message+=" not supported function ";
+            itoa(function_code, &tmp_chars[0], 10);
+            message+=&tmp_chars[0];
+            sett_obj->sys_message(program_settings::ERROR_MSG, message);
+            failures_count++;
+            telemetr_answer=metro_device::generate_error_answer_for_function ( 
+                                           telemetr_request[program_settings::MODBUS_DEVICE_NUMBER_INDEX],
+                                           function_code,
+                                           program_settings::MODBUS_EXCEPTION_ILLEGAL_FUNCTION);
+		      socket_device->send(telemetr_answer);
+            continue;
+       };
+       
+       // Step 3: Read the rest of the packet (function data + optional data bytes for function 16 + CRC)
+       // Calculate bytes already received beyond header (may include some function data)
+       int bytes_beyond_header = header_bytes_received - program_settings::MODBUS_REQUEST_HEADER_SIZE;
+       
+       // For function 16: need to read function_partial_size first to get data_bytes_count
+       if (function_code == 16) {
+           // Read function_partial_size (if not already received with header)
+           int function_bytes_needed = function_partial_size - bytes_beyond_header;
+           if (function_bytes_needed > 0) {
+               metro_device::command_data function_data;
+               int function_bytes_received = socket_device->recv(function_data, function_bytes_needed);
+               if (function_bytes_received < function_bytes_needed) {
+                   throw socket_exception("Received incomplete function-specific data");
+               }
+               telemetr_request.insert(telemetr_request.end(), function_data.begin(), function_data.end());
+           }
+           
+           // Read data_bytes_count from last byte of function_partial_size
+           int header_and_function_size = program_settings::MODBUS_REQUEST_HEADER_SIZE + function_partial_size;
+           if (static_cast<int>(telemetr_request.size()) < header_and_function_size) {
+               throw socket_exception("Cannot read data_bytes_count for function 16");
+           }
+           byte data_bytes_count = telemetr_request[header_and_function_size - 1];
+           
+           // Read data bytes and CRC together
+           int data_and_crc_needed = data_bytes_count + program_settings::MODBUS_CRC_SIZE;
+           int bytes_beyond_function = telemetr_request.size() - header_and_function_size;
+           int remaining_needed = data_and_crc_needed - bytes_beyond_function;
+           
+           if (remaining_needed > 0) {
+               metro_device::command_data remaining_data;
+               int remaining_bytes_received = socket_device->recv(remaining_data, remaining_needed);
+               if (remaining_bytes_received < remaining_needed) {
+                   throw socket_exception("Received incomplete data bytes or CRC for function 16");
+               }
+               telemetr_request.insert(telemetr_request.end(), remaining_data.begin(), remaining_data.end());
+           }
+       } else {
+           // For functions 4, 5, 6: read function data and CRC together
+           int function_and_crc_needed = function_partial_size + program_settings::MODBUS_CRC_SIZE;
+           int remaining_needed = function_and_crc_needed - bytes_beyond_header;
+           
+           if (remaining_needed > 0) {
+               metro_device::command_data remaining_data;
+               int remaining_bytes_received = socket_device->recv(remaining_data, remaining_needed);
+               if (remaining_bytes_received < remaining_needed) {
+                   throw socket_exception("Received incomplete function data or CRC");
+               }
+               telemetr_request.insert(telemetr_request.end(), remaining_data.begin(), remaining_data.end());
+           }
+       }
+       
+       // Verify we have complete packet
+       int total_expected_size = program_settings::MODBUS_REQUEST_HEADER_SIZE + 
+                                 function_partial_size + 
+                                 ((function_code == 16) ? telemetr_request[program_settings::MODBUS_REQUEST_HEADER_SIZE + function_partial_size - 1] : 0) +
+                                 program_settings::MODBUS_CRC_SIZE;
+       if (static_cast<int>(telemetr_request.size()) < total_expected_size) {
+           throw socket_exception("Incomplete packet received");
+       }
 
          //CRC check
          if (telemetr_request.size()<=program_settings::MODBUS_CRC_SIZE)   throw socket_exception ("telemetr_request.size()<=program_settings::MODBUS_CRC_SIZE]");

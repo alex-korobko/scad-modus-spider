@@ -204,9 +204,9 @@ return Pt_CONTINUE;
 };
 
 
-void save_report_to_floppy_disk(PtWidget_t *widget)
+void save_report_to_usb_disk(PtWidget_t *widget)
 {
-char const *btns[] = { "&ОК", "О&тмена"};
+char const *btns[] = { "&ОК", "&Вiдмiна"};
 
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -219,8 +219,8 @@ const char* font_for_alert_text=NULL;
 if (spider_sys_sett->small_font_prepared())
    font_for_alert_text=spider_sys_sett->get_small_font();
 
-switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Создание отчета", NULL,
-           "Для создания отчета вставьте пустую дискету в дисковод и нажмите кнопку ОК",
+switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Побудова звiту", NULL,
+           "Щоб побудувати звiт пiдключiть USB накопичувач та натиснiть ОК",
             font_for_alert_text,
            2, btns, NULL, 1, 2, Pt_BLOCK_ALL ) ) {
 
@@ -246,15 +246,8 @@ try {
     current_time=time(NULL);
     localtime_r(&current_time, &local_time);
 
-   if ( mount( "/dev/fd0", 
-           "/fs/floppy", 
-           0, 
-           "dos", 
-           NULL, 
-           0)==-1)
-           throw spider_exception("Can`t mount floppy drive");
 
-   file_name<<"/fs/floppy/report_"<<(local_time.tm_year+1900)<<"_"
+   file_name<<"/fs/usb0/report_"<<(local_time.tm_year+1900)<<"_"
                                       <<((local_time.tm_mon+1)<10?"0":"")
                                       <<(local_time.tm_mon+1)<<"_"
                                       <<(local_time.tm_mday<10?"0":"")
@@ -267,14 +260,16 @@ try {
                                       <<local_time.tm_sec<<".html";
 
     file_report = fopen( file_name.str().c_str(), "w+" );
-    if( file_report == NULL ) 
-       throw spider_exception("file_report == NULL");
-
+    if( file_report == NULL ){
+       string error_msg ("Cannot create file ");
+       error_msg += file_name.str();
+       throw spider_exception(error_msg);
+		}
    try {
       log_rec_cont->create_report(file_report);
     } catch (spider_exception spr_exc) {
        spider_sys_sett->message_window(system_settings::ERROR_MSG, 
-                 "Не удалось создать отчет!\nПроизошла ошибка:\n"+spr_exc.get_description());
+                 "Не вдалося побудувати звiт!\nСталася помилка:\n"+spr_exc.get_description());
     }; // catch (spider_exception spr_exc) //for log_rec_cont->create_report(...)
 
 
@@ -282,11 +277,6 @@ try {
            throw spider_exception(string(" fclose(file_report) is failed :")+strerror(errno));
 
      file_report=NULL;
-
-   if ( umount( "/fs/floppy", 
-           _MOUNT_FORCE)==-1)
-           throw spider_exception("Can`t umount floppy drive");
-
 } catch (spider_exception spr_exc) {
       string exc_descr(spr_exc.get_description());
        if (file_report!=NULL) 
@@ -295,16 +285,15 @@ try {
                       exc_descr+=strerror(errno);
                }; // if (fclose(file_report)!=0)
 
-   if ( umount( "/fs/floppy", 
-           _MOUNT_FORCE)==-1)
-           throw spider_exception("Can`t umount floppy drive");
-
-      spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_floppy(...) "+exc_descr);
-      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Файл отчета создать не удалось!", false);
+      spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_usb_disk(...) "+exc_descr);
+      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Не вдалося побудувати звiт!", false);
+       if (fclose(file_report)!=0) {
+          spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_usb_disk(...) failed to close report file after exception");
+       }
 	  return;
 };
 
-	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл отчета успешно создан", false);
+	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл звiту побудовано", false);
 };
 
 void save_report_to_ftp_directory( PtWidget_t *widget )
@@ -352,7 +341,7 @@ try {
       log_rec_cont->create_report(file_report);
     } catch (spider_exception spr_exc) {
        spider_sys_sett->message_window(system_settings::ERROR_MSG, 
-                 "Не удалось создать отчет!\nПроизошла ошибка:\n"+spr_exc.get_description());
+                 "Не вдалося побудувати звiт!\nСталася помилка:\n"+spr_exc.get_description());
     }; // catch (spider_exception spr_exc) //for log_rec_cont->create_report(...)
 
 
@@ -370,18 +359,18 @@ try {
                }; // if (fclose(file_report)!=0)
 
       spider_sys_sett->sys_message(system_settings::ERROR_MSG, "In save_report_to_ftp_directory(...) "+exc_descr);
-      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Файл отчета создать не удалось!", false);
+      spider_sys_sett->message_window(system_settings::ERROR_MSG, "Не вдалося побудувати звiт!", false);
       return;
 };
 
-	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл отчета успешно создан", false);
+	spider_sys_sett->message_window(system_settings::INFO_MSG, "Файл звiту побудовано", false);
 };
 
 int
 activate_report_button_in_log_window( PtWidget_t *widget, 
                                                                         void *apinfo, 
                                                                         PtCallbackInfo_t *cbinfo ){
-char const *btns[] = { "&На дискету", "&В директорию", "О&тмена"};
+char const *btns[] = { "&На USB сховище", "&В директорию", "&Скасувати"};
 
 system_settings_spider *spider_sys_sett=system_settings_spider::get_instance();
 if (spider_sys_sett==NULL) {
@@ -390,18 +379,18 @@ if (spider_sys_sett==NULL) {
 };
 
 const char* font_for_alert_text=NULL;
-string info_message = "Вы можете создать отчет на дискету\nили в директорию\n";
+string info_message = "Побудова звiту на USB сховище\nчи у директорию\n";
 info_message += spider_sys_sett->get_report_import_directory();
 
 if (spider_sys_sett->small_font_prepared())
    font_for_alert_text=spider_sys_sett->get_small_font();
 
-switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Создание отчета", NULL,
+switch( PtAlert( spider_sys_sett->get_main_window(), NULL, "Побудова звiту", NULL,
            info_message.c_str(),
             font_for_alert_text,
            3, btns, NULL, 2, 3, Pt_BLOCK_ALL ) ) {
     case 1:
-			save_report_to_floppy_disk(widget);
+			save_report_to_usb_disk(widget);
 			break;
     case 2:
 			save_report_to_ftp_directory(widget);
@@ -453,7 +442,7 @@ try {
                                                  Pt_ARG_LABEL_IMAGE, spider_sys_sett->get_image(system_settings_spider::BLOCK_RED_LED),0);
                     } else { //if (log_rec_cont->filter.get_filter_state())
                         PtSetResource(log_rec_cont->get_filtration_state_indicator(),
-                                                 Pt_ARG_TEXT_STRING, "ФИЛЬТР ВЫКЛ",0);
+                                                 Pt_ARG_TEXT_STRING, "ФИЛЬТР ВИКЛ",0);
                         PtSetResource(log_rec_cont->get_filtration_state_indicator(),
                                                  Pt_ARG_LABEL_IMAGE, spider_sys_sett->get_image(system_settings_spider::BLOCK_GREY_LED),0);
                     }; //if (log_rec_cont->filter.get_filter_state())
@@ -608,7 +597,7 @@ try {
 		(log_rec_cont->filter.get_stop_time()<=
 		log_rec_cont->filter.get_start_time())){
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
-								"Конечная дата фильтрации должна быть позже, чем начальная",
+								"Кiнечна дата фильтрацii повинна буты пiзже, нIж початкова",
                                  true);
 				return Pt_CONTINUE;
 			};
@@ -618,7 +607,7 @@ try {
          !log_rec_cont->filter.get_all_msg_types() &&
          log_rec_cont->filter.msg_types_empty()) {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG,
-                                               "Не выбран ни один тип сообщения",
+                                               "Не обрано жодного типу повiдомлення",
                                                 true);
 				return Pt_CONTINUE;
 			};
@@ -627,7 +616,7 @@ try {
           !log_rec_cont->filter.get_all_stations() &&
           log_rec_cont->filter.stations_empty()) {
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
-                                                 "Не выбрана ни одна станция",
+                                                 "Не обрано жодноi станцii",
                                                   true);
 				return Pt_CONTINUE;
 			};
@@ -636,7 +625,7 @@ try {
         !log_rec_cont->filter.get_all_devices() &&
 		log_rec_cont->filter.devices_empty()) 	{
 				spider_sys_sett->message_window(system_settings::ERROR_MSG, 
-                                   "Не выбрано ни одно из устройств на станциях",
+                                   "Не обрано жодного пристрою",
                                     true);
 				return Pt_CONTINUE;
 			};
@@ -932,7 +921,7 @@ time_t local_time_t;
 bool disable_all_elemets_in_panel=false;
 
 char *w_days[]={
-    "Вс",
+    "Нд",
     "Пн",
     "Вт",
     "Ср",
@@ -942,18 +931,18 @@ char *w_days[]={
 };
 
 char *y_months[]={
-    "Январь",
-    "Февраль",
-    "Март",
-    "Апрель",
-    "Май",
-    "Июнь",
-    "Июль",
-    "Август",
-    "Сентябрь",
-    "Октябрь",
-    "Ноябрь",
-    "Декабрь"
+    "Сiчень",
+    "Лютий",
+    "Березень",
+    "Квiтень",
+    "Травень",
+    "Червень",
+    "Липень",
+    "Серпень",
+    "Вересень",
+    "Жовтень",
+    "Листопад",
+    "Грудень"
  };
 
 
@@ -1073,7 +1062,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отмена", 0);
+                       "Скасувати", 0);
          PtSetArg(&args[4], Pt_ARG_POINTER,
                         log_rec_cont, 0);
 
@@ -1099,7 +1088,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "Включить фильтрацию сообщений", 0);
+                       "Включити фильтрацiю повiдомлень", 0);
          if (log_rec_cont->filter.get_filter_state()) {
   			   PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
             } else {
@@ -1156,7 +1145,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[4], Pt_ARG_ANCHOR_FLAGS,
                              Pt_TRUE, Pt_BOTTOM_ANCHORED_BOTTOM);
          PtSetArg(&args[5], Pt_ARG_TITLE,
-                             "Временной диапазон", 0);
+                             "Часовий диапазон", 0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                              Pt_FALSE, Pt_HIGHLIGHTED);
 
@@ -1174,7 +1163,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "Весь временной диапазон", 0);
+                       "За весь час", 0);
          if (log_rec_cont->filter.get_all_times()) {
   			   PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET);
             } else {
@@ -1212,7 +1201,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[2], Pt_ARG_HEIGHT,
                          dialog_wnd_height-buttons_panel_height-inside_panel_margin, 0);
          PtSetArg(&args[3], Pt_ARG_TITLE,
-                             "Начальная дата", 0);
+                             "Початкова дата", 0);
          PtSetArg(&args[4], Pt_ARG_CONTAINER_FLAGS,
                             Pt_TRUE, Pt_SHOW_TITLE);
          PtSetArg(&args[5], Pt_ARG_CONTAINER_FLAGS,
@@ -1331,7 +1320,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           23, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " ч ", 0);
+                          " год ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      50, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -1386,7 +1375,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           59, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " мин    ", 0);
+                          " хвил  ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      60, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -1517,7 +1506,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                             "Время", 0);
+                             "Час", 0);
 
            current_button=PtCreateWidget(PtLabel, //no, that not button, $-)
                                                   current_panel,
@@ -1542,7 +1531,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           23, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " ч ", 0);
+                          " год ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      50, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -1597,7 +1586,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[3], Pt_ARG_NUMERIC_MAX,
                           59, 0);
          PtSetArg(&args[4], Pt_ARG_NUMERIC_SUFFIX,
-                          " мин    ", 0);
+                          " хвил ", 0);
          PtSetArg(&args[5], Pt_ARG_WIDTH,
                      60, 0);
          PtSetArg(&args[6], Pt_ARG_HEIGHT,
@@ -1640,7 +1629,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[4], Pt_ARG_ANCHOR_FLAGS,
                              Pt_TRUE, Pt_BOTTOM_ANCHORED_BOTTOM);
          PtSetArg(&args[5], Pt_ARG_TITLE,
-                             "Типы сообщений", 0);
+                             "Типи повiдомлень", 0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                              Pt_FALSE, Pt_HIGHLIGHTED);
 
@@ -1658,7 +1647,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "Все типы сообщений", 0);
+                       "Всi типи повiдомлень", 0);
         if (log_rec_cont->filter.get_all_msg_types()) {
   			   PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
             } else {
@@ -1753,7 +1742,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[4], Pt_ARG_ANCHOR_FLAGS,
                              Pt_TRUE, Pt_BOTTOM_ANCHORED_BOTTOM);
          PtSetArg(&args[5], Pt_ARG_TITLE,
-                             "Станции и оборудование", 0);
+                             "Станцii та пристроi", 0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                              Pt_FALSE, Pt_HIGHLIGHTED);
 
@@ -1771,7 +1760,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                       "Все станции", 0);
+                       "Всi станцii", 0);
          if (log_rec_cont->filter.get_all_stations()) {
   			   PtSetArg(&args[2], Pt_ARG_FLAGS, Pt_TRUE, Pt_SET); 
             } else {
@@ -1810,7 +1799,7 @@ if (dialog_window==NULL)
          PtSetArg(&args[2], Pt_ARG_HEIGHT,
                          dialog_wnd_height-buttons_panel_height-inside_panel_margin, 0);
          PtSetArg(&args[3], Pt_ARG_TITLE,
-                             "Станция", 0);
+                             "Станцiя", 0);
          PtSetArg(&args[4], Pt_ARG_CONTAINER_FLAGS,
                             Pt_TRUE, Pt_SHOW_TITLE);
          PtSetArg(&args[5], Pt_ARG_CONTAINER_FLAGS,
@@ -2066,7 +2055,7 @@ PtCallback_t tmp_callback;
 vector<PtArg_t> args;
 PhPoint_t widget_position;
 PtFileSelectionInfo_t info;
-string dialog_title("Архив журналов сообщений") , filter_button_text("Фильтр");
+string dialog_title("Архив журналiв повiдомлень") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
                       dialog_wnd_width=1800,
                       buttons_panel_height=40,
@@ -2089,11 +2078,11 @@ if (archive_log->get_widget()!=NULL) {
 
 if ( PtFileSelection( main_window, 
                      NULL,
-                     "Открыть файл архива", 
+                     "Вiдкрити файл архиву", 
                      ".",
                      "*.log", 
-                     "Открыть",
-                     "Отмена", 
+                     "Вiдкрити",
+                     "Скасувати", 
                      NULL, 
                      &info, 
                     Pt_FSR_NO_NEW | Pt_FSR_NO_NEW_BUTTON | Pt_FSR_NO_DELETE | Pt_FSR_NO_UP_BUTTON |
@@ -2120,7 +2109,7 @@ archive_log->load(info.path);
 } catch (spider_exception spr_exc) {
     spider_sys_sett->message_window(
              system_settings::ERROR_MSG,
-             "Ошибка чтения архива");
+             "Помилка завантаження архиву");
     spider_sys_sett->sys_message(system_settings::ERROR_MSG, 
          "In activate_main_log_button_in_main_window: "+spr_exc.get_description());
      return( Pt_CONTINUE);
@@ -2261,7 +2250,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/8,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Время", 0);
+                       "Час", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2274,7 +2263,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Станция", 0);
+                       "Станцiя", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2287,7 +2276,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, (dialog_wnd_width-2)/8,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Устройство", 0);
+                       "Пристрiй", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2300,7 +2289,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, (dialog_wnd_width-2)/2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Сообщение", 0);
+                       "Повiдомлення", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2327,11 +2316,11 @@ try {
          if (archive_log->filter.get_filter_state()) { // true mean is filtered
                   PtSetArg(&args[5], Pt_ARG_LABEL_IMAGE,
                          spider_sys_sett->get_image(system_settings_spider::BLOCK_RED_LED), 0);
-                    filter_button_text+=" ВКЛ";
+                    filter_button_text+=" ВIМКН";
              } else { // if (archive_log->filter.get_filter_state())
                   PtSetArg(&args[5], Pt_ARG_LABEL_IMAGE,
                           spider_sys_sett->get_image(system_settings_spider::BLOCK_GREY_LED), 0);
-                   filter_button_text+=" ВЫКЛ";
+                   filter_button_text+=" ВИМИК";
              };// if (archive_log->filter.get_filter_state())
          PtSetArg(&args[6], Pt_ARG_TEXT_STRING,
                        filter_button_text.c_str(), 0);
@@ -2364,7 +2353,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отчет", 0);
+                       "Звiт", 0);
          PtSetArg(&args[4], Pt_ARG_POINTER,
                         archive_log, 0);
 		callbacks.clear();
@@ -2390,7 +2379,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
          PtSetArg(&args[4], Pt_ARG_POINTER,
                        archive_log, 0);
 		callbacks.clear();
@@ -2436,7 +2425,7 @@ vector<PtCallback_t> callbacks;
 PtCallback_t tmp_callback;
 vector<PtArg_t> args;
 PhPoint_t widget_position;
-string dialog_title("Журнал сообщений") , filter_button_text("Фильтр");
+string dialog_title("Журнал повiдомлень") , filter_button_text("Фiльтр");
 unsigned int dialog_wnd_height=450,
                       dialog_wnd_width=1800,
                       buttons_panel_height=40,
@@ -2575,7 +2564,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/8,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Время", 0);
+                       "Час", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2588,7 +2577,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/4,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Станция", 0);
+                       "Станцiя", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2601,7 +2590,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, (dialog_wnd_width-2)/8,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Устройство", 0);
+                       "Пристрiй", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2614,7 +2603,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, (dialog_wnd_width-2)/2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Сообщение", 0);
+                       "Повiдомлення", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -2641,11 +2630,11 @@ try {
          if (main_log->filter.get_filter_state()) { // true mean is filtered
                    PtSetArg(&args[5], Pt_ARG_LABEL_IMAGE,
                           spider_sys_sett->get_image(system_settings_spider::BLOCK_RED_LED), 0);
-                    filter_button_text+=" ВКЛ";
+                    filter_button_text+=" ВIМКН";
              } else { // if (main_log->filter.get_filter_state())
                   PtSetArg(&args[5], Pt_ARG_LABEL_IMAGE,
                           spider_sys_sett->get_image(system_settings_spider::BLOCK_GREY_LED), 0);
-                   filter_button_text+=" ВЫКЛ";
+                   filter_button_text+=" ВИМКН";
              };// if (main_log->filter.get_filter_state())
 
          PtSetArg(&args[6], Pt_ARG_TEXT_STRING,
@@ -2678,7 +2667,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отчет", 0);
+                       "Звiт", 0);
          PtSetArg(&args[4], Pt_ARG_POINTER,
                         main_log, 0);
 		callbacks.clear();
@@ -2695,7 +2684,6 @@ try {
          if (current_button==NULL)
                   throw spider_exception("button \"Report\" in buttons_panel is NULL");
 
-
 		args.clear();
 		args.resize(6);
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, buttons_panel_height-8,0);
@@ -2705,7 +2693,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
          PtSetArg(&args[4], Pt_ARG_POINTER,
                        main_log, 0);
 		callbacks.clear();
@@ -2742,5 +2730,3 @@ try {
 
 return( Pt_CONTINUE);
 };
-
-

@@ -398,7 +398,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
         PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Станция", 0);
+                       "Станцiя", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -411,7 +411,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/6,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Устройство", 0);
+                       "Пристрiй", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -465,7 +465,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2, 0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, 200,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Время", 0);
+                       "Час", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -483,7 +483,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_exit_button_in_stations_devices_properties_window;
          tmp_callback.data=NULL;

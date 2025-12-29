@@ -154,7 +154,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[4], Pt_ARG_ANCHOR_FLAGS,
                              Pt_TRUE, Pt_BOTTOM_ANCHORED_BOTTOM);
          PtSetArg(&args[5], Pt_ARG_TITLE,
-                             "Диспетчеры", 0);
+                             "Дiспетчери", 0);
          PtSetArg(&args[6], Pt_ARG_FLAGS,
                              Pt_FALSE, Pt_HIGHLIGHTED);
 
@@ -225,7 +225,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Имя :", 0);
+                            "Iм'я :", 0);
          current_widget=PtCreateWidget(PtLabel,
                                                   dispatchers_panel,
                                                   args.size(),
@@ -260,7 +260,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Отчество :", 0);
+                            "Прiзвище :", 0);
          current_widget=PtCreateWidget(PtLabel,
                                                   dispatchers_panel,
                                                   args.size(),
@@ -295,7 +295,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Фамилия :", 0);
+                            "По батьковi :", 0);
          current_widget=PtCreateWidget(PtLabel,
                                                   dispatchers_panel,
                                                   args.size(),
@@ -331,7 +331,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Новый", 0);
+                            "Новий", 0);
 
 		callbacks.clear();
 		tmp_callback.event_f=activate_new_dispatcher_window;
@@ -357,7 +357,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Изменить", 0);
+                            "Змiнити", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_edit_dispatcher_window;
          tmp_callback.data=NULL;
@@ -382,7 +382,7 @@ if (dispatchers==NULL) {
          PtSetArg(&args[0], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[1], Pt_ARG_TEXT_STRING,
-                            "Удалить", 0);
+                            "Видалити", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_delete_dispatcher_window;
          tmp_callback.data=NULL;
@@ -558,7 +558,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_exit_button_in_dispatchers_window;
          tmp_callback.data=NULL;

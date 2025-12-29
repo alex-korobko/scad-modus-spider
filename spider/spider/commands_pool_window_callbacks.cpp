@@ -260,7 +260,7 @@ vector<PtCallback_t> callbacks;
 PtCallback_t tmp_callback;
 vector<PtArg_t> args;
 PhPoint_t widget_position;
-string dialog_title("Команды");
+string dialog_title("Команди");
 unsigned int dialog_wnd_height=350, 
                      dialog_wnd_width=750, 
                      buttons_panel_height=40,
@@ -401,7 +401,7 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/3,0);
         PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Станция", 0);
+                       "Станцiя", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
@@ -414,13 +414,13 @@ try {
 		PtSetArg(&args[0], Pt_ARG_HEIGHT, divider_height-2,0);
 		PtSetArg(&args[1], Pt_ARG_WIDTH, (dialog_wnd_width-2)/3,0);
          PtSetArg(&args[2], Pt_ARG_TEXT_STRING,
-                       "Устройство", 0);
+                       "Пристрiй", 0);
          current_button=PtCreateWidget(PtButton,
                                                      divider_in_raw_list,
                                                      args.size(),
                                                      &args[0]);
          if (current_button==NULL)
-                  throw spider_exception("button \"Station\" in raw list header is NULL");
+                  throw spider_exception("button \"Device\" in raw list header is NULL");
 
 		args.clear();
 		args.resize(3);
@@ -433,7 +433,7 @@ try {
                                                      args.size(),
                                                      &args[0]);
          if (current_button==NULL)
-                  throw spider_exception("button \"Station\" in raw list header is NULL");
+                  throw spider_exception("button \"Command\" in raw list header is NULL");
 
          //buttons in button panel
 		args.clear();
@@ -445,7 +445,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отправить команду", 0);
+                       "Вiдправити команду", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_send_command_button_in_commands_pool_window;
          tmp_callback.data=raw_list;
@@ -469,7 +469,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отправить все команды", 0);
+                       "Вiдправити всi команди", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_send_all_commands_button_in_commands_pool_window;
          tmp_callback.data=raw_list;
@@ -493,7 +493,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Отменить команду", 0);
+                       "Вiдмiнити команду", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_chancel_command_button_in_commands_pool_window;
          tmp_callback.data=raw_list;
@@ -517,7 +517,7 @@ try {
          PtSetArg(&args[2], Pt_ARG_POS,
                      &widget_position, 0);
          PtSetArg(&args[3], Pt_ARG_TEXT_STRING,
-                       "Закрыть окно", 0);
+                       "Закрити вiкно", 0);
 		callbacks.clear();
 		tmp_callback.event_f=activate_exit_button_in_commands_pool_window;
          tmp_callback.data=NULL;

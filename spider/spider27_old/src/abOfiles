@@ -1,1 +1,0 @@
-ABOBJ = abmain.o callbacks.o draw.o main.o 
