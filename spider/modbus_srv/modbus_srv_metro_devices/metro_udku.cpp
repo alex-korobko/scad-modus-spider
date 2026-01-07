@@ -184,8 +184,22 @@ metro_device::command_data
                         iter_beg, iter_end);
 //messages generating
         new_messages.clear();
+        
+        // Extract register 30001 low byte: escalator condition code
+        const int REGISTER_30001_LOW_BYTE_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2;
+        byte escalator_condition_value = answer_from_com_port[0][REGISTER_30001_LOW_BYTE_INDEX];
+        
+        // Extract register 30008 low byte bits
+        const int REGISTER_30008_LOW_BYTE_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16;
+        byte register_30008_low_byte = answer_from_com_port[0][REGISTER_30008_LOW_BYTE_INDEX];
+        byte rkp_value = register_30008_low_byte & 0x80;  // RKP rele of start control (bit 7)
+        byte rpv1_value = register_30008_low_byte & 0x08; // RPV1 kontactor UP (bit 3)
+        byte rpn1_value = register_30008_low_byte & 0x04; // RPN1 kontactor DOWN (bit 2)
+        byte rg2_value = register_30008_low_byte & 0x02;  // RG2 Реле готовности (bit 1)
+        byte mu_tu_switcher_value = register_30008_low_byte & 0x01;  // MU Готовність телемеханіки (bit 0)
+
        if ( previos_escalator_condition_value!=-1)
-        switch (answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2]) {
+        switch (escalator_condition_value) {
           case MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE :
                if (previos_escalator_condition_value!=MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE &&
                     (previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_GPUP_VALUE  ||
@@ -270,31 +284,31 @@ metro_device::command_data
             break;
         default :
           ostringstream error_message;
-          error_message<<"In metro_udku::create_answer_to_socket_func_4 unknown value in 30001 register`s low byte : "<<static_cast<int>(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2]);
+          error_message<<"In metro_udku::create_answer_to_socket_func_4 unknown value in 30001 register`s low byte : "<<static_cast<int>(escalator_condition_value);
            sett_obj->sys_message(program_settings::ERROR_MSG, error_message.str());
-        }; //switch (answer_from_com_port[0][program_settings:
+        }; //switch (escalator_condition_value)
 
-    previos_escalator_condition_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+2];
-
-   if (previos_rkp_value!=-1 && (answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10)!=0) {  //on TU
-         if (previos_rkp_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x80) &&
-              (answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x80)==0) {//RKP is 0 means escalator is running on nominal speed
-                   if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x08)!=0) {
+   previos_escalator_condition_value=escalator_condition_value;
+   bool  escalator_on_tu = mu_tu_switcher_value > 0; //1 on TU, 0 on local (MU) 
+   if (previos_rkp_value!=-1 && escalator_on_tu) {  
+         if (previos_rkp_value!=rkp_value &&
+              rkp_value>0) {//RKP is 1 means escalator is running on nominal speed
+                   if (rpv1_value!=0) {
                               new_messages.push_back(0);
                               new_messages.push_back(MESSAGE_TU_COMMAND_UP_SUCCESS);
-                         } else if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x04)!=0) {
+                         } else if (rpn1_value!=0) {
                                new_messages.push_back(0);
                                new_messages.push_back(MESSAGE_TU_COMMAND_DOWN_SUCCESS);
                          } else {
-                               sett_obj->sys_message(program_settings::ERROR_MSG, "In metro_udku::create_answer_to_socket_func_4 RKP is 0 but RPN & RPV is 0");
+                               sett_obj->sys_message(program_settings::ERROR_MSG, "In metro_udku::create_answer_to_socket_func_4 RKP is 1 but both RPN & RPV are 0");
                          };
-        };  //(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x80)==0) {//RKP is 0 means escalator is running on nominal speed
+        };  //RKP is 1 means escalator is running on nominal speed
     }; //if (previos_rkp_value!=-1 &&
-    previos_rkp_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x80;
+    previos_rkp_value=rkp_value;
 
    if (previos_mu_tu_switcher_value!=-1){ 
-         if (previos_mu_tu_switcher_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10))
-                   if ((answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10)!=0) {
+         if (previos_mu_tu_switcher_value!=mu_tu_switcher_value)
+                   if (escalator_on_tu) {
                               new_messages.push_back(0);
                               new_messages.push_back(MESSAGE_ESCALATOR_ON_TU);
                          } else {
@@ -302,11 +316,11 @@ metro_device::command_data
                                new_messages.push_back(MESSAGE_ESCALATOR_ON_MU);
                          };
     };
-    previos_mu_tu_switcher_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x10;
+    previos_mu_tu_switcher_value=mu_tu_switcher_value;
 
    if (previos_block_circut_value!=-1) {
-         if (previos_block_circut_value!=(answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02) &&
-              (answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02)==0) {
+         if (previos_block_circut_value!=rg2_value &&
+              rg2_value==0) {
                      // Determine which block circuit is broken
                      // if the index_of_block_circut==0 then this is ERROR 
                      // the UDKU config will have the ERROR block circut name at the index 0
@@ -370,9 +384,9 @@ metro_device::command_data
                     } 
                     new_messages.push_back(index_of_block_circut);
                     new_messages.push_back(MESSAGE_ESCALATOR_NOT_READY_WITH_BLOCK_CIRCUT_NAME);
-            };//if (previos_block_circut_value!=(answer_from_com_port[0][program_settings::MODBUS
+            };//if (previos_block_circut_value!=rg2_value && rg2_value==0)
       }; //if (previos_block_circut_value!=-1) {
-      previos_block_circut_value=answer_from_com_port[0][program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16] & 0x02;
+      previos_block_circut_value=rg2_value;
 
      if (!new_messages.empty())
          metro_device::add_messages_fifo (new_messages);

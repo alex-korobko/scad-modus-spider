@@ -75,7 +75,9 @@ def extract_unique_blocks(input_file, output_file):
     # Write unique blocks to output file
     try:
         # Create output directory if it doesn't exist
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        output_dir = os.path.dirname(output_file)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
         
         with open(output_file, 'w') as f:
             f.write(f'Unique hexadecimal data blocks extracted from {os.path.basename(input_file)}\n')
@@ -106,7 +108,7 @@ def main():
     
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    
+    print(f"Input file: {input_file}; Output file: {output_file}")
     success = extract_unique_blocks(input_file, output_file)
     sys.exit(0 if success else 1)
 

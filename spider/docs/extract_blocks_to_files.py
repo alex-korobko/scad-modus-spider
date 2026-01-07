@@ -33,7 +33,7 @@ The script:
 2. Extracts the Modbus header (device, function code, byte count)
 3. Extracts data bytes (respecting the byte count, excluding CRC)
 4. Groups data bytes into registers (2 bytes per register: high byte, low byte)
-5. Writes each block to a separate file (4_3_1.txt, 4_3_2.txt, etc.)
+5. Writes each block to a separate file (4_{device_id}_1.txt, 4_{device_id}_2.txt, etc.)
 
 Usage:
     python3 extract_blocks_to_files.py <input_file> <output_directory> [device_id]
@@ -51,7 +51,8 @@ Examples:
     python3 extract_blocks_to_files.py docs/log_3_20251218.txt output/ 3
 
 Output files:
-    The script creates files named 4_3_1.txt, 4_3_2.txt, etc., where the number
+    The script creates files named 4_{device_id}_1.txt, 4_{device_id}_2.txt, etc., where
+    device_id is extracted from the data (or provided as parameter) and the number
     corresponds to the block number from the input file.
 """
 
@@ -211,7 +212,7 @@ def main():
             )
             
             # Write to output file
-            output_file = os.path.join(output_dir, f'4_3_{block_num}.txt')
+            output_file = os.path.join(output_dir, f'4_{dev_id}_{block_num}.txt')
             write_register_file(output_file, dev_id, func_code, byte_cnt, registers)
             
             print(f"Created {output_file}")

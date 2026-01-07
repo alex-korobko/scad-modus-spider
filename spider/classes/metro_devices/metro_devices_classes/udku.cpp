@@ -1371,23 +1371,21 @@ void metro_udku::decode_answer_from_device_4_function
           advance(tmp_iter2, 2);
     };
 
-
      if (begin_addr<= 30008&&
          begin_addr+registers_count>30008) {
            word udku_signals=sys_sett->type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2));
-
-            for (int index_of_block_circut=0; index_of_block_circut<16;index_of_block_circut++)
-                    if ((udku_signals & (0x0001<<index_of_block_circut))!=0){
-                           local_data_block.set_signal_value(
-                              2+index_of_block_circut,
-                              udku_data_block::SIGNAL_VALUE_RED); 
-                         } else {
-                            local_data_block.set_signal_value(
-                            2+index_of_block_circut,
-                            udku_data_block::SIGNAL_VALUE_GREEN); 
-                         };
-
-            tmp_iter1=tmp_iter2;
+           for (int index_of_block_circut=0; index_of_block_circut<16;index_of_block_circut++) {
+              if ((udku_signals & (0x0001<<index_of_block_circut))!=0){
+                      local_data_block.set_signal_value(
+                        2+index_of_block_circut,
+                        udku_data_block::SIGNAL_VALUE_RED); 
+                    } else {
+                      local_data_block.set_signal_value(
+                      2+index_of_block_circut,
+                      udku_data_block::SIGNAL_VALUE_GREEN); 
+                    };
+              };
+           tmp_iter1=tmp_iter2;
             advance(tmp_iter2, 2);
     };
 
@@ -1412,8 +1410,9 @@ void metro_udku::decode_answer_from_device_4_function
   // Store old values before updating signals for transition detection
   bool old_A0_x0 = A0_x0;
   bool old_A0_x4 = A0_x4;
+  int old_A0_x1_state = A0_x1;
   
-  A0_x0=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_RKP)==udku_data_block::SIGNAL_VALUE_GREEN);
+  A0_x0=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_RKP)!=udku_data_block::SIGNAL_VALUE_GREEN);
 
   if (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPV1)==udku_data_block::SIGNAL_VALUE_RED) {
       A0_x1=system_settings::DIRECTION_UP;
@@ -1421,13 +1420,10 @@ void metro_udku::decode_answer_from_device_4_function
        A0_x1=system_settings::DIRECTION_DOWN;
       };
 
-		// TODO:  RG in UDKU switches briefly 0-1-0 or 1-0-1 when ecalator starts, the code should ignore one-packet change of the RG state
-        A0_x3=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MU_TU_MODE)==udku_data_block::SIGNAL_VALUE_GREEN);			
-    
-
+   //TU mode when set to 1, local (MU) mode when set to 0 
+  A0_x3=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MU_TU_MODE)!=udku_data_block::SIGNAL_VALUE_GREEN);
   A0_x4= (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_BLOCK_CIRCUT_STATUS)!=udku_data_block::SIGNAL_VALUE_GREEN);
-/*
-  if (A0_x4)
+  if (A0_x4) {
        switch (local_data_block.get_parameter_value(udku_data_block::INDEX_PARAM_MODE_VALUE)) {
                      case system_settings::UDKU_MODE_GPSTOP:
                      case system_settings::UDKU_MODE_GPUP:
@@ -1438,41 +1434,7 @@ void metro_udku::decode_answer_from_device_4_function
                          A0_x4=false;
                         break;
         }; //switch (local_data_block.get_parameter_value())
-*/
-
-//automatic command generation based on signal conditions
-//Generate COMMAND_UP or COMMAND_DOWN when ALL of the following conditions are met:
-//1. Block circuit status is not GREEN (A0_x4 is true)
-//2. Contactor RPV1 (UP) or RPN1 (DOWN) is RED (direction is set)
-//3. RKP is not GREEN (A0_x0 is false, meaning RKP signal is not GREEN)
-//4. Device is in TU mode (A0_x3 is true)
-if (A0_x4 && !A0_x0 && A0_x3) {
-    // Check if this is a new condition (transition detection to avoid repeated triggers)
-    bool condition_newly_met = (!old_A0_x4 && A0_x4) || 
-                                (old_A0_x0 && !A0_x0) ||
-                                (old_A0_x1_state != A0_x1);
-    
-    if (condition_newly_met) {
-        // Determine direction based on contactor signals
-        bool rpv1_red = (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPV1)==udku_data_block::SIGNAL_VALUE_RED);
-        bool rpn1_red = (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_CONTACTOR_RPN1)==udku_data_block::SIGNAL_VALUE_RED);
-        
-        if (rpv1_red) {
-            // Contactor RPV1 is RED -> direction is UP
-            A0(3); // COMMAND_UP event
-            if (metro_device::log_packets) {
-                cout << "udku device id " << get_id() << " automatic COMMAND_UP generated: block circuit not GREEN, RKP not GREEN, RPV1 RED" << endl;
-            }
-        } else if (rpn1_red) {
-            // Contactor RPN1 is RED -> direction is DOWN
-            A0(4); // COMMAND_DOWN event
-            if (metro_device::log_packets) {
-                cout << "udku device id " << get_id() << " automatic COMMAND_DOWN generated: block circuit not GREEN, RKP not GREEN, RPN1 RED" << endl;
-            }
-        }
-    }
-}
-
+      };
 //mashzal door
 		if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
 			local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)) {

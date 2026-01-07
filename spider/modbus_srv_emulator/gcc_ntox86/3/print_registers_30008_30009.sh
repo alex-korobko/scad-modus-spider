@@ -49,11 +49,11 @@ print_bits() {
                     7) bit_desc="RKP rele of start control (0 means escalator is running on nominal speed, 1 mean escalator is stopped or in starting mode)" ;;
                     6) bit_desc="RB2 circut of power supply (1 mean is power supply NOT normal)" ;;
                     5) bit_desc="KT breaks kontaktor (1 mean breaks is ON)" ;;
-                    4) bit_desc="RG telemechanics is ready" ;; # Готовність телемеханіки (1 mean not ready)
+                    4) bit_desc="RG telemechanics is ready" ;; # NOT USED Готовність телемеханіки (1 mean not ready)
                     3) bit_desc="RPV1 kontactor UP (1 means escalator running UP)" ;;
                     2) bit_desc="RPN1 kontactor DOWN (1 means escalator running DOWN)" ;; #
-                    1) bit_desc="RBK" ;; #RBK (Реле блокувального кола)
-                    0) bit_desc="V16" ;; #B16 (Вимикач допоміжного приводу)
+                    1) bit_desc="RG2 1 is ready, 0 is not ready" ;; #RG2 (Реле готовности)
+                    0) bit_desc="MU-TU 1 is on TU mode, 0 is on MU mode" ;; #MU- (Вимикач допоміжного приводу)
                 esac
             fi
         elif [ "$register_name" = "30009" ]; then
