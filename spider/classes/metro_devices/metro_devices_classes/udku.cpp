@@ -1423,18 +1423,7 @@ void metro_udku::decode_answer_from_device_4_function
    //TU mode when set to 1, local (MU) mode when set to 0 
   A0_x3=(local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MU_TU_MODE)!=udku_data_block::SIGNAL_VALUE_GREEN);
   A0_x4= (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_BLOCK_CIRCUT_STATUS)!=udku_data_block::SIGNAL_VALUE_GREEN);
-  if (A0_x4) {
-       switch (local_data_block.get_parameter_value(udku_data_block::INDEX_PARAM_MODE_VALUE)) {
-                     case system_settings::UDKU_MODE_GPSTOP:
-                     case system_settings::UDKU_MODE_GPUP:
-                     case system_settings::UDKU_MODE_GPDOWN:
-                         A0_x4=true;
-                         break;
-                      default:
-                         A0_x4=false;
-                        break;
-        }; //switch (local_data_block.get_parameter_value())
-      };
+ 
 //mashzal door
 		if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=
 			local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)) {
