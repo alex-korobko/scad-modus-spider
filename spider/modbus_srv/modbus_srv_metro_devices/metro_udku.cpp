@@ -201,14 +201,7 @@ metro_device::command_data
        if ( previos_escalator_condition_value!=-1)
         switch (escalator_condition_value) {
           case MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE :
-               if (previos_escalator_condition_value!=MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE &&
-                    (previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_GPUP_VALUE  ||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_GPDOWN_VALUE ||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_UP20_VALUE ||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_UP25_VALUE||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_NOT7SEC_VALUE||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_BREAK_VALUE||
-                      previos_escalator_condition_value==MODBUS_REGISTER_3001_LOW_BYTE_SAMOHOD_VALUE)) {
+               if (previos_escalator_condition_value!=MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE) {
                           new_messages.push_back(0);
                           new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
                     };
@@ -321,69 +314,15 @@ metro_device::command_data
    if (previos_block_circut_value!=-1) {
          if (previos_block_circut_value!=rg2_value &&
               rg2_value==0) {
-                     // Determine which block circuit is broken
-                     // if the index_of_block_circut==0 then this is ERROR 
-                     // the UDKU config will have the ERROR block circut name at the index 0
-                    byte index_of_block_circut=0;
-                    bool circuit_found=false;
-                    
-                    // Check circuits 1-8: Register 30009 high byte (byte index+17)
-                    // Bit 7 -> circuit index 1, Bit 6 -> circuit index 2, ..., Bit 0 -> circuit index 8
-                    const int CIRCUIT_BYTE_1_8_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+17;
-                    byte circuit_byte_1_8 = answer_from_com_port[0][CIRCUIT_BYTE_1_8_INDEX];
-                    if (circuit_byte_1_8 != 0) {
-                        byte bit_pos = metro_device::find_first_set_bit(circuit_byte_1_8);
-                        if (bit_pos < 8) {
-                            index_of_block_circut = bit_pos + 1;  // Circuits 1-8 (bit 0 -> index 1, bit 7 -> index 8)
-                            circuit_found = true;
-                        }
-                    }
-                    
-                    // Check circuits 9-16: Register 30009 low byte (byte index+18)
-                    // Bit 7 -> circuit index 9, Bit 6 -> circuit index 10, ..., Bit 0 -> circuit index 16
-                    if (!circuit_found) {
-                        const int CIRCUIT_BYTE_9_16_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18;
-                        byte circuit_byte_9_16 = answer_from_com_port[0][CIRCUIT_BYTE_9_16_INDEX];
-                        if (circuit_byte_9_16 != 0) {
-                            byte bit_pos = metro_device::find_first_set_bit(circuit_byte_9_16);
-                            if (bit_pos < 8) {
-                                index_of_block_circut = bit_pos + 9;  // Circuits 9-16 (bit 0 -> index 9, bit 7 -> index 16)
-                                circuit_found = true;
-                            }
-                        }
-                    }
-                    
-                    // Check circuits 17-19: Register 30008 high byte (byte index+15) bits 7, 6, 5
-                    // Bit 7 (0x80) -> circuit index 17, Bit 6 (0x40) -> circuit index 18, Bit 5 (0x20) -> circuit index 19
-                    if (!circuit_found) {
-                        const int CIRCUIT_BYTE_17_19_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+15;
-                        byte circuit_byte_17_19 = answer_from_com_port[0][CIRCUIT_BYTE_17_19_INDEX];
-                        // Check bit 7 (0x80) -> circuit index 17
-                        if ((circuit_byte_17_19 & 0x80) != 0) {
-                            index_of_block_circut = 17;
-                            circuit_found = true;
-                        }
-                        // Check bit 6 (0x40) -> circuit index 18
-                        else if ((circuit_byte_17_19 & 0x40) != 0) {
-                            index_of_block_circut = 18;
-                            circuit_found = true;
-                        }
-                        // Check bit 5 (0x20) -> circuit index 19
-                        else if ((circuit_byte_17_19 & 0x20) != 0) {
-                            index_of_block_circut = 19;
-                            circuit_found = true;
-                        }
-                    }
-                    
-                    // If no specific circuit found, index_of_block_circut remains 0 (ERROR index)
-                    // This is expected behavior - index 0 indicates general error when no specific circuit is identified
-                    if (!circuit_found) {
-                        sett_obj->sys_message(program_settings::INFO_MSG, 
-                            "In metro_udku::create_answer_to_socket_func_4: "
-                            "Block circuit fault detected but no specific circuit found - using error index 0");
-                    } 
+                    byte index_of_block_circut = find_block_circuit_index(answer_from_com_port);
+                    last_broken_block_circuit_index = index_of_block_circut;
                     new_messages.push_back(index_of_block_circut);
                     new_messages.push_back(MESSAGE_ESCALATOR_NOT_READY_WITH_BLOCK_CIRCUT_NAME);
+            } else if (previos_block_circut_value!=rg2_value &&
+                       rg2_value!=0) {
+                    // Block circuit was fixed, use the previously stored broken circuit index
+                    new_messages.push_back(last_broken_block_circuit_index);
+                    new_messages.push_back(MESSAGE_ESCALATOR_READY_WITH_BLOCK_CIRCUT_NAME);
             };//if (previos_block_circut_value!=rg2_value && rg2_value==0)
       }; //if (previos_block_circut_value!=-1) {
       previos_block_circut_value=rg2_value;
@@ -425,6 +364,92 @@ metro_device::command_data
 
 
   return answer_to_socket;
+};
+
+byte metro_udku::find_block_circuit_index
+         (metro_device::command_data_container answer_from_com_port){
+    program_settings* sett_obj=program_settings::get_instance();
+    // Determine which block circuit is broken
+    // if the index_of_block_circut==0 then this is ERROR 
+    // the UDKU config will have the ERROR block circut name at the index 0
+    byte index_of_block_circut=0;
+    bool circuit_found=false;
+    
+    // Check circuits 1-8: Register 30009 high byte (byte index+17)
+    // Bit 7 -> circuit index 1, Bit 6 -> circuit index 2, ..., Bit 0 -> circuit index 8
+    const int CIRCUIT_BYTE_1_8_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+17;
+    byte circuit_byte_1_8 = answer_from_com_port[0][CIRCUIT_BYTE_1_8_INDEX];
+    if (circuit_byte_1_8 != 0) {
+        byte bit_pos = metro_device::find_first_set_bit(circuit_byte_1_8);
+        if (bit_pos < 8) {
+            index_of_block_circut = bit_pos + 1;  // Circuits 1-8 (bit 0 -> index 1, bit 7 -> index 8)
+            circuit_found = true;
+        }
+    }
+    
+    // Check circuits 9-16: Register 30009 low byte (byte index+18)
+    // Bit 7 -> circuit index 9, Bit 6 -> circuit index 10, ..., Bit 0 -> circuit index 16
+    // Exclude bit 2 (ВТ) here - it is checked last below
+    if (!circuit_found) {
+        const int CIRCUIT_BYTE_9_16_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18;
+        byte circuit_byte_9_16 = answer_from_com_port[0][CIRCUIT_BYTE_9_16_INDEX];
+        byte circuit_byte_9_16_excl_vt = circuit_byte_9_16 & ~0x04;  // mask out bit 2 (ВТ)
+        if (circuit_byte_9_16_excl_vt != 0) {
+            byte bit_pos = metro_device::find_first_set_bit(circuit_byte_9_16_excl_vt);
+            if (bit_pos < 8) {
+                index_of_block_circut = bit_pos + 9;  // Circuits 9-16 (bit 0 -> index 9, bit 7 -> index 16)
+                circuit_found = true;
+            }
+        }
+    }
+    
+    // Check circuits 17-20: Register 30008 high byte (byte index+15) bits 7, 6, 5, 4
+    // Bit 7 (0x80) -> circuit index 17, Bit 6 (0x40) -> circuit index 18, Bit 5 (0x20) -> circuit index 19
+    // Bit 4 (0x10) -> circuit index 20 (ДУО - Дистанційна зупинка)
+    if (!circuit_found) {
+        const int CIRCUIT_BYTE_17_20_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+15;
+        byte circuit_byte_17_20 = answer_from_com_port[0][CIRCUIT_BYTE_17_20_INDEX];
+        // Check bit 7 (0x80) -> circuit index 17
+        if ((circuit_byte_17_20 & 0x80) != 0) {
+            index_of_block_circut = 17;
+            circuit_found = true;
+        }
+        // Check bit 6 (0x40) -> circuit index 18
+        else if ((circuit_byte_17_20 & 0x40) != 0) {
+            index_of_block_circut = 18;
+            circuit_found = true;
+        }
+        // Check bit 5 (0x20) -> circuit index 19
+        else if ((circuit_byte_17_20 & 0x20) != 0) {
+            index_of_block_circut = 19;
+            circuit_found = true;
+        }
+        // Check bit 4 (0x10) -> circuit index 20 (ДУО - Дистанційна зупинка)
+        else if ((circuit_byte_17_20 & 0x10) != 0) {
+            index_of_block_circut = 20;
+            circuit_found = true;
+        }
+    }
+    
+    // Check ВТ (bit 2 of register 30009 low byte) last - same index 14 as in circuits 9-16
+    if (!circuit_found) {
+        const int CIRCUIT_BYTE_9_16_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+18;
+        byte circuit_byte_9_16 = answer_from_com_port[0][CIRCUIT_BYTE_9_16_INDEX];
+        if ((circuit_byte_9_16 & 0x04) != 0) {  // bit 2: ВТ (Блокування робочого гальма)
+            index_of_block_circut = 14;
+            circuit_found = true;
+        }
+    }
+    
+    // If no specific circuit found, index_of_block_circut remains 0 (ERROR index)
+    // This is expected behavior - index 0 indicates general error when no specific circuit is identified
+    if (!circuit_found) {
+        sett_obj->sys_message(program_settings::INFO_MSG, 
+            "In metro_udku::find_block_circuit_index: "
+            "Block circuit fault detected but no specific circuit found - using error index 0");
+    } 
+    
+    return index_of_block_circut;
 };
 
 metro_device::command_data_container 

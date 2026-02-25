@@ -1,0 +1,3 @@
+DIRS = gcc_ntox86
+ALLDIRS = gcc_ntox86
+

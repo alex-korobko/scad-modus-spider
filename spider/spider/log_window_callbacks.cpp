@@ -2057,7 +2057,7 @@ PhPoint_t widget_position;
 PtFileSelectionInfo_t info;
 string dialog_title("Архив журналiв повiдомлень") , filter_button_text("Фильтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=1800,
+                      dialog_wnd_width=1200,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;
@@ -2427,7 +2427,7 @@ vector<PtArg_t> args;
 PhPoint_t widget_position;
 string dialog_title("Журнал повiдомлень") , filter_button_text("Фiльтр");
 unsigned int dialog_wnd_height=450,
-                      dialog_wnd_width=1800,
+                      dialog_wnd_width=1200,
                       buttons_panel_height=40,
                       divider_height=35,
                       button_in_panel_width=180;

@@ -250,6 +250,11 @@ bool sound::play(std::vector<string> *names_to_play) {
 //ATTENTION!!! only for using file descriptors
     system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
+	if (!sys_sett->get_sound_enabled()) {
+		delete names_to_play;
+		return true;
+	}
+
 	pthread_attr_t      attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);

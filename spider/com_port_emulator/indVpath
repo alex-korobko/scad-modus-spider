@@ -1,0 +1,4 @@
+VPATH =../system_settings_classes\
+ :../metro_devices_classes_modbus\
+ :../
+

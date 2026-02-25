@@ -19,6 +19,7 @@ chars_container font_for_menu;
 images_container images;
 string start_wav_file_name;
 string report_import_directory;
+bool sound_enabled;
 
 system_settings_spider();
 
@@ -141,6 +142,7 @@ virtual ~system_settings_spider() {};
 	PhImage_t* get_image (images_size_type image_index);
 	const string& get_start_wav_file_name() const {return start_wav_file_name;};
 	const string& get_report_import_directory() const {return report_import_directory;};
+	bool get_sound_enabled() const {return sound_enabled;};
 
 // windows
 	void message_window(

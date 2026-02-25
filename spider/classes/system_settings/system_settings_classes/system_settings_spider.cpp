@@ -34,27 +34,38 @@ system_settings_spider::system_settings_spider() :
     map_container(NULL),
     images(IMAGES_COUNT),
 	start_wav_file_name("sounds/wp_start.wav"),
-	report_import_directory("/home/kor/tmp/")
+	report_import_directory("/home/kor/tmp/"),
+	sound_enabled(true)
  {};
 
 
 void system_settings_spider::load_settings() throw (spider_exception) 
 {
-enum {REPORT_DIR=0,  ENTRIES_COUNT};
+enum {REPORT_DIR=0, SOUND_ENABLED, ENTRIES_COUNT};
 ostringstream exception_description;
 string entry_name;
+string entry_value;
 const char *entry_name_c_str;
 vector<char> temp_str(512);
 vector<string> entries_names(ENTRIES_COUNT);
 
 entries_names[REPORT_DIR]="report_directory";
+entries_names[SOUND_ENABLED]="sound_enabled";
 
 entry_name_c_str=PxConfigNextString(&temp_str[0],temp_str.size());
 
 while(entry_name_c_str!=NULL){
 entry_name=entry_name_c_str;
+entry_value=&temp_str[0];
 if (entry_name.compare(entries_names[REPORT_DIR])==0) {
 			report_import_directory = &temp_str[0];
+	} else if (entry_name.compare(entries_names[SOUND_ENABLED])==0) {
+			// "0", "false", "no", "disabled" => sound off; anything else => on
+			if (entry_value=="0" || entry_value=="false" || entry_value=="no" || entry_value=="disabled") {
+				sound_enabled = false;
+			} else {
+				sound_enabled = true;
+			}
 	} else {
            exception_description<<"Unrecognized config entry  "<<entry_name;
             throw spider_exception(exception_description.str());

@@ -1279,21 +1279,18 @@ void metro_udku::decode_answer_from_device_4_function
             advance(tmp_iter2, 1);
     };
 
-    if (begin_addr<= 30002&&
+    if (begin_addr<= 30002 &&
          begin_addr+registers_count>30002) {
-
-            tmp_byte_value=*tmp_iter1;
+            // Register 30002: high byte = DKSE_POSITION, low byte = ESCALATOR_TYPE
             local_data_block.set_parameter_value(
-	             udku_data_block::INDEX_PARAM_DKSE_POSITION,
-                tmp_byte_value);
+                udku_data_block::INDEX_PARAM_DKSE_POSITION,
+                *tmp_iter1);
 
             tmp_iter1=tmp_iter2;
             advance(tmp_iter2, 1);
-
-            tmp_byte_value=*tmp_iter1;
             local_data_block.set_parameter_value(
                 udku_data_block::INDEX_PARAM_ESCALATOR_TYPE,
-                tmp_byte_value);
+                *tmp_iter1);
 
             tmp_iter1=tmp_iter2;
             advance(tmp_iter2, 1);
@@ -1328,14 +1325,21 @@ void metro_udku::decode_answer_from_device_4_function
             advance(tmp_iter2, 2);
     };
 
-     if (begin_addr<= 30005&&
+     if (begin_addr<= 30005 &&
          begin_addr+registers_count>30005) {
+            // Register 30005: high byte = ESCALATOR_SPEED_VALUE, low byte = ESCALATOR_DESIGNED_SPEED_VALUE
             local_data_block.set_parameter_value(
-                                      udku_data_block::INDEX_PARAM_ESCALATOR_SPEED_VALUE,
-                                       system_settings::type_from_bytes<word>(system_settings::bytes (tmp_iter1, tmp_iter2))
-                                       );
-           tmp_iter1=tmp_iter2;
-           advance(tmp_iter2, 2);
+                udku_data_block::INDEX_PARAM_ESCALATOR_SPEED_VALUE,
+                *tmp_iter1);
+
+            tmp_iter1=tmp_iter2;
+            advance(tmp_iter2, 1);
+            local_data_block.set_parameter_value(
+                udku_data_block::INDEX_PARAM_ESCALATOR_DESIGNED_SPEED_VALUE,
+                *tmp_iter1);
+
+            tmp_iter1=tmp_iter2;
+            advance(tmp_iter2, 1);
     };
 
      if (begin_addr<= 30006&&

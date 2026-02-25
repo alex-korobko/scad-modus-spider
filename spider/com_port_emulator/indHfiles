@@ -1,0 +1,8 @@
+HEADERS = defines.h\
+ spider_exception.h\
+ system_settings.h\
+ system_settings_spider.h 
+ifdef UNIT_TESTING
+
+endif
+

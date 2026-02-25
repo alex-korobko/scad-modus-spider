@@ -9,11 +9,14 @@ metro_device::command_data_container create_request_to_com_port();
 metro_device::command_data
          create_answer_to_socket_func_4
                (metro_device::command_data_container answer_from_com_port);
+byte find_block_circuit_index
+         (metro_device::command_data_container answer_from_com_port);
 
 int previos_escalator_condition_value;
 int previos_rkp_value;
 int previos_mu_tu_switcher_value;
 int previos_block_circut_value;
+byte last_broken_block_circuit_index;
 
 public:
 
@@ -49,7 +52,7 @@ enum {
        MESSAGE_ERROR_ALL_SIGNALS=14,
        MESSAGE_ERROR_CONTACT=15,
        MESSAGE_ESCALATOR_NOT_READY_WITH_BLOCK_CIRCUT_NAME=16,
-       MESSAGE_ESCALATOR_READY_WITH_BLOCK_CIRCUT_NAME=17, //now not used
+       MESSAGE_ESCALATOR_READY_WITH_BLOCK_CIRCUT_NAME=17,
        MESSAGE_ESCALATOR_ON_TU=18,
        MESSAGE_ESCALATOR_ON_MU=19,
        MESSAGE_TU_COMMAND_UP_SUCCESS=20,
@@ -85,7 +88,8 @@ metro_udku(int new_number, bool new_log_packets)
     previos_escalator_condition_value(-1),
     previos_rkp_value(-1),
     previos_mu_tu_switcher_value(-1),
-    previos_block_circut_value(-1) {
+    previos_block_circut_value(-1),
+    last_broken_block_circuit_index(0) {
 };
 
 virtual ~metro_udku(){};
