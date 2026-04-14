@@ -398,9 +398,11 @@ switch (old_automat_state) {
     break;
     case A0_READY_NOT_ACCEPTED:
            A0_z6();
+           if (pref_direction!=system_settings::DIRECTION_REVERSE) A0_z2();
      break;
     case A0_READY:
            A0_z7();
+           if (pref_direction!=system_settings::DIRECTION_REVERSE) A0_z2();
           break;
     case A0_STARTING:
           break;
@@ -1439,7 +1441,7 @@ void metro_udku::decode_answer_from_device_4_function
 			system_settings::bytes tmp_bytes;
 
 			 byte door_data_to_send = 0;
-			 if (data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=udku_data_block::SIGNAL_VALUE_GREEN)  {
+			 if (local_data_block.get_signal_value(udku_data_block::INDEX_SIGNAL_MASHZAL_DOOR)!=udku_data_block::SIGNAL_VALUE_GREEN)  {
 				door_data_to_send = 1;
 			};
 

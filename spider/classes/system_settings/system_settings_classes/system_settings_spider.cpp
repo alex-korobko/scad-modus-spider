@@ -302,7 +302,7 @@ void system_settings_spider::prepare_visualization(
 
 		font_for_messages_large.resize(MAX_FONT_TAG);
 		string font_name("Helvetica");
-		int  font_size(12);
+		int  font_size(14);
 
 		if (PfGenerateFontName ( font_name.c_str(),
 												PF_STYLE_ANTIALIAS | PF_STYLE_BOLD,
@@ -316,7 +316,7 @@ void system_settings_spider::prepare_visualization(
 
 		font_for_messages_small.resize(MAX_FONT_TAG);		
 		font_name="Arial";
-		font_size=10;
+		font_size=12;
 		
 		if (PfGenerateFontName ( font_name.c_str(),
 												PF_STYLE_ANTIALIAS,

@@ -470,13 +470,14 @@ void metro_door::decode_answer_from_device_to_data_block(){
                                   msg_dict_container::iterator msgs_iter=types_iter->second->type_messages.begin(); //in door data type only one message  - door opened
 
 	   			      ldword tmp_id=main_log->get_records_autoincrement();
- 			          main_log->set_records_autoincrement(++tmp_id); 
+ 			          main_log->set_records_autoincrement(++tmp_id);
                        main_log->insert(log_record(tmp_id,
                                                             msgs_iter->second.get_id(),
                                                             msgs_iter->second.get_type(),
                                                             metro_device::get_station_id(),
                                                             metro_device::get_id(),
                                                             time(NULL)));
+                       main_log->prepare_to_display();
                       }; //if (types_iter!=dev_types->end())
                    }; //if (A0_state==A0_DOOR_OPENED_NOT_ACCEPTED)
 

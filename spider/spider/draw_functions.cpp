@@ -279,6 +279,41 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	count=0;
 	draw_point.y=where->ul.y+system_settings_spider::ROW_HEIGHT/2;
 
+	// The scrollbar is always visible (Pt_LIST_SCROLLBAR_ALWAYS).  In QNX 6.5
+	// Photon, PtRawList passes `where` with lr.x at the full widget right edge —
+	// the Pt_LIST_SCROLLBAR_AUTORESIZE flag does NOT reduce it for custom draw
+	// functions.  We must clip text to stop it bleeding into the scrollbar area.
+	//
+	// Pt_ARG_SCROLLBAR_WIDTH belongs to PtScrollbar, not PtRawList/PtGenList.
+	// Querying it on the list widget can silently return 0, making the subtraction
+	// a no-op.  Instead, walk the child widget list to find the embedded
+	// PtScrollbar and read its actual left edge via PtWidgetExtent — that is the
+	// exact boundary where text must stop.  Fall back to 17 px (the QNX 6.5
+	// Photon default) if the traversal finds nothing.
+	PhRect_t content_clip = *where;
+	{
+		bool sb_found = false;
+		PtWidget_t *child = PtWidgetChildFront(widget);
+		while (child != NULL) {
+			if (PtWidgetIsClass(child, PtScrollbar)) {
+				PhRect_t sb_extent;
+				PtWidgetExtent(child, &sb_extent);
+				if (sb_extent.ul.x > content_clip.ul.x)
+					content_clip.lr.x = sb_extent.ul.x - 1;
+				sb_found = true;
+				break;
+			}
+			child = PtWidgetBrotherBehind(child);
+		}
+		if (!sb_found) {
+			// Fallback: QNX 6.5 Photon default scrollbar width
+			const short fallback_sb_width = 17;
+			if (content_clip.lr.x > content_clip.ul.x + fallback_sb_width)
+				content_clip.lr.x -= fallback_sb_width;
+		}
+	}
+	PgSetClipping(1, &content_clip);
+
 	while (	count < nitems &&
 				iter_log_rec!=log_rec_contain->end()){
 
@@ -449,7 +484,6 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	 	strftime(&tmp_chars[0], tmp_chars.size(), "%H:%M:%S", localtime( &tmp_time ));		
         time_text=&tmp_chars[0];
 
-		// drawing
 		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings_spider::COLUMN_LEFT_MARGIN;
 		PgDrawText(date_text.c_str(), date_text.size(), &draw_point, Pg_TEXT_BOTTOM);
 
@@ -477,7 +511,7 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 		PgDrawText(message_text_lines[i].c_str(), message_text_lines[i].size(), &draw_point, Pg_TEXT_BOTTOM);
 
         };
-        //last part offset of previos line 
+        //last part offset of previos line
 		if (message_text_lines.size()<=1) {
 		draw_point.y+=offset_in_list_row;
         };
@@ -486,6 +520,7 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 		count++;
 		iter_log_rec++;
      }; // while (	count< nitems &&
+	PgSetClipping( 0, NULL ); // restore — do not let the row clip affect header redraws
 
 
    } catch (spider_exception spr_exc) {

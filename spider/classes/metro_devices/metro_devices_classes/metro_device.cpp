@@ -400,7 +400,7 @@ void send_datablock_to_door(metro_devices_container::iterator& devices_iter, byt
 
 	if ((devices_iter==devices->end()) ||
 		(devices_iter->second->get_type_description()!=metro_device_type::DEVICE_TYPE_DOOR) ||
-		devices_iter->second->get_enabled()) {
+		!devices_iter->second->get_enabled()) {
 		return;
 	};
 

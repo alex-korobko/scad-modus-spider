@@ -397,9 +397,11 @@ switch (old_automat_state) {
     break;
     case A0_READY_NOT_ACCEPTED:
            A0_z6();
+           if (pref_direction!=system_settings::DIRECTION_REVERSE) A0_z2();
      break;
     case A0_READY:
            A0_z7();
+           if (pref_direction!=system_settings::DIRECTION_REVERSE) A0_z2();
           break;
     case A0_STARTING:
           break;

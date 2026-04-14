@@ -206,8 +206,7 @@ void log_device_buffer(int device_id, metro_device::buffer_data_type buffer_to_l
            msg_description<<" 0x"<<&tmp_chars[0];
             if (i>0 && (i%10)==0) msg_description<<"\n";
        };
-      spider_sys_sett->sys_message(system_settings::INFO_MSG,  
-                                                          msg_description.str());
+      spider_sys_sett->sys_message(system_settings::INFO_MSG, msg_description.str());
 };
 
 void* metro_device_thread

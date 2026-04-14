@@ -1086,7 +1086,7 @@ system_settings_spider *sys_sett_obj=system_settings_spider::get_instance();
 
 enum {ID=0, STATION_ID, TYPE, ENABLED, NUMBER, MODBUS_NUMBER,  ESCALATOR_ID,
 			IP_ADDRESS, START_DAY_MODE, START_HOUR, START_MINUTE, OFFLINE_DELAY,
-			LOG_PACKETS, DOOR_ID, ENTRIES_COUNT};
+			LOG_PACKETS, DOOR_ID, ESCALATOR_IDS, ENTRIES_COUNT};
 
 ostringstream exception_description;
 const char *entry_name_c_str;
@@ -1115,6 +1115,7 @@ entries_names[ENABLED]="enabled";
 entries_names[NUMBER]="num";
 entries_names[MODBUS_NUMBER]="modbus num";
 entries_names[ESCALATOR_ID]="escalator id";
+entries_names[ESCALATOR_IDS]="escalator_ids";
 entries_names[IP_ADDRESS]="ip";
 entries_names[START_DAY_MODE]="start day mode";
 entries_names[START_HOUR]="start hour";
@@ -1203,23 +1204,31 @@ if (entry_name.compare(entries_names[ID])==0) {
 						};
 				};	
 
-	} else if (entry_name.compare(entries_names[ESCALATOR_ID])==0) { 	
+	} else if (entry_name.compare(entries_names[ESCALATOR_ID])==0) {
 
-			int temp_int = atoi(&temp_str[0]);
-			if (temp_int>0)
-			{
-				if (this->find(temp_int)!=this->end()){
-						escalators_ids.push_back(temp_int);
-					} else 	{
+		exception_description<<"In load_shavr_parameters: config token \"escalator id\" is no longer supported, use \"escalator_ids\" with a comma-separated list instead";
+		throw spider_exception(exception_description.str());
+
+	} else if (entry_name.compare(entries_names[ESCALATOR_IDS])==0) {
+
+			istringstream ids_stream(&temp_str[0]);
+			string token;
+			while (getline(ids_stream, token, ',')) {
+				int temp_int = atoi(token.c_str());
+				if (temp_int>0) {
+					if (this->find(temp_int)!=this->end()){
+							escalators_ids.push_back(temp_int);
+						} else {
                        exception_description<<"In load_shavr_parameters: Not found related device`s id  ";
-                       exception_description<<&temp_str[0];
+                       exception_description<<token;
                        throw spider_exception(exception_description.str());
-					};
-			} else {
+						};
+				} else {
                        exception_description<<"In load_shavr_parameters: Wrong related device`s id ";
-                       exception_description<<&temp_str[0];
+                       exception_description<<token;
                        throw spider_exception(exception_description.str());
-			};
+				};
+			}; //while getline
 
 	} else if (entry_name.compare(entries_names[NUMBER])==0) { 	
 			int temp_int = atoi(&temp_str[0]);

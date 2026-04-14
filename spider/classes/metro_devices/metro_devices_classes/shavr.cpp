@@ -632,6 +632,7 @@ if (!metro_device::get_enabled()) return;
 
 if (metro_device::get_station_widget()==NULL)
 	throw spider_exception("metro_shavr::update_device_widget() pointer to station widget is null");
+	cout<<"shavr update_device_widget: device_id="<<get_id()<<" station_widget non-null"<<endl;
 
 if (state_indicator_widget==NULL)
 	throw spider_exception("metro_shavr::update_device_widget() pointer to state_indicator_widget is null");
@@ -712,6 +713,7 @@ PtSetResources(state_indicator_widget,
 
 
 //power lines updating 
+	cout<<"shavr update_device_widget: device_id="<<get_id()<<" escalators_dimensions.size()="<<escalators_dimensions.size()<<endl;
 if (escalators_dimensions.empty())
 	throw spider_exception("metro_shavr::update_device_widget() empty escalators dimensions container");
 
@@ -815,6 +817,7 @@ if (escalators_dimensions.empty())
     PtRealizeWidget(created_line);
 	power_lines.push_back(created_line);
 
+	cout<<"shavr update_device_widget: device_id="<<get_id()<<" A0_x1="<<A0_x1<<" A0_x2="<<A0_x2<<(A0_x1 && A0_x2 ? " drawing escalator segments" : " skipping escalator segments (early return)")<<endl;
 if (!A0_x1 ||
     !A0_x2) return;
 
