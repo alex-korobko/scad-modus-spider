@@ -183,12 +183,11 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	unsigned count;
 	PhPoint_t draw_point;
 
-	int tmp_msg_id, msg_type, device_id, splitting_message_find_pos;
+	int tmp_msg_id, msg_type, device_id;
     int breaking_path_find_pos,
           input_circut_name_find_pos,
           dispatcher_name_find_pos,
           stop_cause_find_pos,
-          offset_in_list_row,
 		 dispatcher_id,
 		 stop_cause_id;
 	ostringstream  device_text;
@@ -292,20 +291,24 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	// Photon default) if the traversal finds nothing.
 	PhRect_t content_clip = *where;
 	{
-		bool sb_found = false;
+		bool v_sb_found = false;
 		PtWidget_t *child = PtWidgetChildFront(widget);
 		while (child != NULL) {
 			if (PtWidgetIsClass(child, PtScrollbar)) {
 				PhRect_t sb_extent;
 				PtWidgetExtent(child, &sb_extent);
-				if (sb_extent.ul.x > content_clip.ul.x)
+				// Vertical scrollbar: anchored to the right edge
+				if (sb_extent.ul.x > content_clip.ul.x) {
 					content_clip.lr.x = sb_extent.ul.x - 1;
-				sb_found = true;
-				break;
+					v_sb_found = true;
+				}
+				// Horizontal scrollbar: anchored to the bottom edge
+				if (sb_extent.ul.y > content_clip.ul.y + (content_clip.lr.y - content_clip.ul.y) / 2)
+					content_clip.lr.y = sb_extent.ul.y - 1;
 			}
 			child = PtWidgetBrotherBehind(child);
 		}
-		if (!sb_found) {
+		if (!v_sb_found) {
 			// Fallback: QNX 6.5 Photon default scrollbar width
 			const short fallback_sb_width = 17;
 			if (content_clip.lr.x > content_clip.ul.x + fallback_sb_width)
@@ -452,22 +455,6 @@ void log_raw_list_draw_function( PtWidget_t *widget,
                             &tmp_chars[0]);
                     };//if (stop_cause_find_pos!=-1)
 
-                     //splitting text
-                    if (message_text_lines.size()>0) {
-                    while (message_text_lines[message_text_lines.size()-1].size()>system_settings_spider::MAX_CHARS_COUNT_IN_ROW) {
-                        splitting_message_find_pos=
-                           static_cast<int>(message_text_lines[message_text_lines.size()-1].find_last_of(' ', system_settings_spider::MAX_CHARS_COUNT_IN_ROW));	
-			
-                        if (splitting_message_find_pos<0) splitting_message_find_pos=system_settings_spider::MAX_CHARS_COUNT_IN_ROW;
-
-                        message_text_lines.push_back(message_text_lines[message_text_lines.size()-1].substr(splitting_message_find_pos, message_text_lines[message_text_lines.size()-1].size()-splitting_message_find_pos));
-                        message_text_lines[message_text_lines.size()-2].replace(
-                                       splitting_message_find_pos, 
-                                       message_text_lines[message_text_lines.size()-2].size()-splitting_message_find_pos,
-                                       " ",
-                                       0);
-                      }; //while (message_text_lines[
-				 }; //if (message_text_lines.size()>0)
 		}; // if (tmp_msg_id!=0)
 
 		iter_metro_stations=stations->find(iter_log_rec->get_station_id());
@@ -496,27 +483,9 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 		draw_point.x = where->ul.x + internal_column_pos[3].from + system_settings_spider::COLUMN_LEFT_MARGIN;	
 		PgDrawText(device_text.str().c_str(), device_text.str().size(), &draw_point, Pg_TEXT_BOTTOM);
 
-       //return to up position in row
-		draw_point.y-=system_settings_spider::ROW_HEIGHT/2;
-
-		if (message_text_lines.size()<=1) {
-         offset_in_list_row=system_settings_spider::ROW_HEIGHT/2;
-        } else {
-         offset_in_list_row=system_settings_spider::ROW_HEIGHT/message_text_lines.size();
-        };
-
-        for (system_settings::strings_container::size_type i=0; i<message_text_lines.size(); i++) {
-		draw_point.x = where->ul.x + internal_column_pos[4].from + system_settings_spider::COLUMN_LEFT_MARGIN;	
-		draw_point.y+=offset_in_list_row;
-		PgDrawText(message_text_lines[i].c_str(), message_text_lines[i].size(), &draw_point, Pg_TEXT_BOTTOM);
-
-        };
-        //last part offset of previos line
-		if (message_text_lines.size()<=1) {
-		draw_point.y+=offset_in_list_row;
-        };
-        //new line offset
-		draw_point.y+=system_settings_spider::ROW_HEIGHT/2;
+		draw_point.x = where->ul.x + internal_column_pos[4].from + system_settings_spider::COLUMN_LEFT_MARGIN;
+		PgDrawText(message_text_lines[0].c_str(), message_text_lines[0].size(), &draw_point, Pg_TEXT_BOTTOM);
+		draw_point.y+=system_settings_spider::ROW_HEIGHT;
 		count++;
 		iter_log_rec++;
      }; // while (	count< nitems &&

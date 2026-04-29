@@ -2195,9 +2195,9 @@ try {
          PtSetArg(&args[3], Pt_ARG_RAWLIST_DRAW_F,
                        log_raw_list_draw_function, 0);
 		PtSetArg(&args[4], Pt_ARG_LIST_FLAGS,
-                      Pt_TRUE, Pt_LIST_SCROLLBAR_ALWAYS);
+                      Pt_TRUE, Pt_LIST_VSCROLLBAR_ALWAYS);
 		PtSetArg(&args[5], Pt_ARG_LIST_FLAGS,
-                      Pt_TRUE, Pt_LIST_SCROLLBAR_AUTORESIZE);
+                      Pt_TRUE, Pt_LIST_HSCROLLBAR_ALWAYS);
 		PtSetArg(&args[6], Pt_ARG_LIST_FLAGS,
                       Pt_TRUE, Pt_LIST_BALLOONS_IN_COLUMNS);
 		PtSetArg(&args[7], Pt_ARG_POINTER,
@@ -2506,12 +2506,12 @@ try {
           widget_position.y=0;
          PtSetArg(&args[2], Pt_ARG_POS,
                        &widget_position, 0);
-         PtSetArg(&args[3], Pt_ARG_RAWLIST_DRAW_F, 
+         PtSetArg(&args[3], Pt_ARG_RAWLIST_DRAW_F,
                        log_raw_list_draw_function, 0);
 		PtSetArg(&args[4], Pt_ARG_LIST_FLAGS,
-                      Pt_TRUE, Pt_LIST_SCROLLBAR_ALWAYS);
+                      Pt_TRUE, Pt_LIST_VSCROLLBAR_ALWAYS);
 		PtSetArg(&args[5], Pt_ARG_LIST_FLAGS,
-                      Pt_TRUE, Pt_LIST_SCROLLBAR_AUTORESIZE);
+                      Pt_TRUE, Pt_LIST_HSCROLLBAR_ALWAYS);
 		PtSetArg(&args[6], Pt_ARG_LIST_FLAGS,
                       Pt_TRUE, Pt_LIST_BALLOONS_IN_COLUMNS);
 		PtSetArg(&args[7], Pt_ARG_POINTER,
