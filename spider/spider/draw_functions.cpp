@@ -20,6 +20,7 @@ using namespace std;
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <map>
 
 #include "defines.h"
 #include "spider_exception.h"
@@ -56,6 +57,126 @@ class metro_devices_container;
 extern msg_dict_container *messages;
 extern log_records_container *main_log;
 extern log_records_container *archive_log;
+
+struct MaxMsgWidthEntry {
+    short width;
+    log_records_container *log;
+    MaxMsgWidthEntry() : width(0), log(NULL) {}
+};
+static map<PtWidget_t*, MaxMsgWidthEntry> g_max_msg_px_width;
+
+struct MsgColResizeWork {
+    PtWidget_t *list;
+    short needed;
+};
+
+// Widens the trailing (message) column of the log list so the longest
+// observed message fits, even when that exceeds the list's visible width.
+//
+// Why three steps:
+//   PtRawList recomputes its horizontal scroll maximum from the *divider's*
+//   geometry on every scrollbar interaction, not from Pt_ARG_LIST_COLUMN_POS.
+//   The divider is laid out within the list's visible bounds, so unless we
+//   first widen the divider widget itself, the message-column button is
+//   silently capped at the divider's available slack and any list-side
+//   column-position update gets snapped back the moment the user drags the
+//   scrollbar.
+//
+// Five columns: date(0), time(1), station(2), device(3), message(4).
+static const int LOG_LIST_COLUMN_COUNT = 5;
+static const int LOG_LIST_MSG_COLUMN_INDEX = 4;
+
+static int msg_col_resize_work_proc(void *data) {
+    MsgColResizeWork *w = static_cast<MsgColResizeWork*>(data);
+
+    // 1. Locate the divider that drives column geometry. In this UI it is
+    //    parented under the list widget rather than being a sibling.
+    PtWidget_t *divider = NULL;
+    {
+        PtWidget_t *child = PtWidgetChildFront(w->list);
+        while (child != NULL) {
+            if (PtWidgetIsClass(child, PtDivider)) { divider = child; break; }
+            child = PtWidgetBrotherBehind(child);
+        }
+    }
+
+    // 2. Find the trailing (rightmost) divider button — the message-column
+    //    header.
+    PtWidget_t *msg_btn = NULL;
+    short cur_msg_btn_w = 0;
+    if (divider != NULL) {
+        short max_x = -1;
+        PtWidget_t *btn = PtWidgetChildFront(divider);
+        while (btn != NULL) {
+            PhPoint_t *pos = NULL;
+            PtGetResource(btn, Pt_ARG_POS, &pos, 0);
+            if (pos && pos->x > max_x) {
+                max_x = pos->x;
+                msg_btn = btn;
+            }
+            btn = PtWidgetBrotherBehind(btn);
+        }
+        if (msg_btn != NULL) {
+            unsigned short *cw = NULL;
+            PtGetResource(msg_btn, Pt_ARG_WIDTH, &cw, 0);
+            if (cw) cur_msg_btn_w = (short)*cw;
+        }
+    }
+
+    short delta = (msg_btn != NULL) ? (w->needed - cur_msg_btn_w) : w->needed;
+
+    PtHold();
+
+    // 3. Grow the divider widget itself by the same delta so its children
+    //    have room to expand. Setting Pt_ARG_WIDTH on the button alone is
+    //    silently capped when the divider is anchored to the list's right
+    //    edge — which is exactly the "snap back on drag" behaviour we saw.
+    if (divider != NULL && delta > 0) {
+        PhDim_t *div_dim = NULL;
+        PtGetResource(divider, Pt_ARG_DIM, &div_dim, 0);
+        if (div_dim != NULL) {
+            PhDim_t new_dim;
+            new_dim.w = (unsigned short)(div_dim->w + delta);
+            new_dim.h = div_dim->h;
+            PtSetResource(divider, Pt_ARG_DIM, &new_dim, 0);
+        }
+    }
+
+    // 4. Widen the message-column button. The divider's internal binding
+    //    propagates the new geometry to Pt_ARG_LIST_COLUMN_POS, so this is
+    //    what makes PtRawList's scroll-max recompute (triggered on scrollbar
+    //    interaction) see the larger total width and stop snapping back.
+    if (msg_btn != NULL && w->needed > cur_msg_btn_w) {
+        PtSetResource(msg_btn, Pt_ARG_WIDTH, (unsigned int)w->needed, 0);
+    }
+
+    // 5. Belt-and-braces: also push the new column position straight onto
+    //    the list. If the divider->list propagation lags or is partial, the
+    //    next draw still sees the correct internal_column_pos[4] for text
+    //    placement.
+    PtArg_t arg;
+    PtListColumn_t *cols = NULL;
+    PtSetArg(&arg, Pt_ARG_LIST_COLUMN_POS, &cols, 0);
+    PtGetResources(w->list, 1, &arg);
+    if (cols != NULL) {
+        short cur_data_w = cols[LOG_LIST_MSG_COLUMN_INDEX].to
+                         - cols[LOG_LIST_MSG_COLUMN_INDEX].from;
+        if (w->needed > cur_data_w) {
+            PtListColumn_t new_cols[LOG_LIST_COLUMN_COUNT];
+            for (int i = 0; i < LOG_LIST_COLUMN_COUNT; ++i)
+                new_cols[i] = cols[i];
+            new_cols[LOG_LIST_MSG_COLUMN_INDEX].to =
+                new_cols[LOG_LIST_MSG_COLUMN_INDEX].from + w->needed;
+            PtSetArg(&arg, Pt_ARG_LIST_COLUMN_POS, new_cols, LOG_LIST_COLUMN_COUNT);
+            PtSetResources(w->list, 1, &arg);
+        }
+    }
+
+    PtRelease();
+
+    free(w);
+    return Pt_END;
+}
 
 void commands_pool_raw_list_draw_function( PtWidget_t *widget,
             PtGenListItem_t *item,
@@ -276,7 +397,12 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	advance(iter_log_rec, index-1);
 
 	count=0;
-	draw_point.y=where->ul.y+system_settings_spider::ROW_HEIGHT/2;
+	{
+		PhRect_t font_ext = { 0, 0, 0, 0 };
+		PfExtentText( &font_ext, NULL, spider_sys_sett->get_small_font(), "M", 0 );
+		short font_h = font_ext.lr.y - font_ext.ul.y + 1;
+		draw_point.y = where->ul.y + (system_settings_spider::ROW_HEIGHT - font_h) / 2;
+	}
 
 	// The scrollbar is always visible (Pt_LIST_SCROLLBAR_ALWAYS).  In QNX 6.5
 	// Photon, PtRawList passes `where` with lr.x at the full widget right edge —
@@ -317,6 +443,7 @@ void log_raw_list_draw_function( PtWidget_t *widget,
 	}
 	PgSetClipping(1, &content_clip);
 
+	short max_msg_px_width = 0;
 	while (	count < nitems &&
 				iter_log_rec!=log_rec_contain->end()){
 
@@ -472,23 +599,53 @@ void log_raw_list_draw_function( PtWidget_t *widget,
         time_text=&tmp_chars[0];
 
 		draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings_spider::COLUMN_LEFT_MARGIN;
-		PgDrawText(date_text.c_str(), date_text.size(), &draw_point, Pg_TEXT_BOTTOM);
+		PgDrawText(date_text.c_str(), date_text.size(), &draw_point, Pg_TEXT_TOP);
 
 		draw_point.x = where->ul.x + internal_column_pos[1].from + system_settings_spider::COLUMN_LEFT_MARGIN;
-		PgDrawText(time_text.c_str(), time_text.size(), &draw_point, Pg_TEXT_BOTTOM);
+		PgDrawText(time_text.c_str(), time_text.size(), &draw_point, Pg_TEXT_TOP);
 
-		draw_point.x = where->ul.x + internal_column_pos[2].from + system_settings_spider::COLUMN_LEFT_MARGIN;	
-		PgDrawText(station_text.c_str(), station_text.size(), &draw_point, Pg_TEXT_BOTTOM);
-		
-		draw_point.x = where->ul.x + internal_column_pos[3].from + system_settings_spider::COLUMN_LEFT_MARGIN;	
-		PgDrawText(device_text.str().c_str(), device_text.str().size(), &draw_point, Pg_TEXT_BOTTOM);
+		draw_point.x = where->ul.x + internal_column_pos[2].from + system_settings_spider::COLUMN_LEFT_MARGIN;
+		PgDrawText(station_text.c_str(), station_text.size(), &draw_point, Pg_TEXT_TOP);
+
+		draw_point.x = where->ul.x + internal_column_pos[3].from + system_settings_spider::COLUMN_LEFT_MARGIN;
+		PgDrawText(device_text.str().c_str(), device_text.str().size(), &draw_point, Pg_TEXT_TOP);
 
 		draw_point.x = where->ul.x + internal_column_pos[4].from + system_settings_spider::COLUMN_LEFT_MARGIN;
-		PgDrawText(message_text_lines[0].c_str(), message_text_lines[0].size(), &draw_point, Pg_TEXT_BOTTOM);
+		PgDrawText(message_text_lines[0].c_str(), message_text_lines[0].size(), &draw_point, Pg_TEXT_TOP);
+		{
+			PhRect_t msg_ext = { 0, 0, 0, 0 };
+			PfExtentText( &msg_ext, NULL, spider_sys_sett->get_small_font(), message_text_lines[0].c_str(), 0 );
+			// Width occupied to the right of the draw origin. Negative ul.x
+			// (italic left overhang) extends the glyph leftward of the origin
+			// and does not affect the right-edge column-width calculation.
+			short msg_w = msg_ext.lr.x + 1;
+			if (msg_w > max_msg_px_width) max_msg_px_width = msg_w;
+		}
 		draw_point.y+=system_settings_spider::ROW_HEIGHT;
 		count++;
 		iter_log_rec++;
      }; // while (	count< nitems &&
+	if (max_msg_px_width > 0) {
+		// Pad both sides symmetrically so the text doesn't sit flush against the
+		// next column / scrollbar at maximum horizontal scroll.
+		short needed = max_msg_px_width + 2 * system_settings_spider::COLUMN_LEFT_MARGIN;
+		// Reset cached max if the underlying log container has been swapped —
+		// otherwise the column would stay sized for whatever the previous log
+		// happened to contain.
+		MaxMsgWidthEntry &entry = g_max_msg_px_width[widget];
+		if (entry.log != log_rec_contain) {
+			entry.width = 0;
+			entry.log = log_rec_contain;
+		}
+		short &stored = entry.width;
+		if (needed > stored) {
+			stored = needed;
+			MsgColResizeWork *w = static_cast<MsgColResizeWork*>(malloc(sizeof(MsgColResizeWork)));
+			w->list   = widget;
+			w->needed = needed;
+			PtAppAddWorkProc(NULL, msg_col_resize_work_proc, w);
+		}
+	}
 	PgSetClipping( 0, NULL ); // restore — do not let the row clip affect header redraws
 
 
