@@ -34,7 +34,7 @@ virtual ~system_settings_spider() {};
 	enum{
 				COLUMN_LEFT_MARGIN =5,
 				ROW_HEIGHT=40,
-                MAX_CHARS_COUNT_IN_ROW=100
+				LOG_LIST_VIRTUAL_WIDTH=3000
 			};
 
 	// images

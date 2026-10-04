@@ -1759,7 +1759,7 @@ system_settings::strings_container directions_strings=sys_sett_obj->get_directio
 	                 system_settings::COMMAND_ACCEPT, 
 	                 metro_device::get_station_id(),
 	                 metro_device::get_modbus_number(),
-                     "КВИТИРОВАТЬ")
+                     "КВIТУВАТИ")
               );
 
      if (A0_state==A0_STARTING ||
