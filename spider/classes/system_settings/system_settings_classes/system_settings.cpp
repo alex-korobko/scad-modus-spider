@@ -38,7 +38,7 @@ system_settings::system_settings() :
     dispatchers_name("dispatchers.ini"),
 	routing_name("routing.ini"){
 	
-		escalator_mode_text[ESCALATOR_MODE_UNUSED]="Ошибка режима!!";
+		escalator_mode_text[ESCALATOR_MODE_UNUSED]="Помилка режима!!";
 		escalator_mode_text[ESCALATOR_MODE_MAIN_DRIVE_AT_PANEL]="ГП со щита";
 		escalator_mode_text[ESCALATOR_MODE_MAIN_DRIVE_AT_BEANCH_BOARD]="ГП с пульта";
 		escalator_mode_text[ESCALATOR_MODE_MAIN_DRIVE_AT_REMOTE_CONTROL]="ГП с ДУ";
@@ -46,28 +46,28 @@ system_settings::system_settings() :
 		escalator_mode_text[ESCALATOR_MODE_SMALL_DRIVE_AT_BEANCH_BOARD]="МП с пульта";
 		escalator_mode_text[ESCALATOR_MODE_TEST]="Тест";
 		escalator_mode_text[ESCALATOR_MODE_BRAKING_OFF]="Растормаж.";
-		escalator_mode_text[ESCALATOR_MODE_RUNNING_OUT]="Выбег";
+		escalator_mode_text[ESCALATOR_MODE_RUNNING_OUT]="Вибiг";
 
 		escalator_ready_text[ESCALATOR_STATE_MAIN_DRIVE_READY]="ГП готов";
 		escalator_ready_text[ESCALATOR_STATE_SMALL_DRIVE_READY]="МП Готов";
 		escalator_ready_text[ESCALATOR_STATE_TEST_READY]="Тест готов";
 		escalator_ready_text[ESCALATOR_STATE_BRAKING_OFF_READY]="Раст. готов";
-		escalator_ready_text[ESCALATOR_STATE_RUNNING_OUT_READY]="Выбег готов";
+		escalator_ready_text[ESCALATOR_STATE_RUNNING_OUT_READY]="Вибiг готов";
 		escalator_ready_text[ESCALATOR_STATE_NOT_READY]="Не готов";
 		escalator_ready_text[ESCALATOR_STATE_WORKING]="Блок-цепи норма";
 
 		udku_mode_text[UDKU_MODE_GPSTOP]="СТОП";
-		udku_mode_text[UDKU_MODE_GPUP]="ПОДЪЕМ";
+		udku_mode_text[UDKU_MODE_GPUP]="ПIДЙОМ";
 		udku_mode_text[UDKU_MODE_GPDOWN]="СПУСК";
-		udku_mode_text[UDKU_MODE_UP20]="Превышение скорости на 20%";
-		udku_mode_text[UDKU_MODE_UP25]="Превышение скорости на 25%";
+		udku_mode_text[UDKU_MODE_UP20]="Перевищення швидкості на 20%";
+		udku_mode_text[UDKU_MODE_UP25]="Перевищення швидкості на 25%";
 		udku_mode_text[UDKU_MODE_NOT7SEC]="НЕ останов через 7 сек";
-		udku_mode_text[UDKU_MODE_BREAK]="ОПРОКИДЫВАНИЕ";
-		udku_mode_text[UDKU_MODE_SAMOHOD]="САМОХОД";
-		udku_mode_text[UDKU_MODE_BRAK0]="Нет сигнала Д0 ДКСЭ";
-		udku_mode_text[UDKU_MODE_BRAK90]="Нет сигнала Д90 ДКСЭ";
-		udku_mode_text[UDKU_MODE_BRAKALLES]="Нет сигналов с ДКСЭ";
-		udku_mode_text[UDKU_MODE_BRAKKSR]="Нет контакта стыковки разъемов ДКСЭ";
+		udku_mode_text[UDKU_MODE_BREAK]="ОПРОКИДУВАННЯ";
+		udku_mode_text[UDKU_MODE_SAMOHOD]="САМОХIД";
+		udku_mode_text[UDKU_MODE_BRAK0]="Нет сигнала Д0 ДКСЕ";
+		udku_mode_text[UDKU_MODE_BRAK90]="Нет сигнала Д90 ДКСЕ";
+		udku_mode_text[UDKU_MODE_BRAKALLES]="Нет сигналов с ДКСЕ";
+		udku_mode_text[UDKU_MODE_BRAKKSR]="Нет контакта сплучення ДКСЕ";
 		udku_mode_text[UDKU_MODE_UNUSED]="-";
 
 		udku_type_text[UDKU_TYPE_LT_1]="ЛТ-1 0.94 м/с";
@@ -91,8 +91,8 @@ system_settings::system_settings() :
 		udku_type_text[UDKU_TYPE_EM_5_5]="ЭМ-5.5 0.94 м/с";
 		udku_type_text[UDKU_TYPE_UNUSED]="-";
 
-        udku_position_text[UDKU_POSITION_LEFT]="Левое";
-        udku_position_text[UDKU_POSITION_RIGHT]="Правое";
+        udku_position_text[UDKU_POSITION_LEFT]="Лiве";
+        udku_position_text[UDKU_POSITION_RIGHT]="Праве";
         udku_position_text[UDKU_POSITION_UNUSED]="-";
 
 		outer_states_text[ENABLED]="enabled";
@@ -104,14 +104,14 @@ system_settings::system_settings() :
 		directions_text_engl[DIRECTION_REVERSE]="reverse";
 
 		directions_text_russ[DIRECTION_STOP]="СТОП";
-		directions_text_russ[DIRECTION_UP]="ПОДЪЕМ";
+		directions_text_russ[DIRECTION_UP]="ПIДЙОМ";
 		directions_text_russ[DIRECTION_DOWN]="СПУСК";
 		directions_text_russ[DIRECTION_REVERSE]="РЕВЕРС";
 
-		start_days_modes_text_russ[START_DAY_MODE_EVERYDAY]="ЕЖЕДНЕВНО";
-		start_days_modes_text_russ[START_DAY_MODE_NEVER]="НИКОГДА";
-		start_days_modes_text_russ[START_DAY_MODE_ODD]="НЕЧЕТНЫЕ";
-		start_days_modes_text_russ[START_DAY_MODE_EVEN]="ЧЕТНЫЕ";
+		start_days_modes_text_russ[START_DAY_MODE_EVERYDAY]="ШОДЕННО";
+		start_days_modes_text_russ[START_DAY_MODE_NEVER]="НIКОЛИ";
+		start_days_modes_text_russ[START_DAY_MODE_ODD]="НЕЧЕТНI";
+		start_days_modes_text_russ[START_DAY_MODE_EVEN]="ЧЕТНI";
 
 		start_days_modes_text_engl[START_DAY_MODE_EVERYDAY]="everyday";
 		start_days_modes_text_engl[START_DAY_MODE_NEVER]="never";

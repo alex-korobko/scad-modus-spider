@@ -748,7 +748,7 @@ try {
                 command_text=cmd.get_command_description();
                 start_hour=timers_commands_iter->get_timer_hour();
                 start_minute=timers_commands_iter->get_timer_minute();
-                time_text<<(start_hour<10?"0":"")<<start_hour<<" часов : "<<(start_minute<10?"0":"")<<start_minute<<" минут";
+                time_text<<(start_hour<10?"0":"")<<start_hour<<" годин : "<<(start_minute<10?"0":"")<<start_minute<<" хвилин";
 
              // drawing
                 draw_point.x=where->ul.x+internal_column_pos[0].from + system_settings_spider::COLUMN_LEFT_MARGIN;
@@ -878,7 +878,7 @@ try {
 
                      start_hour=devices_iter->second->get_start_hour();
                      start_minute=devices_iter->second->get_start_minute();
-                     time_text<<(start_hour<10?"0":"")<<start_hour<<" часов : "<<(start_minute<10?"0":"")<<start_minute<<" минут";
+                     time_text<<(start_hour<10?"0":"")<<start_hour<<" годин : "<<(start_minute<10?"0":"")<<start_minute<<" хвилин";
                      execution_mode_text=execution_modes_texts[devices_iter->second->get_execution_mode()];
 
 
