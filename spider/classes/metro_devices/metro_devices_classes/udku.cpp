@@ -1056,17 +1056,17 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
       buffer.push_back(6); //data bytes count
 
-      buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_mon+1)));
-      buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_mday)));
+      buffer.push_back(static_cast<byte>(tm_local->tm_mon+1));
+      buffer.push_back(static_cast<byte>(tm_local->tm_mday));
       if ((tm_local->tm_wday-1)<0) {
        buffer.push_back(6);
           } else {
            buffer.push_back(static_cast<byte>(tm_local->tm_wday-1));
         };
 
-       buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_hour)));
-       buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_min)));
-       buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_sec)));
+       buffer.push_back(static_cast<byte>(tm_local->tm_hour));
+       buffer.push_back(static_cast<byte>(tm_local->tm_min));
+       buffer.push_back(static_cast<byte>(tm_local->tm_sec));
 
 
        system_settings::bytes tmp_bytes=system_settings::bytes_of_type<word>(system_settings::crc(buffer));

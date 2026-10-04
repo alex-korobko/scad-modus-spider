@@ -1183,6 +1183,7 @@ system_settings_spider *sys_sett=system_settings_spider::get_instance();
 
        buffer.push_back(6); //data bytes count
 
+       // SHAVR expects BCD (UDKU expects binary) - do not unify
        buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_mon+1)));
        buffer.push_back(system_settings::decode_to_binary_decimal_notation(static_cast<byte>(tm_local->tm_mday)));
       if ((tm_local->tm_wday-1)<0) {
