@@ -1,0 +1,119 @@
+# running down
+# no CRC: emulator appends it
+0x01
+0x04
+0x4c
+# #30001 state (2 up,3 down,6 stop)
+0x00
+0x03
+# #30002 mode (3 TU)
+0x00
+0x03
+# #30003 ready (0 main ready,6 working)
+0x00
+0x06
+# #30004 block circuit (1 normal)
+0x00
+0x01
+# #30005 braking path (1 normal)
+0x00
+0x01
+# #30006 BU1/BU2/BU3 nibbles
+0x01
+0x11
+# #30007 upper msg id (hi must be 0)
+0x00
+0x00
+# #30008 lo = N new messages
+0x00
+0x00
+# #30009 reserved
+0x00
+0x00
+# #30010 braking path u32 hi
+0x00
+0x00
+# #30011 braking path u32 lo
+0x03
+0xe8
+# #30012 running path u32 hi
+0x00
+0x00
+# #30013 running path u32 lo
+0x13
+0x88
+# #30014 reserved
+0x00
+0x00
+# #30015 reserved
+0x00
+0x00
+# #30016 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30017 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30018 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30019 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30020 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30021 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30022 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30023 block circuits (2 bits each, 00 green)
+0x00
+0x00
+# #30024 reserved
+0x00
+0x00
+# #30025 contactors
+0x00
+0x00
+# #30026 automats
+0x00
+0x00
+# #30027 other signals
+0x00
+0x00
+# #30028 isolation
+0x00
+0x00
+# #30029 reserved
+0x00
+0x00
+# #30030 reserved
+0x00
+0x00
+# #30031 message word
+0x00
+0x00
+# #30032 message word
+0x00
+0x00
+# #30033 message word
+0x00
+0x00
+# #30034 message word
+0x00
+0x00
+# #30035 message word
+0x00
+0x00
+# #30036 message word
+0x00
+0x00
+# #30037 message word
+0x00
+0x00
+# #30038 message word
+0x00
+0x00

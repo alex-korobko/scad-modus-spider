@@ -1,0 +1,11 @@
+# 380V in1 lost, escalators on input 2
+# no CRC: emulator appends it
+0x05
+0x04
+0x04
+# #30008 hi escalators 3/4, lo escalators 1/2 (nibble: b0 supplied in1,b1 ready in1,b2 supplied in2,b3 ready in2)
+0xcc
+0xcc
+# #30009 hi b7 24V b2 door open; lo b2 380V in1,b3 380V in2,b1 fire(0=alarm),b0 smoke(0=alarm),b4/5/6 220V UPS/in1/in2
+0x80
+0x7b

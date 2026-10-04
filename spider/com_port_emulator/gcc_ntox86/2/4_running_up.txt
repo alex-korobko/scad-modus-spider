@@ -1,0 +1,32 @@
+# GPUP, RKP+RPV1
+# no CRC: emulator appends it
+0x02
+0x04
+0x12
+# #30001 lo condition (0 GPSTOP,1 GPUP,2 GPDOWN,8 BRAK0)
+0x00
+0x01
+# #30002 hi DKSE pos, lo escalator type
+0x00
+0x01
+# #30003 hi braking OK (0xFF normal), lo braking path
+0xff
+0x00
+# #30004 braking path
+0x00
+0x00
+# #30005 hi nominal / lo current speed cm/s
+0x32
+0x32
+# #30006 running path
+0x00
+0x00
+# #30007 running path
+0x00
+0x00
+# #30008 hi block contacts; lo b7 RKP b3 RPV1 b2 RPN1 b1 RG2 b0 TU
+0x00
+0x8b
+# #30009 block contacts (lo b2 VT)
+0x00
+0x00
