@@ -15,7 +15,8 @@ Every frame has r2 010b, r3/r4 0000 04ba, r6/r7 0001 8ab7.
 and restores the baseline.
 
 ## Expected per cycle (after the fix)
-- exactly one `0x0006`, at the braking -> stopped step;
+- exactly one `0x0006`, at running -> braking (contactor bits drop; stopped is taken from RPV1/RPN1 only);
 - `0x0110` (circuit ВБП+ВБЛ not ready) at braking;
 - `0x0015` (TU DOWN succeeded) at starting -> running (RKP 1->0, RG=1 when stopped);
-- no `0x12`/`0x13` during the run.
+- no `0x12`/`0x13` during the run;
+- no additional-drive messages (`0x19`..`0x1B`).

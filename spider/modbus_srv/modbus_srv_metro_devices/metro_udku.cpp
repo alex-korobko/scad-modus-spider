@@ -201,23 +201,27 @@ metro_device::command_data
         byte b16_value = register_30008_low_byte & 0x01;  // B16 drive switch (bit 0): 1 main drive, 0 additional drive
         (void)kt_value;
 
-        // Register 30005 low byte: current speed, cm/s
-        const int REGISTER_30005_LOW_BYTE_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+10;
-        byte current_speed = answer_from_com_port[0][REGISTER_30005_LOW_BYTE_INDEX];
-
-        // device state is detected from the signal bits, not from 30001
+        // device state is detected from the contactor bits, not from 30001
+        // the drive can be switched only while stopped, so B16 is taken at the start of a run
         bool moving = (rpv1_value!=0 || rpn1_value!=0);
-        bool stopped = (!moving && current_speed==0);
+        bool stopped = !moving;
 
         if (moving) {
-              previos_moving_value=1;
-              if (b16_value!=0) run_on_main_drive=true;
-        } else if (stopped) {
-              if (previos_moving_value==1 && run_on_main_drive) {
-                    new_messages.push_back(0);
-                    new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
+              if (previos_moving_value!=1) {
+                    run_on_main_drive = (b16_value!=0);
+                    if (previos_moving_value==0 && !run_on_main_drive) {
+                          new_messages.push_back(0);
+                          new_messages.push_back(rpv1_value!=0 ? MESSAGE_ADDITIONAL_DRIVE_STARTED_UP
+                                                               : MESSAGE_ADDITIONAL_DRIVE_STARTED_DOWN);
+                    };
               };
-              run_on_main_drive=false;
+              previos_moving_value=1;
+        } else {
+              if (previos_moving_value==1) {
+                    new_messages.push_back(0);
+                    new_messages.push_back(run_on_main_drive ? MESSAGE_STOP_WITH_BREAKING_PATH
+                                                             : MESSAGE_ADDITIONAL_DRIVE_STOPPED);
+              };
               previos_moving_value=0;
         }; //if (moving)
 

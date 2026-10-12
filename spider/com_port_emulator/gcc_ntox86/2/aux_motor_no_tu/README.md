@@ -19,4 +19,4 @@ and restores `../4_baseline.txt` at the end.
 ## Expected modbus_srv output
 - Before the fix: each cycle adds `00 06` to the message block (upper id incremented) and sloginfo shows
   "unknown value in 30001 register`s low byte : 255" on every 0xFF poll.
-- After the fix: no new messages, no 255 errors (stop message needs a run on the main drive, B16=1).
+- After the fix: no `0x0006`, no 255 errors. Per cycle: `0x0019` (additional drive started UP) at stop -> start, and `0x001B` (additional drive stopped) at running -> coasting (contactor bits RPV1/RPN1 both off). Stop is taken from the contactor bits only, not from speed.
