@@ -63,9 +63,10 @@ enum {
        MESSAGE_RECIEVE_COMMAND_UP=22,
        MESSAGE_RECIEVE_COMMAND_DOWN=23,
        MESSAGE_RECIEVE_COMMAND_STOP=24,
-       MESSAGE_ADDITIONAL_DRIVE_STARTED_UP=25,
-       MESSAGE_ADDITIONAL_DRIVE_STARTED_DOWN=26,
-       MESSAGE_ADDITIONAL_DRIVE_STOPPED=27
+       //ids from global_messages.ini, the UDKU device type does not define them
+       MESSAGE_ADDITIONAL_DRIVE_STARTED_UP=42,   // Команда ПОДЪЕМ выполнена успешно
+       MESSAGE_ADDITIONAL_DRIVE_STARTED_DOWN=57, // Команда СПУСК выполнена успешно
+       MESSAGE_ADDITIONAL_DRIVE_STOPPED=91       // ВЫБЕГ ! Останов эскалатора
  };
 
 enum {
