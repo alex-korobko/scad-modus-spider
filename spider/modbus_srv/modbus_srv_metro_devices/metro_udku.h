@@ -14,8 +14,10 @@ byte find_block_circuit_index
 
 int previos_escalator_condition_value;
 int previos_rkp_value;
-int previos_mu_tu_switcher_value;
 int previos_block_circut_value;
+int previos_moving_value;      // -1 unknown, 1 moving or coasting, 0 stopped
+int last_stopped_rg_value;     // RG seen on the last poll with escalator stopped
+bool run_on_main_drive;        // current run was (at least partly) on the main drive
 byte last_broken_block_circuit_index;
 
 public:
@@ -75,7 +77,8 @@ enum {
        MODBUS_REGISTER_3001_LOW_BYTE_BRAK0_VALUE=8,
        MODBUS_REGISTER_3001_LOW_BYTE_BRAK90_VALUE=9,
        MODBUS_REGISTER_3001_LOW_BYTE_BRAKALLES_VALUE=10,
-       MODBUS_REGISTER_3001_LOW_BYTE_BRAKKSR_VALUE=11
+       MODBUS_REGISTER_3001_LOW_BYTE_BRAKKSR_VALUE=11,
+       MODBUS_REGISTER_3001_LOW_BYTE_TRANSIENT_VALUE=0xFF //firmware value during acceleration/braking, any drive
  };
 
 
@@ -87,8 +90,10 @@ metro_udku(int new_number, bool new_log_packets)
     metro_device(new_number, new_log_packets),
     previos_escalator_condition_value(-1),
     previos_rkp_value(-1),
-    previos_mu_tu_switcher_value(-1),
     previos_block_circut_value(-1),
+    previos_moving_value(-1),
+    last_stopped_rg_value(-1),
+    run_on_main_drive(false),
     last_broken_block_circuit_index(0) {
 };
 
