@@ -19,4 +19,5 @@ and restores `../4_baseline.txt` at the end.
 ## Expected modbus_srv output
 - Before the fix: each cycle adds `00 06` to the message block (upper id incremented) and sloginfo shows
   "unknown value in 30001 register`s low byte : 255" on every 0xFF poll.
-- After the fix: no `0x0006`, no 255 errors. Per cycle: `0x002A` (global msg 42, additional drive started UP) at stop -> start, and `0x005B` (global msg 91, additional drive stopped) at coasting -> stop (contactors off and speed 0; the drive coasts after the contactors drop, so the message is delayed until r5 low byte = 0).
+- After the fix: no `0x0006`, no 255 errors. Per cycle: `0x000A` (global msg 10, "Система остановлена") at coasting -> stop (contactors off and speed 0; the drive coasts after the contactors drop, so the message is delayed until r5 low byte = 0).
+- The start messages `0x002A`/`0x0039` (global msgs 42/57, "Команда ПОДЪЕМ/СПУСК выполнена успешно") are command-execution messages and are generated only if the escalator is on TU (RG = 1 while stopped). In these frames RG = 0, so they do not appear.

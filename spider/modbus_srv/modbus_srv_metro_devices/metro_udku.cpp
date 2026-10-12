@@ -214,7 +214,7 @@ metro_device::command_data
         if (moving) {
               if (previos_moving_value!=1) {
                     run_on_main_drive = (b16_value!=0);
-                    if (previos_moving_value==0 && !run_on_main_drive) {
+                    if (previos_moving_value==0 && !run_on_main_drive && last_stopped_rg_value>0) { //command execution, only on TU
                           new_messages.push_back(0);
                           new_messages.push_back(rpv1_value!=0 ? MESSAGE_ADDITIONAL_DRIVE_STARTED_UP
                                                                : MESSAGE_ADDITIONAL_DRIVE_STARTED_DOWN);
