@@ -214,18 +214,20 @@ metro_device::command_data
         if (moving) {
               if (previos_moving_value!=1) {
                     run_on_main_drive = (b16_value!=0);
-                    if (previos_moving_value==0 && !run_on_main_drive && last_stopped_rg_value>0) { //command execution, only on TU
+                    // main drive: TU command success is sent on RKP 1->0 (see below).
+                    // additional drive: RKP stays 0, so it is sent when the run begins; only on TU
+                    if (previos_moving_value==0 && !run_on_main_drive && last_stopped_rg_value>0) {
                           new_messages.push_back(0);
-                          new_messages.push_back(rpv1_value!=0 ? MESSAGE_ADDITIONAL_DRIVE_STARTED_UP
-                                                               : MESSAGE_ADDITIONAL_DRIVE_STARTED_DOWN);
+                          new_messages.push_back(rpv1_value!=0 ? MESSAGE_TU_COMMAND_UP_SUCCESS
+                                                               : MESSAGE_TU_COMMAND_DOWN_SUCCESS);
                     };
               };
               previos_moving_value=1;
         } else if (stopped) {
+              // same stop message for both drives
               if (previos_moving_value==1) {
                     new_messages.push_back(0);
-                    new_messages.push_back(run_on_main_drive ? MESSAGE_STOP_WITH_BREAKING_PATH
-                                                             : MESSAGE_ADDITIONAL_DRIVE_STOPPED);
+                    new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
               };
               previos_moving_value=0;
         }; //if (moving)

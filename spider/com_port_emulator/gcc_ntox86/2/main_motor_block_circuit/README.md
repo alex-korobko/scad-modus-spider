@@ -18,5 +18,4 @@ and restores the baseline.
 - exactly one `0x0006`, at braking -> stopped (contactors off and speed 0);
 - `0x0110` (circuit ВБП+ВБЛ not ready) at braking;
 - `0x0015` (TU DOWN succeeded) at starting -> running (RKP 1->0, RG=1 when stopped);
-- no `0x12`/`0x13` during the run;
-- no additional-drive messages (`0x2A`, `0x39`, `0x0A`).
+- no `0x12`/`0x13` during the run.
