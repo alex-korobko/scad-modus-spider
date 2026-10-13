@@ -212,20 +212,10 @@ metro_device::command_data
         bool stopped = (!moving && current_speed==0);
 
         if (moving) {
-              if (previos_moving_value!=1) {
-                    run_on_main_drive = (b16_value!=0);
-                    // main drive: TU command success is sent on RKP 1->0 (see below).
-                    // additional drive: RKP stays 0, so it is sent when the run begins; only on TU
-                    if (previos_moving_value==0 && !run_on_main_drive && last_stopped_rg_value>0) {
-                          new_messages.push_back(0);
-                          new_messages.push_back(rpv1_value!=0 ? MESSAGE_TU_COMMAND_UP_SUCCESS
-                                                               : MESSAGE_TU_COMMAND_DOWN_SUCCESS);
-                    };
-              };
+              if (previos_moving_value!=1) run_on_main_drive = (b16_value!=0);
               previos_moving_value=1;
         } else if (stopped) {
-              // same stop message for both drives
-              if (previos_moving_value==1) {
+              if (previos_moving_value==1 && run_on_main_drive) {
                     new_messages.push_back(0);
                     new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
               };
@@ -359,6 +349,10 @@ metro_device::command_data
             };//if (previos_block_circut_value!=rg2_value && rg2_value==0)
       }; //if (previos_block_circut_value!=-1) {
       previos_block_circut_value=rg2_value;
+
+     // no messages are generated while the escalator is on the additional drive;
+     // the tracked state above is still updated, so no stale edges appear after switching back
+     if (b16_value==0) new_messages.clear();
 
      if (!new_messages.empty())
          metro_device::add_messages_fifo (new_messages);

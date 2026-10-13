@@ -19,6 +19,4 @@ and restores `../4_baseline.txt` at the end.
 ## Expected modbus_srv output
 - Before the fix: each cycle adds `00 06` to the message block (upper id incremented) and sloginfo shows
   "unknown value in 30001 register`s low byte : 255" on every 0xFF poll.
-- After the fix: no 255 errors. The additional drive uses the same messages as the main drive:
-  - `0x0006` (stop, braking path) once per cycle at coasting -> stop (contactors off and speed 0). It is sent for every stop, TU or MU, so it still appears here. The braking path r3/r4 is constant (`04ba`) in these frames, so the value shown may be stale.
-  - `0x0014`/`0x0015` (TU command UP/DOWN succeeded) at stop -> start, only if the escalator was on TU (RG = 1 while stopped). RG = 0 in these frames, so they do not appear.
+- After the fix: no new messages at all and no 255 errors. While the escalator is on the additional drive (B16 = 0) modbus_srv generates no messages (stop, TU/MU, block circuit, fault codes); the tracked state is still updated.
