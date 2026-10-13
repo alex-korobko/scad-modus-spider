@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 N=${1:-3}
 i=0
 while [ $i -lt $N ]; do
-    for v in stop start running coasting stop; do
+    for v in stop start running coasting stop running_down coasting stop; do
         echo "cycle $((i+1)): 4_$v.txt"
         cp "4_$v.txt" ../4.txt
         sleep 5

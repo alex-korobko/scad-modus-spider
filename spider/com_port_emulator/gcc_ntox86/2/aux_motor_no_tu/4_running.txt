@@ -1,11 +1,11 @@
-# aux motor, no TU: running, R1=0xFF transient
+# aux motor, no TU: running up, 30001 = 12
 # no CRC: emulator appends it
 0x02
 0x04
 0x12
-#30001 lo condition (0 GPSTOP, 0xFF transient)
+#30001 lo condition (0 GPSTOP, 12 additional drive up, 13 additional drive down, 0xFF transient)
 0x00
-0xff
+0x0c
 #30002 hi DKSE pos, lo escalator type
 0x01
 0x0b
