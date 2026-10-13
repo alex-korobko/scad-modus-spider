@@ -68,6 +68,8 @@ system_settings::system_settings() :
 		udku_mode_text[UDKU_MODE_BRAK90]="Нет сигнала Д90 ДКСЕ";
 		udku_mode_text[UDKU_MODE_BRAKALLES]="Нет сигналов с ДКСЕ";
 		udku_mode_text[UDKU_MODE_BRAKKSR]="Нема контакта сполучення ДКСЕ";
+		udku_mode_text[UDKU_MODE_ADDITIONAL_UP]="ДП ПIДЙОМ";
+		udku_mode_text[UDKU_MODE_ADDITIONAL_DOWN]="ДП СПУСК";
 		udku_mode_text[UDKU_MODE_UNUSED]="-";
 
 		udku_type_text[UDKU_TYPE_LT_1]="ЛТ-1 0.94 м/с";

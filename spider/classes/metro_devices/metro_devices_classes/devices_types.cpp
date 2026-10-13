@@ -151,6 +151,8 @@ bool device_parameter::value_is_norma(data_block *data, int parameter_index){
                          case system_settings::UDKU_MODE_GPSTOP:
                          case system_settings::UDKU_MODE_GPUP:
                          case system_settings::UDKU_MODE_GPDOWN:
+                         case system_settings::UDKU_MODE_ADDITIONAL_UP:
+                         case system_settings::UDKU_MODE_ADDITIONAL_DOWN:
                              return true;
                              break;
                          default:

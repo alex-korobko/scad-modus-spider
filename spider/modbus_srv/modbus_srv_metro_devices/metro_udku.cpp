@@ -296,6 +296,10 @@ metro_device::command_data
   			                  new_messages.push_back(MESSAGE_ERROR_CONTACT);
                            };
             break;
+        case MODBUS_REGISTER_3001_LOW_BYTE_ADDITIONAL_UP_VALUE:
+        case MODBUS_REGISTER_3001_LOW_BYTE_ADDITIONAL_DOWN_VALUE:
+                  //additional drive state, no message
+                  break;
         case MODBUS_REGISTER_3001_LOW_BYTE_TRANSIENT_VALUE:
                   //transient value, no action
                   break;
