@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <inttypes.h>
+#include <errno.h>
 #include <sys/neutrino.h>
 #include <sys/slog.h>
 #include <sys/slogcodes.h>

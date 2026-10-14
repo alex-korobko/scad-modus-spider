@@ -15,7 +15,7 @@ struct route {
           test_hosts_container test_hosts;
  };
 
-private:
+public:
  typedef vector<route> routes_container;
  typedef vector<route>::iterator routes_iterator;
  typedef vector<route>::size_type routes_size_type;
@@ -24,6 +24,7 @@ private:
  typedef vector<in_addr>::iterator gateways_iterator;
  typedef vector<in_addr>::size_type gateways_size_type;
 
+private:
   struct internal_route {
      struct rt_msghdr rt;
      struct sockaddr_in dst;

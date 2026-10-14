@@ -35,8 +35,8 @@ comport::comport (
 	    byte parity,
 	    byte data_bits,
 	    byte stop_bits,
-	    int delay_useconds=0,
-        float comport_koeff=1.0)  throw (comport_exception)  :
+	    int delay_useconds,
+        float comport_koeff)  throw (comport_exception)  :
 	    		m_port_handle(-1),
 	    	    m_dev_port("/dev/ser"),
 	    	    m_baud_rate(baud_rate),
@@ -170,8 +170,8 @@ comport::~comport() throw (comport_exception){
 };
 
 void comport::send(comport_data_block data_to_send, 
-								bool flush_io_buffers_after_send = false,
-								unsigned int rts_delay = 5000) throw (comport_exception){
+								bool flush_io_buffers_after_send,
+								unsigned int rts_delay) throw (comport_exception){
 	static int  delay_messages_counter = 0;
 	ostringstream exception_message;
 	int count_of_sended_bytes;
@@ -276,8 +276,8 @@ void comport::flush_input_output_buffer() throw (comport_exception){
 
 int  comport::recv(comport::comport_data_block &buffer_to_recieve,
                      int bytes_count,
-	                 bool flush_io_buffers=false,
-				     unsigned int recieve_timeout = 10) 
+	                 bool flush_io_buffers,
+				     unsigned int recieve_timeout) 
                       throw (comport_exception)
 {
     comport_data_block recived_data(bytes_count), all_recieved_data;

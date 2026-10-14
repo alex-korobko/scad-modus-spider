@@ -22,6 +22,8 @@ status :
         9-BRAK90
         10-BRAKALLES
         11-BRAKKSR
+        12-additional drive goes up
+        13-additional drive goes down
 
 	modbus register 30002
      high byte

@@ -178,7 +178,7 @@ metro_device::command_data
            MESSAGES_MODBUS_REGISTERS_COUNT*MESSAGES_INCREM);
         iter_beg=answer_from_com_port[0].begin();
         iter_end=iter_beg;
-        advance(iter_beg, program_settings::MODBUS_HEADER_SIZE);
+        advance(iter_beg, static_cast<int>(program_settings::MODBUS_HEADER_SIZE));
         advance(iter_end, answer_from_com_port[0].size()-program_settings::MODBUS_CRC_SIZE);
         answer_to_socket.insert(answer_to_socket.end(),
                         iter_beg, iter_end);
@@ -192,19 +192,40 @@ metro_device::command_data
         // Extract register 30008 low byte bits
         const int REGISTER_30008_LOW_BYTE_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+16;
         byte register_30008_low_byte = answer_from_com_port[0][REGISTER_30008_LOW_BYTE_INDEX];
-        byte rkp_value = register_30008_low_byte & 0x80;  // RKP rele of start control (bit 7)
+        byte rkp_value = register_30008_low_byte & 0x80;  // RKP start control rele (bit 7), 0 = running at nominal speed
+        byte kt_value = register_30008_low_byte & 0x20;   // KT brake released (bit 5), informational only
+        byte rg_value = register_30008_low_byte & 0x10;   // RG TU readiness (bit 4), 1 = ready to accept TU start
         byte rpv1_value = register_30008_low_byte & 0x08; // RPV1 kontactor UP (bit 3)
         byte rpn1_value = register_30008_low_byte & 0x04; // RPN1 kontactor DOWN (bit 2)
-        byte rg2_value = register_30008_low_byte & 0x02;  // RG2 Реле готовности (bit 1)
-        byte mu_tu_switcher_value = register_30008_low_byte & 0x01;  // MU Готовність телемеханіки (bit 0)
+        byte rg2_value = register_30008_low_byte & 0x02;  // RG2/RBK block circuit OK (bit 1)
+        byte b16_value = register_30008_low_byte & 0x01;  // B16 drive switch (bit 0): 1 main drive, 0 additional drive
+        (void)kt_value;
+
+        // Register 30005 low byte: current speed, cm/s
+        const int REGISTER_30005_LOW_BYTE_INDEX = program_settings::MODBUS_DATA_BYTES_COUNT_INDEX+10;
+        byte current_speed = answer_from_com_port[0][REGISTER_30005_LOW_BYTE_INDEX];
+
+        // device state is detected from the signal bits, not from 30001
+        // moving: contactors on; stopped: contactors off and speed 0 (the drive coasts after the contactors drop)
+        // the drive can be switched only while stopped, so B16 is taken at the start of a run
+        bool moving = (rpv1_value!=0 || rpn1_value!=0);
+        bool stopped = (!moving && current_speed==0);
+
+        if (moving) {
+              if (previos_moving_value!=1) run_on_main_drive = (b16_value!=0);
+              previos_moving_value=1;
+        } else if (stopped) {
+              if (previos_moving_value==1 && run_on_main_drive) {
+                    new_messages.push_back(0);
+                    new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
+              };
+              previos_moving_value=0;
+        }; //if (moving)
 
        if ( previos_escalator_condition_value!=-1)
         switch (escalator_condition_value) {
           case MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE :
-               if (previos_escalator_condition_value!=MODBUS_REGISTER_3001_LOW_BYTE_GPSTOP_VALUE) {
-                          new_messages.push_back(0);
-                          new_messages.push_back(MESSAGE_STOP_WITH_BREAKING_PATH);
-                    };
+                  //stop message is generated from the signal bits, see above
                   break;
           case MODBUS_REGISTER_3001_LOW_BYTE_GPUP_VALUE:
 					//no message can be added if escalator goes up
@@ -275,17 +296,25 @@ metro_device::command_data
   			                  new_messages.push_back(MESSAGE_ERROR_CONTACT);
                            };
             break;
+        case MODBUS_REGISTER_3001_LOW_BYTE_ADDITIONAL_UP_VALUE:
+        case MODBUS_REGISTER_3001_LOW_BYTE_ADDITIONAL_DOWN_VALUE:
+                  //additional drive state, no message
+                  break;
+        case MODBUS_REGISTER_3001_LOW_BYTE_TRANSIENT_VALUE:
+                  //transient value, no action
+                  break;
         default :
           ostringstream error_message;
           error_message<<"In metro_udku::create_answer_to_socket_func_4 unknown value in 30001 register`s low byte : "<<static_cast<int>(escalator_condition_value);
            sett_obj->sys_message(program_settings::ERROR_MSG, error_message.str());
         }; //switch (escalator_condition_value)
 
-   previos_escalator_condition_value=escalator_condition_value;
-   bool  escalator_on_tu = mu_tu_switcher_value > 0; //1 on TU, 0 on local (MU) 
-   if (previos_rkp_value!=-1 && escalator_on_tu) {  
+   if (escalator_condition_value!=MODBUS_REGISTER_3001_LOW_BYTE_TRANSIENT_VALUE)
+        previos_escalator_condition_value=escalator_condition_value;
+   // TU command success: RKP 1->0 (running at nominal speed), only if the escalator was on TU when the start began
+   if (previos_rkp_value!=-1 && last_stopped_rg_value>0) {
          if (previos_rkp_value!=rkp_value &&
-              rkp_value>0) {//RKP is 1 means escalator is running on nominal speed
+              rkp_value==0) {
                    if (rpv1_value!=0) {
                               new_messages.push_back(0);
                               new_messages.push_back(MESSAGE_TU_COMMAND_UP_SUCCESS);
@@ -293,23 +322,21 @@ metro_device::command_data
                                new_messages.push_back(0);
                                new_messages.push_back(MESSAGE_TU_COMMAND_DOWN_SUCCESS);
                          } else {
-                               sett_obj->sys_message(program_settings::ERROR_MSG, "In metro_udku::create_answer_to_socket_func_4 RKP is 1 but both RPN & RPV are 0");
+                               sett_obj->sys_message(program_settings::ERROR_MSG, "In metro_udku::create_answer_to_socket_func_4 RKP went to 0 but both RPN & RPV are 0");
                          };
-        };  //RKP is 1 means escalator is running on nominal speed
+        };
     }; //if (previos_rkp_value!=-1 &&
     previos_rkp_value=rkp_value;
 
-   if (previos_mu_tu_switcher_value!=-1){ 
-         if (previos_mu_tu_switcher_value!=mu_tu_switcher_value)
-                   if (escalator_on_tu) {
-                              new_messages.push_back(0);
-                              new_messages.push_back(MESSAGE_ESCALATOR_ON_TU);
-                         } else {
-                               new_messages.push_back(0);
-                               new_messages.push_back(MESSAGE_ESCALATOR_ON_MU);
-                         };
+   // TU/MU: RG drops to 0 while running on the main motor, so evaluate it only while stopped
+   if (stopped) {
+         bool escalator_on_tu = rg_value > 0; //1 on TU, 0 on local (MU)
+         if (last_stopped_rg_value!=-1 && last_stopped_rg_value!=(escalator_on_tu?1:0)) {
+                   new_messages.push_back(0);
+                   new_messages.push_back(escalator_on_tu ? MESSAGE_ESCALATOR_ON_TU : MESSAGE_ESCALATOR_ON_MU);
+         };
+         last_stopped_rg_value=escalator_on_tu?1:0;
     };
-    previos_mu_tu_switcher_value=mu_tu_switcher_value;
 
    if (previos_block_circut_value!=-1) {
          if (previos_block_circut_value!=rg2_value &&
@@ -326,6 +353,10 @@ metro_device::command_data
             };//if (previos_block_circut_value!=rg2_value && rg2_value==0)
       }; //if (previos_block_circut_value!=-1) {
       previos_block_circut_value=rg2_value;
+
+     // no messages are generated while the escalator is on the additional drive;
+     // the tracked state above is still updated, so no stale edges appear after switching back
+     if (b16_value==0) new_messages.clear();
 
      if (!new_messages.empty())
          metro_device::add_messages_fifo (new_messages);

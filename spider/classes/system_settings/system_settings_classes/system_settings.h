@@ -140,6 +140,8 @@ virtual ~system_settings() {};
                 UDKU_MODE_BRAK90,
                 UDKU_MODE_BRAKALLES,
                 UDKU_MODE_BRAKKSR,
+                UDKU_MODE_ADDITIONAL_UP,   //12 additional drive goes up
+                UDKU_MODE_ADDITIONAL_DOWN, //13 additional drive goes down
                 UDKU_MODE_UNUSED,
 				UDKU_MODES_COUNT};
 

@@ -16,6 +16,8 @@ using namespace std;
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
+#include <sys/time.h>
 #include <inttypes.h>
 #include <iostream.h>
 #include <string>
@@ -39,6 +41,26 @@ using namespace std;
   
 #endif
 
+// Max time io_read waits for the Modbus thread to queue a response before
+// returning 0 bytes. Must stay short: the resource manager has ONE thread, so
+// a blocked read also blocks every io_write/devctl from the client.
+#define COM_EMU_READ_WAIT_MS 300
+
+// Emulated device turnaround time (ms) before the reply starts; overridable
+// with the optional 3rd command line argument.
+static int g_reply_turnaround_ms = 10;
+
+// Line speed as a plain number, independent of how the B<rate> constants are
+// defined on the target.
+static int baud_to_bps(int b) {
+    if (b == B9600)   return 9600;
+    if (b == B19200)  return 19200;
+    if (b == B38400)  return 38400;
+    if (b == B57600)  return 57600;
+    if (b == B115200) return 115200;
+    return 9600;
+}
+
 // Custom devctl: release device so another process can open (call from current opener, then close fd)
 #define COM_EMU_DCMD_RELEASE  0x4001
 
@@ -57,13 +79,21 @@ typedef struct {
     byte parity;
     byte data_bits;
     byte stop_bits;
+    int line_status;   // emulated modem line status (DCMD_CHR_SERCTL/LINESTATUS)
     
     // Thread synchronization
     pthread_mutex_t request_mutex;
     pthread_mutex_t response_mutex;
     pthread_cond_t request_ready;
     pthread_cond_t response_ready;
-    
+
+    // Startup handshake: RM thread reports resmgr_attach() result back to main
+    pthread_mutex_t init_mutex;
+    pthread_cond_t  init_cond;
+    bool init_done;
+    int  init_status;       // 0 = attach ok, -1 = attach failed
+    int  com_port_number;   // /dev/ser<com_port_number> to register
+
     // Data buffers
     metro_device::command_data request_buffer;
     metro_device::command_data response_buffer;
@@ -84,6 +114,12 @@ typedef struct {
 
 static com_port_rm_state_t rm_state;
 
+// Directory that contains the response-file tree: <dir>/<device>/<command>.txt.
+// Resolved once at startup to the executable's own directory, so the emulator
+// finds its response files no matter which working directory it is launched
+// from. Empty string => fall back to the legacy cwd-relative "gcc_ntox86/".
+static string g_response_base_dir;
+
 // Forward declarations
 int io_open_handler(resmgr_context_t *ctp, io_open_t *msg, RESMGR_HANDLE_T *handle, void *extra);
 int io_close_handler(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *ocb);
@@ -99,14 +135,77 @@ void cleanup_resource_manager();
 
 
 
+// Resolve the directory that holds the executable. Device directories are
+// expected to sit right next to the binary (<exe_dir>/<device>/<command>.txt),
+// so this lets the emulator be launched from any working directory. Tries the
+// QNX procfs entry first, then falls back to argv[0]. Returns an empty string
+// if the directory can't be determined.
+static string resolve_exe_dir(const char *argv0) {
+    char buf[1024];
+
+    // 1) QNX Neutrino procfs: reading /proc/<pid>/exefile yields the full path
+    //    of the running executable.
+    {
+        ostringstream proc_path;
+        proc_path << "/proc/" << getpid() << "/exefile";
+        int fd = open(proc_path.str().c_str(), O_RDONLY);
+        if (fd != -1) {
+            int n = read(fd, buf, sizeof(buf) - 1);
+            close(fd);
+            if (n > 0) {
+                buf[n] = '\0';
+                string p(buf);
+                string::size_type nl = p.find_first_of("\r\n");
+                if (nl != string::npos) p.erase(nl);
+                // Only trust an absolute path; otherwise fall through to argv[0].
+                if (!p.empty() && p[0] == '/') {
+                    string::size_type slash = p.find_last_of('/');
+                    if (slash != string::npos) return p.substr(0, slash);
+                }
+            }
+        }
+    }
+
+    // 2) Fall back to argv[0], made absolute with the cwd captured now (the
+    //    emulator never chdir()s, so this stays valid).
+    if (argv0 != NULL && argv0[0] != '\0') {
+        string a(argv0);
+        string abs_path;
+        if (a[0] == '/') {
+            abs_path = a;                          // already absolute
+        } else if (a.find('/') != string::npos) {  // relative, but has a path
+            char cwd[1024];
+            if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                abs_path = string(cwd) + "/" + a;
+            }
+        }
+        // (argv0 with no '/' came from a PATH search: can't resolve here.)
+        if (!abs_path.empty()) {
+            string::size_type slash = abs_path.find_last_of('/');
+            if (slash != string::npos) return abs_path.substr(0, slash);
+        }
+    }
+
+    return string();  // unknown -> caller uses legacy cwd-relative path
+}
+
 // Private function to read response data from file
 static metro_device::command_data read_response_from_file(byte device_number, byte command_code) {
-    metro_device::command_data response_data;    
-    
+    metro_device::command_data response_data;
+
     try {
-        // Create file path: gcc_ntox86/device_number/command_number.txt
+        // Build the response file path. Device directories live next to the
+        // executable, so root the path at the executable's own directory:
+        //   <exe_dir>/<device>/<command>.txt
+        // If the executable directory couldn't be resolved, fall back to the
+        // legacy cwd-relative "gcc_ntox86/" prefix (same location when launched
+        // from the directory above gcc_ntox86/).
         ostringstream file_path;
-        file_path << "gcc_ntox86/";
+        if (!g_response_base_dir.empty()) {
+            file_path << g_response_base_dir << "/";
+        } else {
+            file_path << "gcc_ntox86/";
+        }
         vector<char> tmp_chars(20);
         itoa(device_number, &tmp_chars[0], 10);
         file_path << &tmp_chars[0] << "/";
@@ -116,6 +215,21 @@ static metro_device::command_data read_response_from_file(byte device_number, by
         // Open file for reading
         ifstream response_file(file_path.str().c_str());
         if (!response_file.is_open()) {
+            // File missing or (more often) wrong working directory: the path is
+            // relative to the emulator's cwd, so log both to make it obvious.
+            int open_errno = errno;
+            char cwd_buf[1024];
+            ostringstream diag;
+            diag << "Cannot open response file '" << file_path.str() << "'"
+                 << " : " << strerror(open_errno);
+            // For a relative path (legacy fallback), also show where it resolved.
+            if (!file_path.str().empty() && file_path.str()[0] != '/'
+                && getcwd(cwd_buf, sizeof(cwd_buf)) != NULL) {
+                diag << " (cwd=" << cwd_buf << " -> '" << cwd_buf << "/"
+                     << file_path.str() << "')";
+            }
+            program_settings::get_instance()->sys_message(
+                program_settings::ERROR_MSG, diag.str());
             return response_data; // Return empty vector if file doesn't exist
         }
         
@@ -164,6 +278,18 @@ static metro_device::command_data read_response_from_file(byte device_number, by
         }
         
         response_file.close();
+
+        // The file opened but yielded no usable bytes. This is reported the
+        // same way upstream as a missing file ("No response file found"), so
+        // call it out distinctly here.
+        if (response_data.empty()) {
+            ostringstream diag;
+            diag << "Response file '" << file_path.str()
+                 << "' opened but contained no usable byte values"
+                    " (only comments/blank lines, or values > 0xFF / not hex)";
+            program_settings::get_instance()->sys_message(
+                program_settings::ERROR_MSG, diag.str());
+        }
     } catch (...) {
         // Return empty vector on any error
         response_data.clear();
@@ -173,15 +299,26 @@ static metro_device::command_data read_response_from_file(byte device_number, by
 }
 
 // Resource Manager Initialization
-int init_resource_manager(int com_port_number, int baud_rate, 
+int init_resource_manager(int com_port_number, int baud_rate,
                           byte parity, byte data_bits, byte stop_bits) {
-    int resmgr_id;
-    resmgr_attr_t resmgr_attr;
-    ostringstream device_path;
-    
-    // Build device path: /dev/ser1, /dev/ser2, etc.
-    device_path << "/dev/ser" << com_port_number;
-    
+    // NOTE: the dispatch handle, resmgr_attach() and dispatch_context_alloc()
+    // are performed in resource_manager_thread() so that the channel is created
+    // AND received on by the same thread. Doing them in different threads led to
+    // ESRCH ("No such process") on the first dispatch_block().
+
+    // Remember which port this RM will register (/dev/ser<N>)
+    rm_state.com_port_number = com_port_number;
+
+    {
+        ostringstream m;
+        m << "init_resource_manager: port=" << com_port_number
+          << " baud=" << baud_rate
+          << " parity=" << static_cast<int>(parity)
+          << " data_bits=" << static_cast<int>(data_bits)
+          << " stop_bits=" << static_cast<int>(stop_bits);
+        program_settings::get_instance()->sys_message(program_settings::INFO_MSG, m.str());
+    }
+
     // Initialize mount structure
     iofunc_mount_t *mount = &rm_state.mount;
     mount->conf =IOFUNC_PC_SYNC_IO;
@@ -221,6 +358,7 @@ int init_resource_manager(int com_port_number, int baud_rate,
     rm_state.parity = parity;
     rm_state.data_bits = data_bits;
     rm_state.stop_bits = stop_bits;
+    rm_state.line_status = 0;
     
     // Apply baud rate
     cfsetispeed(&rm_state.termios_settings, baud_rate);
@@ -255,8 +393,12 @@ int init_resource_manager(int com_port_number, int baud_rate,
     pthread_mutex_init(&rm_state.response_mutex, NULL);
     pthread_cond_init(&rm_state.request_ready, NULL);
     pthread_cond_init(&rm_state.response_ready, NULL);
-    
+    pthread_mutex_init(&rm_state.init_mutex, NULL);
+    pthread_cond_init(&rm_state.init_cond, NULL);
+
     // Initialize state
+    rm_state.init_done = false;
+    rm_state.init_status = -1;
     rm_state.device_open = false;
     rm_state.shutdown = false;
     rm_state.request_pending = false;
@@ -267,32 +409,10 @@ int init_resource_manager(int com_port_number, int baud_rate,
     rm_state.packets_received = 0;
     rm_state.packets_sent = 0;
     
-    // Create dispatch structure
-    rm_state.dpp = dispatch_create();
-    if (rm_state.dpp == NULL) {
-        return -1;  // Error creating dispatch
-    }
-    
-    // Set up resource manager attributes
-    memset(&resmgr_attr, 0, sizeof(resmgr_attr));
-    resmgr_attr.nparts_max = 1;  // Number of IOV parts for replies
-    resmgr_attr.msg_max_size = 2048;  // Maximum message size
-    resmgr_attr.flags = 0;  // Default flags
-    
-    // Attach resource manager to pathname
-    resmgr_id = resmgr_attach(rm_state.dpp, &resmgr_attr,
-                              device_path.str().c_str(),
-                              _FTYPE_ANY, 0,
-                              &rm_state.connect_funcs,
-                              &rm_state.io_funcs,
-                              &rm_state.attr);
-    
-    if (resmgr_id == -1) {
-        dispatch_destroy(rm_state.dpp);
-        return -1;  // Error attaching
-    }
-    
-    return 0;  // Success
+    // Dispatch handle / channel is created in resource_manager_thread()
+    rm_state.dpp = NULL;
+
+    return 0;  // Success (channel is created and attached in the RM thread)
 }
 
 // I/O Handler: Open
@@ -307,38 +427,52 @@ int io_open_handler(resmgr_context_t *ctp, io_open_t *msg,
         return EBUSY;  // Resource busy
     }
     
-    // Allocate and initialize OCB
-    //ocb = iofunc_ocb_calloc( handle, &(rm_state.attr));
+    // Allocate our own OCB. We MUST bind this exact OCB to the connection
+    // ourselves so that every later io_read / io_write / io_devctl handler is
+    // handed the same pointer we store in rm_state.open_ocb.
+    //
+    // Do NOT use iofunc_open_default() here: per the QNX docs it internally
+    // calls iofunc_ocb_calloc() to allocate its OWN ocb and iofunc_ocb_attach()
+    // to bind THAT one to the connection. rm_state.open_ocb would then point at
+    // a different, unbound ocb, so every subsequent handler fails the
+    // "ocb != rm_state.open_ocb" check and returns EBADF (client sees
+    // tcgetattr/read/write fail with "Bad file descriptor").
     ocb = iofunc_ocb_calloc( ctp, &(rm_state.attr));
     if (ocb == NULL) {
         return ENOMEM;
     }
-    
+
     // Set up open control block
     ocb->ioflag = msg->connect.ioflag;
     ocb->sflag = msg->connect.sflag;
     ocb->offset = 0;
-    
-    // Call default open handler - this performs standard validation
-    status = iofunc_open_default(ctp, msg, &rm_state.attr, extra);
-    
-    if (status == EOK) {
-        // Store OCB for later use only if open succeeded
-        rm_state.open_ocb = ocb;
-        pthread_mutex_lock(&rm_state.request_mutex);
-        rm_state.device_open = true;
-        rm_state.request_buffer.clear();
-        rm_state.response_buffer.clear();
-        rm_state.request_pending = false;
-        rm_state.response_pending = false;
-        pthread_cond_broadcast(&rm_state.request_ready);  // wake Modbus thread if waiting for client
-        pthread_mutex_unlock(&rm_state.request_mutex);
-    } else {
-        // Open failed, free OCB
+
+    // Validate the client's open mode against the device attributes.
+    status = iofunc_open(ctp, msg, &rm_state.attr, NULL, NULL);
+    if (status != EOK) {
         iofunc_ocb_free(ocb);
+        return status;
     }
-    
-    return status;
+
+    // Bind OUR ocb to this connection (calls resmgr_open_bind() internally).
+    status = iofunc_ocb_attach(ctp, msg, ocb, &rm_state.attr, NULL);
+    if (status != EOK) {
+        iofunc_ocb_free(ocb);
+        return status;
+    }
+
+    // Open succeeded and our ocb is now the one bound to the connection.
+    rm_state.open_ocb = ocb;
+    pthread_mutex_lock(&rm_state.request_mutex);
+    rm_state.device_open = true;
+    rm_state.request_buffer.clear();
+    rm_state.response_buffer.clear();
+    rm_state.request_pending = false;
+    rm_state.response_pending = false;
+    pthread_cond_broadcast(&rm_state.request_ready);  // wake Modbus thread if waiting for client
+    pthread_mutex_unlock(&rm_state.request_mutex);
+
+    return EOK;
 }
 
 // I/O Handler: Read (sends Modbus responses to client)
@@ -346,7 +480,10 @@ int io_read_handler(resmgr_context_t *ctp, io_read_t *msg,
                     iofunc_ocb_t *ocb) {
     int nbytes;
     int status;
-    metro_device::command_data data_to_send;
+    // static: the reply IOV points into this buffer and is sent AFTER this
+    // handler returns, so it must outlive the call. Safe because the single
+    // resource manager thread is the only caller.
+    static metro_device::command_data data_to_send;
     
     // Verify read access permissions
     status = iofunc_read_verify(ctp, msg, ocb, NULL);
@@ -362,42 +499,60 @@ int io_read_handler(resmgr_context_t *ctp, io_read_t *msg,
     // Lock response mutex
     pthread_mutex_lock(&rm_state.response_mutex);
     
-    // Wait for response data to be available
-    while (!rm_state.response_pending && rm_state.device_open) {
-        pthread_cond_wait(&rm_state.response_ready, &rm_state.response_mutex);
+    // Wait for response data, but only for a bounded time (see
+    // COM_EMU_READ_WAIT_MS) so the single RM thread is never blocked forever.
+    {
+        struct timespec deadline;
+        clock_gettime(CLOCK_REALTIME, &deadline);
+        deadline.tv_nsec += (long)COM_EMU_READ_WAIT_MS * 1000000L;
+        deadline.tv_sec  += deadline.tv_nsec / 1000000000L;
+        deadline.tv_nsec %= 1000000000L;
+
+        while (!rm_state.response_pending && rm_state.device_open) {
+            if (pthread_cond_timedwait(&rm_state.response_ready,
+                                       &rm_state.response_mutex,
+                                       &deadline) == ETIMEDOUT) {
+                break;
+            }
+        }
     }
     
     if (!rm_state.device_open) {
         pthread_mutex_unlock(&rm_state.response_mutex);
         return EBADF;
     }
-    
-    // Copy response data
-    data_to_send = rm_state.response_buffer;
-    rm_state.response_pending = false;
-    
-    pthread_mutex_unlock(&rm_state.response_mutex);
-    
-    // Calculate bytes to send (limit to client's requested bytes)
-    nbytes = min(static_cast<int>(data_to_send.size()), 
-                 static_cast<int>(msg->i.nbytes));
-    
-    if (nbytes == 0) {
-        // No data available - return 0 parts to indicate EOF/empty
-        msg->i.nbytes = 0;
+
+    if (!rm_state.response_pending || rm_state.response_buffer.empty()) {
+        pthread_mutex_unlock(&rm_state.response_mutex);
+        _IO_SET_READ_NBYTES(ctp, 0);
         return _RESMGR_NPARTS(0);
     }
     
+    // Take only what the client asked for; keep the remainder queued so the
+    // next read (modbus_srv reads a reply in several pieces) gets the rest.
+    nbytes = min(static_cast<int>(rm_state.response_buffer.size()),
+                 static_cast<int>(msg->i.nbytes));
+    data_to_send.assign(rm_state.response_buffer.begin(),
+                        rm_state.response_buffer.begin() + nbytes);
+    rm_state.response_buffer.erase(rm_state.response_buffer.begin(),
+                                   rm_state.response_buffer.begin() + nbytes);
+    rm_state.response_pending = !rm_state.response_buffer.empty();
+    
+    pthread_mutex_unlock(&rm_state.response_mutex);
+
     // Set up reply message with IOV
     SETIOV(ctp->iov, &data_to_send[0], nbytes);
-    
-    // Set number of bytes in reply message
-    msg->i.nbytes = nbytes;
-    
+
+    // Report the number of bytes read back to the client. As with write, the
+    // client's read() return value comes from the reply status (ctp->status),
+    // which _IO_SET_READ_NBYTES sets; assigning msg->i.nbytes does NOT affect
+    // it, so the client would otherwise see read() return 0 despite the data.
+    _IO_SET_READ_NBYTES(ctp, nbytes);
+
     // Update statistics
     rm_state.bytes_sent += nbytes;
     rm_state.packets_sent++;
-    
+
     // Return number of IOV parts
     return _RESMGR_NPARTS(1);
 }
@@ -422,7 +577,8 @@ int io_write_handler(resmgr_context_t *ctp, io_write_t *msg,
     
     nbytes = msg->i.nbytes;
     if (nbytes <= 0) {
-        msg->i.nbytes = 0;
+        // 0-byte write: report 0 bytes written to the client.
+        _IO_SET_WRITE_NBYTES(ctp, 0);
         return _RESMGR_NPARTS(0);
     }
     
@@ -444,6 +600,11 @@ int io_write_handler(resmgr_context_t *ctp, io_write_t *msg,
         nbytes = bytes_read;
     }
     
+    // A new request makes any unread part of the previous response stale.
+    pthread_mutex_lock(&rm_state.response_mutex);
+    rm_state.response_buffer.clear();
+    rm_state.response_pending = false;
+    pthread_mutex_unlock(&rm_state.response_mutex);
     // Lock request mutex and store request
     pthread_mutex_lock(&rm_state.request_mutex);
     
@@ -458,9 +619,12 @@ int io_write_handler(resmgr_context_t *ctp, io_write_t *msg,
     // Update statistics
     rm_state.bytes_received += nbytes;
     rm_state.packets_received++;
-    
-    // Set number of bytes written in reply message
-    msg->i.nbytes = nbytes;
+
+    // Report the number of bytes written back to the client. The client's
+    // write() return value comes from the reply status (ctp->status), which
+    // _IO_SET_WRITE_NBYTES sets - assigning msg->i.nbytes does NOT affect it,
+    // so the client would otherwise see write() return 0.
+    _IO_SET_WRITE_NBYTES(ctp, nbytes);
     return _RESMGR_NPARTS(0);
 }
 
@@ -478,15 +642,18 @@ int io_devctl_handler(resmgr_context_t *ctp, io_devctl_t *msg,
     
     switch (msg->i.dcmd) {
         case DCMD_CHR_TCGETATTR:
-            // Get terminal attributes
+            // Get terminal attributes: copy termios into the reply payload and
+            // tell the framework how many data bytes follow the reply header.
             if (nbytes >= static_cast<int>(sizeof(struct termios)) && data_ptr != NULL) {
-                memcpy(data_ptr, &rm_state.termios_settings, 
+                memset(&msg->o, 0, sizeof(msg->o));
+                msg->o.ret_val = EOK;
+                msg->o.nbytes  = sizeof(struct termios);
+                memcpy(_DEVCTL_DATA(msg->o), &rm_state.termios_settings,
                        sizeof(struct termios));
-                _IO_SET_DEVCTL_NBYTES(ctp, sizeof(struct termios));
-            } else {
-                status = EINVAL;
+                SETIOV(ctp->iov, &msg->o, sizeof(msg->o) + sizeof(struct termios));
+                return _RESMGR_NPARTS(1);
             }
-            break;
+            return EINVAL;
             
         case DCMD_CHR_TCSETATTR:
             // Set terminal attributes
@@ -529,26 +696,27 @@ int io_devctl_handler(resmgr_context_t *ctp, io_devctl_t *msg,
                     rm_state.stop_bits = 1;
                 }
                 
-                _IO_SET_DEVCTL_NBYTES(ctp, 0);
+                memset(&msg->o, 0, sizeof(msg->o));
+                msg->o.ret_val = EOK;
+                msg->o.nbytes  = 0;
+                SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
+                return _RESMGR_NPARTS(1);
             } else {
-                status = EINVAL;
+                return EINVAL;
             }
-            break;
             
         case DCMD_CHR_TCFLUSH:
             // Flush input/output buffers
-            pthread_mutex_lock(&rm_state.request_mutex);
-            rm_state.request_buffer.clear();
-            rm_state.request_pending = false;
-            pthread_mutex_unlock(&rm_state.request_mutex);
-            
-            pthread_mutex_lock(&rm_state.response_mutex);
-            rm_state.response_buffer.clear();
-            rm_state.response_pending = false;
-            pthread_mutex_unlock(&rm_state.response_mutex);
-            
-            _IO_SET_DEVCTL_NBYTES(ctp, 0);
-            break;
+            // Deliberately a no-op. The emulator answers within ~1 ms, so a
+            // client flush (modbus_srv flushes before recv) races with the
+            // response being queued and used to erase it, leaving the client
+            // waiting forever. Stale data is discarded in io_write instead.
+
+            memset(&msg->o, 0, sizeof(msg->o));
+            msg->o.ret_val = EOK;
+            msg->o.nbytes  = 0;
+            SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
+            return _RESMGR_NPARTS(1);
             
         case COM_EMU_DCMD_RELEASE:
             // Release device so another process can open. Caller must be current opener; then close(fd).
@@ -564,9 +732,44 @@ int io_devctl_handler(resmgr_context_t *ctp, io_devctl_t *msg,
             pthread_mutex_lock(&rm_state.response_mutex);
             pthread_cond_broadcast(&rm_state.response_ready);
             pthread_mutex_unlock(&rm_state.response_mutex);
-            _IO_SET_DEVCTL_NBYTES(ctp, 0);
-            break;
+            memset(&msg->o, 0, sizeof(msg->o));
+            msg->o.ret_val = EOK;
+            msg->o.nbytes  = 0;
+            SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
+            return _RESMGR_NPARTS(1);
             
+        case DCMD_CHR_SERCTL:
+            // Set modem control lines (e.g. RTS). No physical line exists in the
+            // emulator, so just record the requested RTS state so a subsequent
+            // DCMD_CHR_LINESTATUS reports it consistently, then acknowledge.
+            if (nbytes >= static_cast<int>(sizeof(int)) && data_ptr != NULL) {
+                int ctl = *static_cast<int*>(data_ptr);
+                if (ctl & _CTL_RTS_CHG) {
+                    if (ctl & _CTL_RTS) {
+                        rm_state.line_status |= _LINESTATUS_SER_RTS;
+                    } else {
+                        rm_state.line_status &= ~_LINESTATUS_SER_RTS;
+                    }
+                }
+            }
+            memset(&msg->o, 0, sizeof(msg->o));
+            msg->o.ret_val = EOK;
+            msg->o.nbytes  = 0;
+            SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
+            return _RESMGR_NPARTS(1);
+
+        case DCMD_CHR_LINESTATUS:
+            // Report emulated modem line status (RTS bit tracked via SERCTL).
+            if (nbytes >= static_cast<int>(sizeof(int)) && data_ptr != NULL) {
+                memset(&msg->o, 0, sizeof(msg->o));
+                msg->o.ret_val = EOK;
+                msg->o.nbytes  = sizeof(int);
+                *static_cast<int*>(_DEVCTL_DATA(msg->o)) = rm_state.line_status;
+                SETIOV(ctp->iov, &msg->o, sizeof(msg->o) + sizeof(int));
+                return _RESMGR_NPARTS(1);
+            }
+            return EINVAL;
+
         default:
             // Unknown command, try default handler
             status = iofunc_devctl_default(ctp, msg, ocb);
@@ -613,21 +816,110 @@ int io_close_handler(resmgr_context_t *ctp, void *reserved,
 //}
 
 // Resource Manager Thread
+// Creates the dispatch/channel, attaches /dev/ser<N>, allocates the context and
+// runs the message loop - all in this single thread so the channel is owned by
+// the thread that receives on it (fixes ESRCH on the first dispatch_block()).
 void* resource_manager_thread(void *arg) {
-    dispatch_context_t *ctp;
     program_settings* sett_obj = program_settings::get_instance();
-    
-    // Allocate dispatch context
-    ctp = dispatch_context_alloc(rm_state.dpp);
-    if (ctp == NULL) {
-        sett_obj->sys_message(program_settings::ERROR_MSG,
-                             "Failed to allocate dispatch context");
-        return NULL;
-    }
-    
+    dispatch_context_t *ctp = NULL;
+    int attach_ok = 0;
+
     sett_obj->sys_message(program_settings::INFO_MSG,
-                         "Resource manager thread started");
-    
+                         "RM thread: step 1 - dispatch_create()");
+
+    // Create dispatch structure (channel) in this thread
+    rm_state.dpp = dispatch_create();
+    if (rm_state.dpp != NULL) {
+        sett_obj->sys_message(program_settings::INFO_MSG,
+                             "RM thread: step 1 ok - dispatch handle created");
+
+        resmgr_attr_t resmgr_attr;
+        memset(&resmgr_attr, 0, sizeof(resmgr_attr));
+        resmgr_attr.nparts_max = 1;      // Number of IOV parts for replies
+        resmgr_attr.msg_max_size = 2048; // Maximum message size
+        resmgr_attr.flags = 0;
+
+        ostringstream device_path;
+        device_path << "/dev/ser" << rm_state.com_port_number;
+
+        {
+            ostringstream m;
+            m << "RM thread: step 2 - resmgr_attach(" << device_path.str()
+              << ") nparts_max=" << resmgr_attr.nparts_max
+              << " msg_max_size=" << resmgr_attr.msg_max_size;
+            sett_obj->sys_message(program_settings::INFO_MSG, m.str());
+        }
+
+        errno = 0;
+        int resmgr_id = resmgr_attach(rm_state.dpp, &resmgr_attr,
+                                      device_path.str().c_str(),
+                                      _FTYPE_ANY, 0,
+                                      &rm_state.connect_funcs,
+                                      &rm_state.io_funcs,
+                                      &rm_state.attr);
+        int attach_errno = errno;
+
+        {
+            ostringstream m;
+            m << "RM thread: step 2 result - resmgr_attach(" << device_path.str()
+              << ") returned " << resmgr_id;
+            if (resmgr_id == -1) {
+                m << " errno=" << attach_errno << " (" << strerror(attach_errno) << ")";
+            }
+            sett_obj->sys_message(
+                resmgr_id == -1 ? program_settings::ERROR_MSG : program_settings::INFO_MSG,
+                m.str());
+        }
+
+        if (resmgr_id != -1) {
+            sett_obj->sys_message(program_settings::INFO_MSG,
+                                 "RM thread: step 3 - dispatch_context_alloc()");
+            errno = 0;
+            ctp = dispatch_context_alloc(rm_state.dpp);
+            if (ctp != NULL) {
+                attach_ok = 1;
+                sett_obj->sys_message(program_settings::INFO_MSG,
+                                     "RM thread: step 3 ok - dispatch context allocated");
+            } else {
+                int alloc_errno = errno;
+                ostringstream m;
+                m << "RM thread: step 3 FAILED - dispatch_context_alloc() returned NULL"
+                  << " errno=" << alloc_errno << " (" << strerror(alloc_errno) << ")";
+                sett_obj->sys_message(program_settings::ERROR_MSG, m.str());
+            }
+        }
+
+        if (!attach_ok) {
+            sett_obj->sys_message(program_settings::ERROR_MSG,
+                                 "RM thread: attach/alloc failed - destroying dispatch handle");
+            dispatch_destroy(rm_state.dpp);
+            rm_state.dpp = NULL;
+        }
+    } else {
+        int create_errno = errno;
+        ostringstream m;
+        m << "RM thread: step 1 FAILED - dispatch_create() returned NULL"
+          << " errno=" << create_errno << " (" << strerror(create_errno) << ")";
+        sett_obj->sys_message(program_settings::ERROR_MSG, m.str());
+    }
+
+    // Report attach result to main (handshake)
+    sett_obj->sys_message(program_settings::INFO_MSG,
+                         attach_ok ? "RM thread: signalling main - init OK"
+                                   : "RM thread: signalling main - init FAILED");
+    pthread_mutex_lock(&rm_state.init_mutex);
+    rm_state.init_status = attach_ok ? 0 : -1;
+    rm_state.init_done = true;
+    pthread_cond_signal(&rm_state.init_cond);
+    pthread_mutex_unlock(&rm_state.init_mutex);
+
+    if (!attach_ok) {
+        return NULL;  // main will observe init_status and exit
+    }
+
+    sett_obj->sys_message(program_settings::INFO_MSG,
+                         "Resource manager thread started - entering dispatch_block() loop");
+
     // Main message loop - continue while dispatch context is valid
     while (ctp != NULL) {
         // Block waiting for messages
@@ -641,7 +933,7 @@ void* resource_manager_thread(void *arg) {
             // Diagnostic: channel no longer exists (ESRCH) - log context
             ostringstream diag;
             diag.str("");
-            diag << "RM thread tid=" << reinterpret_cast<uintptr_t>(pthread_self())
+            diag << "RM thread tid=" << static_cast<unsigned long>(pthread_self())
                  << " dpp=" << (rm_state.dpp ? "non-NULL" : "NULL")
                  << " device_open=" << (rm_state.device_open ? "yes" : "no");
             sett_obj->sys_message(program_settings::ERROR_MSG, diag.str());
@@ -806,6 +1098,17 @@ void* modbus_handler_thread(void *arg) {
                                       telemetr_crc.begin(), telemetr_crc.end());
             }
             
+            // Emulate a real device: turnaround time, then the time the reply
+            // needs on the wire (10 bits per byte: start + 8 data + stop).
+            // Done here, in the Modbus thread, so the resource manager thread
+            // keeps serving io_write/io_read meanwhile.
+            {
+                long wire_us = (long)telemetr_answer.size() * 10L * 1000000L /
+                               baud_to_bps(rm_state.baud_rate);
+                long delay_us = (long)g_reply_turnaround_ms * 1000L + wire_us;
+                usleep(delay_us);
+            }
+
             // Store response for resource manager to send
             pthread_mutex_lock(&rm_state.response_mutex);
             rm_state.response_buffer = telemetr_answer;
@@ -845,6 +1148,8 @@ void cleanup_resource_manager() {
     pthread_mutex_destroy(&rm_state.response_mutex);
     pthread_cond_destroy(&rm_state.request_ready);
     pthread_cond_destroy(&rm_state.response_ready);
+    pthread_mutex_destroy(&rm_state.init_mutex);
+    pthread_cond_destroy(&rm_state.init_cond);
     
     // Destroy dispatch structure
     if (rm_state.dpp != NULL) {
@@ -856,6 +1161,26 @@ void cleanup_resource_manager() {
 // Main Function
 int main(int argc, const char *argv[]) {
     program_settings* sett_obj = program_settings::get_instance();
+
+    // Resolve where response files live. Device directories are expected next
+    // to the executable, so response files are read from
+    // <exe_dir>/<device>/<command>.txt regardless of the current working
+    // directory. If the executable directory can't be resolved, this stays
+    // empty and read_response_from_file() falls back to the cwd-relative
+    // "gcc_ntox86/" prefix.
+    g_response_base_dir = resolve_exe_dir(argc > 0 ? argv[0] : NULL);
+    {
+        ostringstream m;
+        if (!g_response_base_dir.empty()) {
+            m << "Response file base directory (executable location): "
+              << g_response_base_dir
+              << "  (expected files: " << g_response_base_dir << "/<device>/<command>.txt)";
+        } else {
+            m << "Could not resolve executable directory; response files will be "
+                 "read relative to the working directory (gcc_ntox86/<device>/<command>.txt)";
+        }
+        sett_obj->sys_message(program_settings::INFO_MSG, m.str());
+    }
     pthread_t rm_thread, modbus_thread;
     pthread_attr_t attr;
     int pthread_creating_result;
@@ -887,6 +1212,11 @@ int main(int argc, const char *argv[]) {
         }
     }
     
+    if (argc > 3) {
+        g_reply_turnaround_ms = atoi(argv[3]);
+        if (g_reply_turnaround_ms < 0) g_reply_turnaround_ms = 0;
+    }
+
     // Initialize pthread attributes
     if (pthread_attr_init(&attr) != EOK) {
         sett_obj->sys_message(program_settings::ERROR_MSG,
@@ -901,7 +1231,7 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
     
-    // Initialize resource manager
+    // Initialize resource manager (non-channel setup: tables, termios, sync, state)
     if (init_resource_manager(com_port_number, baud_rate,
                              0,  // PARITY_DISABLE
                              8,  // DATA_BITS_8
@@ -910,12 +1240,8 @@ int main(int argc, const char *argv[]) {
                              "Failed to initialize resource manager");
         return 1;
     }
-    
-    ostringstream info_msg;
-    info_msg << "Resource manager initialized for /dev/ser" << com_port_number;
-    sett_obj->sys_message(program_settings::INFO_MSG, info_msg.str());
-    
-    // Start resource manager thread
+
+    // Start resource manager thread (it creates the channel and attaches /dev/serN)
     pthread_creating_result = pthread_create(&rm_thread, &attr,
                                             resource_manager_thread, NULL);
     if (pthread_creating_result != EOK) {
@@ -925,7 +1251,35 @@ int main(int argc, const char *argv[]) {
         cleanup_resource_manager();
         return 1;
     }
-    
+
+    // Wait for the RM thread to report whether resmgr_attach() succeeded
+    sett_obj->sys_message(program_settings::INFO_MSG,
+                         "main: waiting for RM thread attach handshake");
+    pthread_mutex_lock(&rm_state.init_mutex);
+    while (!rm_state.init_done) {
+        pthread_cond_wait(&rm_state.init_cond, &rm_state.init_mutex);
+    }
+    int rm_init_status = rm_state.init_status;
+    pthread_mutex_unlock(&rm_state.init_mutex);
+
+    {
+        ostringstream m;
+        m << "main: RM attach handshake received, init_status=" << rm_init_status;
+        sett_obj->sys_message(program_settings::INFO_MSG, m.str());
+    }
+
+    if (rm_init_status != 0) {
+        sett_obj->sys_message(program_settings::ERROR_MSG,
+                             "Resource manager failed to attach /dev/ser - exiting");
+        pthread_join(rm_thread, NULL);
+        cleanup_resource_manager();
+        return 1;
+    }
+
+    ostringstream info_msg;
+    info_msg << "Resource manager initialized for /dev/ser" << com_port_number;
+    sett_obj->sys_message(program_settings::INFO_MSG, info_msg.str());
+
     // Start Modbus handler thread
     pthread_creating_result = pthread_create(&modbus_thread, &attr,
                                             modbus_handler_thread, NULL);

@@ -174,7 +174,7 @@ metro_device::command_data
   command_data::iterator tmp_iter1=request_to_comport[0].begin(), tmp_iter2=tmp_iter1;
 
    advance(tmp_iter1,
-                  program_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX);
+                  static_cast<int>(program_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX));
    advance(tmp_iter2,
                  program_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INDEX+
                     program_settings::MODBUS_FUNCTION_4_REQUEST_REGISTERS_COUNT_INCREM);
@@ -200,7 +200,7 @@ metro_device::command_data
             tmp_iter1=answer_from_com_port[0].begin();
              tmp_iter2=tmp_iter1;
              advance(tmp_iter1,
-                        MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INDEX);
+                        static_cast<int>(MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INDEX));
              advance(tmp_iter2,
                          MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INDEX+
                             MODBUS_FUNCTION_4_ANSWER_MESSAGES_COUNT_INCREM);
@@ -211,7 +211,7 @@ metro_device::command_data
           tmp_iter3=answer_from_com_port[0].begin();
           tmp_iter4=tmp_iter3;
           advance(tmp_iter4,
-                         MODBUS_FUNCTION_4_ANSWER_MESSAGES_BEGIN_INDEX);
+                         static_cast<int>(MODBUS_FUNCTION_4_ANSWER_MESSAGES_BEGIN_INDEX));
 
           buffer_to_return.insert(buffer_to_return.end(),
                                                 tmp_iter3,
@@ -222,7 +222,7 @@ metro_device::command_data
              tmp_iter1=answer_from_com_port[0].begin();
              tmp_iter2=tmp_iter1;
              advance(tmp_iter1,
-                        MODBUS_FUNCTION_4_ANSWER_MESSAGES_BEGIN_INDEX);
+                        static_cast<int>(MODBUS_FUNCTION_4_ANSWER_MESSAGES_BEGIN_INDEX));
              advance(tmp_iter2,
                          MODBUS_FUNCTION_4_ANSWER_MESSAGES_BEGIN_INDEX+2);
 

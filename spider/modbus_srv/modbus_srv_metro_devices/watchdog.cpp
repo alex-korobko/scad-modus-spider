@@ -1,4 +1,5 @@
 #include <sys/neutrino.h>
+#include <errno.h>
 #include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/types.h>
