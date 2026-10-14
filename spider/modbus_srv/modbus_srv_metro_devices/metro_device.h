@@ -26,12 +26,13 @@ command_data default_answer_to_socket;
 
 bool log_packets;
 
+public:
      class metro_device_exception {
        private:
           string test_exc_descr;
 
         public:
-           explicit metro_device_exception (string description) : 
+           explicit metro_device_exception (string description) :
                    test_exc_descr (description) {};
 
             string get_description () {return test_exc_descr;};

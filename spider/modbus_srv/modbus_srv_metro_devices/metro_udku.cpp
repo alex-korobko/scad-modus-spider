@@ -178,7 +178,7 @@ metro_device::command_data
            MESSAGES_MODBUS_REGISTERS_COUNT*MESSAGES_INCREM);
         iter_beg=answer_from_com_port[0].begin();
         iter_end=iter_beg;
-        advance(iter_beg, program_settings::MODBUS_HEADER_SIZE);
+        advance(iter_beg, static_cast<int>(program_settings::MODBUS_HEADER_SIZE));
         advance(iter_end, answer_from_com_port[0].size()-program_settings::MODBUS_CRC_SIZE);
         answer_to_socket.insert(answer_to_socket.end(),
                         iter_beg, iter_end);
